@@ -131,11 +131,11 @@ int main() {
     Ws[1] = W2;
     TwoDMatrix* dscore = matrixMalloc(sizeof(TwoDMatrix));
     printf("Comparing softmax loss and dscore\n");
-    float data_loss = softmaxLoss(ref_H_after_relu, correct_labels, dscore);
-    printf("Expecting data loss: 1.098627, got %f", data_loss);
+    float data_loss = softmaxLoss(ref_softmax_score, correct_labels, dscore);
+    printf("Expecting data loss: 1.098627, got %f\n", data_loss);
     checkMatrixDiff(ref_dscore,dscore,thres);
     float reg_loss = L2RegLoss(Ws, 2, reg);
-    printf("Expecting reg loss: 0.000001, got %f", reg_loss);
+    printf("Expecting reg loss: 0.000001, got %f\n", reg_loss);
     // dW2 = np.dot(hidden.T,dscore)
     // db2 = np.sum(dscore,axis=0,keepdims=True)
     // dhidden = np.dot(dscore,W2.T)
@@ -144,11 +144,11 @@ int main() {
     TwoDMatrix* db = matrixMalloc(sizeof(TwoDMatrix));
     TwoDMatrix* db2 = matrixMalloc(sizeof(TwoDMatrix));
     TwoDMatrix* dH_before_relu = matrixMalloc(sizeof(TwoDMatrix));
-    affineLayerBackword(ref_dscore,ref_H_after_relu,W2,b2,dH_before_relu,dW2,db2)
+    affineLayerBackword(ref_dscore,ref_H_after_relu,W2,b2,dH_before_relu,dW2,db2);
     printf("Comparing dH_before_relu\n");
     checkMatrixDiff(ref_dH_before_relu,dH_before_relu,thres);
     printf("Comparing dW2\n");
-    checkMatrixDiff(ref_dW2,dW2);
+    checkMatrixDiff(ref_dW2,dW2,thres);
 
     // dhidden[hidden <= 0] = 0
     TwoDMatrix* dH_after_relu = matrixMalloc(sizeof(TwoDMatrix));
@@ -160,69 +160,67 @@ int main() {
 
     printf("Comparing self dH\n");
     leakyReLUBackward(dH,ref_H_after_relu,0,dH);
-    checkMatrixDiff(ref_dH_after_relu,dH);
+    checkMatrixDiff(ref_dH_after_relu,dH,thres);
 
     TwoDMatrix* dW2_after_reg_back = matrixMalloc(sizeof(TwoDMatrix));
     printf("Comparing dW2_after_reg_back\n");
     L2RegLossBackward(ref_dW2,W2,reg,dW2_after_reg_back);
     checkMatrixDiff(ref_dW2_after_reg_back,dW2_after_reg_back,thres);
-    TwoDMatrix* dW2 = matrixMalloc(sizeof(TwoDMatrix));
     copyTwoDMatrix(ref_dW2,dW2);
     printf("Comparing self dW2\n");
     L2RegLossBackward(dW2,W2,reg,dW2);
-    checkMatrixDiff(ref_dW2_after_reg_back,dW2);
+    checkMatrixDiff(ref_dW2_after_reg_back,dW2,thres);
 
     TwoDMatrix* dW_after_reg_back = matrixMalloc(sizeof(TwoDMatrix));
     printf("Comparing dW_after_reg_back\n");
     L2RegLossBackward(ref_dW,W2,reg,dW_after_reg_back);
     checkMatrixDiff(ref_dW_after_reg_back,dW_after_reg_back,thres);
-    TwoDMatrix* dW = matrixMalloc(sizeof(TwoDMatrix));
     copyTwoDMatrix(ref_dW,dW);
     printf("Comparing self dW\n");
     L2RegLossBackward(dW,W,reg,dW);
-    checkMatrixDiff(ref_dW_after_reg_back,dW);
+    checkMatrixDiff(ref_dW_after_reg_back,dW,thres);
 
     TwoDMatrix* W_after_update = matrixMalloc(sizeof(TwoDMatrix));
     printf("Comparing W_after_update\n");
     vanillaUpdate(W,dW,learning_rate,W_after_update);
-    checkMatrixDiff(ref_W_after_update,W_after_update);
+    checkMatrixDiff(ref_W_after_update,W_after_update,thres);
     TwoDMatrix* W_self = matrixMalloc(sizeof(TwoDMatrix));
     copyTwoDMatrix(W,W_self);
     printf("Comparing self W_after_update\n");
     vanillaUpdate(W_self,dW,learning_rate,W_self);
-    checkMatrixDiff(ref_W_after_update,W_self);
+    checkMatrixDiff(ref_W_after_update,W_self,thres);
 
     TwoDMatrix* b_after_update = matrixMalloc(sizeof(TwoDMatrix));
     printf("Comparing b_after_update\n");
     vanillaUpdate(b,db,learning_rate,b_after_update);
-    checkMatrixDiff(ref_b_after_update,b_after_update);
+    checkMatrixDiff(ref_b_after_update,b_after_update,thres);
     TwoDMatrix* b_self = matrixMalloc(sizeof(TwoDMatrix));
     copyTwoDMatrix(b,b_self);
     printf("Comparing self b_after_update\n");
     vanillaUpdate(b_self,db,learning_rate,b_self);
-    checkMatrixDiff(ref_b_after_update,b_self);
+    checkMatrixDiff(ref_b_after_update,b_self,thres);
 
     TwoDMatrix* W2_after_update = matrixMalloc(sizeof(TwoDMatrix));
     printf("Comparing W2_after_update\n");
     vanillaUpdate(W2,dW2,learning_rate,W2_after_update);
-    checkMatrixDiff(ref_W2_after_update,W2_after_update);
+    checkMatrixDiff(ref_W2_after_update,W2_after_update,thres);
     TwoDMatrix* W2_self = matrixMalloc(sizeof(TwoDMatrix));
     copyTwoDMatrix(W2,W2_self);
     printf("Comparing self W2_after_update\n");
     vanillaUpdate(W2_self,dW2,learning_rate,W2_self);
-    checkMatrixDiff(ref_W2_after_update,W2_self);
+    checkMatrixDiff(ref_W2_after_update,W2_self,thres);
 
     TwoDMatrix* b2_after_update = matrixMalloc(sizeof(TwoDMatrix));
     printf("Comparing b2_after_update\n");
     vanillaUpdate(b2,db2,learning_rate,b2_after_update);
-    checkMatrixDiff(ref_b2_after_update,b2_after_update);
+    checkMatrixDiff(ref_b2_after_update,b2_after_update,thres);
     TwoDMatrix* b2_self = matrixMalloc(sizeof(TwoDMatrix));
     copyTwoDMatrix(b2,b2_self);
     printf("Comparing self b2_after_update\n");
     vanillaUpdate(b2_self,db2,learning_rate,b2_self);
-    checkMatrixDiff(ref_b2_after_update,b2_self);
+    checkMatrixDiff(ref_b2_after_update,b2_self,thres);
 
-     destroy2DMatrix(training_data);
+    destroy2DMatrix(X);
     destroy2DMatrix(correct_labels);
     return 0;
 }
