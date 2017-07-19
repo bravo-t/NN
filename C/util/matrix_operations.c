@@ -174,7 +174,7 @@ int broadcastMatrix(TwoDMatrix* M, int n, int direction, TwoDMatrix* OUT) {
     return 0;
 }
 
-int BroadcastAdd(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
+int broadcastAdd(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
     TwoDMatrix *broadcasted = malloc(sizeof(TwoDMatrix));
     int n;
     if (direction == 0) {
@@ -183,10 +183,13 @@ int BroadcastAdd(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
         n = M->height;
     }
     if (broadcastMatrix(M,n,direction,broadcasted)) {
+        destroy2DMatrix(broadcasted);
         return 1;
     }
     if (elementwiseAdd2DMatrix(M,broadcasted,OUT)) {
+        destroy2DMatrix(broadcasted);
         return 1;
     }
+    destroy2DMatrix(broadcasted);
     return 0;
 }

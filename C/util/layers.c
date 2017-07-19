@@ -7,5 +7,6 @@ int affineForwardLayer(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* b, TwoDMatrix* 
         printf("ERROR: Input matrix size mismatch: X->width = %d, W->height = %d\n", X->width,W->height);
         exit 1;
     }
-
+    broadcastAdd(OUT, b, 0, OUT);
+    return 0;
 }

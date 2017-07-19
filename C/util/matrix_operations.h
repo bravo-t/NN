@@ -19,5 +19,7 @@ int elementwiseAdd2DMatrix(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT);
 int elementwiseMul2DMatrix(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT);
 int elementExp(TwoDMatrix* M,TwoDMatrix* OUT);
 int elementLeakyReLU(TwoDMatrix* M,float alpha, TwoDMatrix* OUT);
+int broadcastMatrix(TwoDMatrix* M, int n, int direction, TwoDMatrix* OUT);
+int broadcastAdd(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT);
 
 #endif
