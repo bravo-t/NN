@@ -146,3 +146,47 @@ int elementLeakyReLU(TwoDMatrix* M,float alpha, TwoDMatrix* OUT) {
     }
     return 0;
 }
+
+int broadcastMatrix(TwoDMatrix* M, int n, int direction, TwoDMatrix* OUT) {
+    if (direction == 0) {
+        if (M->width != 1) {
+            printf("ERROR: Cannot horizontally broadcast matrix with a width that is not 1\n");
+            return 1;
+        }
+        init2DMatrix(OUT, M->height, n);
+        for(int i=0;i<M->height;i++) {
+            for(int j=0;j<n;j++) {
+                OUT->d[i][j] = M->d[i][0];
+            }
+        }
+    } else {
+        if (M->height != 1) {
+            printf("ERROR: Cannot vertically broadcast matrix with a height that is not 1\n");
+            return 1;
+        }
+        init2DMatrix(OUT, n, M->width);
+        for(int i=0;i<n;i++) {
+            for(int j=0;j<M->width;j++) {
+                OUT->d[i][j] = M->d[0][j];
+            }
+        }
+    }
+    return 0;
+}
+
+int BroadcastAdd(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
+    TwoDMatrix *broadcasted = malloc(sizeof(TwoDMatrix));
+    int n;
+    if (direction == 0) {
+        n = M->width;
+    } else {
+        n = M->height;
+    }
+    if (broadcastMatrix(M,n,direction,broadcasted)) {
+        return 1;
+    }
+    if (elementwiseAdd2DMatrix(M,broadcasted,OUT)) {
+        return 1;
+    }
+    return 0;
+}
