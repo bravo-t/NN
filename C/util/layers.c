@@ -56,4 +56,22 @@ int leakyReLUBackward(TwoDMatrix* dM, TwoDMatrix* M, float alpha, TwoDMatrix* OU
     return 0;
 }
 
-int SVMLoss(TwoDMatrix* SCORE, )
+/*
+score is a N*M 2D matrix, N is the height, and M is the width. N is the number of examples for 
+a mini-batch, and M is the number of labels. The layout of score is like the following;
+
+            score for label1    score for label2    score for label3    ...     score for labelN
+         -----------------------------------------------------------------------------------------
+Example1 |              ****                ****                ****    ...                 ****
+Example2 |              ****                ****                ****    ...                 ****
+         |                                            .
+         |                                            .
+         |                                            .
+ExampleM |              ****                ****                ****    ...                 ****
+
+
+ *
+ */
+int SVMLoss(TwoDMatrix* score, TwoDMatrix* correct_class, TwoDMatrix* dsocre, float data_loss) {
+    
+}
