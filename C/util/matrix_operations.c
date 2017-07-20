@@ -133,6 +133,32 @@ int elementExp(TwoDMatrix* M,TwoDMatrix* OUT) {
     return 0;
 }
 
+int elementAdd(TwoDMatrix* M, float a,TwoDMatrix* OUT) {
+    init2DMatrix(OUT,M->height,M->width);
+    for(int i=0;i<M->height;i++) {
+        for(int j=0;j<M->width;j++) {
+            OUT->d[i][j] = a+M->d[i][j];
+        }
+    }
+    return 0;
+}
+
+int elementMul(TwoDMatrix* M, float a,TwoDMatrix* OUT) {
+    init2DMatrix(OUT,M->height,M->width);
+    for(int i=0;i<M->height;i++) {
+        for(int j=0;j<M->width;j++) {
+            OUT->d[i][j] = a*M->d[i][j];
+        }
+    }
+    return 0;
+}
+
+int elementDiv(TwoDMatrix* M,float a, TwoDMatrix* OUT) {
+    float n = 1/a;
+    return elementMul(TwoDMatrix* M, float n,TwoDMatrix* OUT);
+}
+
+
 int elementLeakyReLU(TwoDMatrix* M,float alpha, TwoDMatrix* OUT) {
     init2DMatrix(OUT,M->height,M->width);
     for(int i=0;i<M->height;i++) {
