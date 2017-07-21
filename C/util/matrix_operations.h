@@ -15,6 +15,7 @@ int transpose2DMatrix(TwoDMatrix* M,TwoDMatrix* OUT);
 int dotProduct(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* OUT);
 int sumX2DMatrix(TwoDMatrix* M,TwoDMatrix* OUT);
 int sumY2DMatrix(TwoDMatrix* M,TwoDMatrix* OUT);
+float sumAll(TwoDMatrix* M);
 int elementwiseAdd2DMatrix(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT);
 int elementwiseMul2DMatrix(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT);
 int elementExp(TwoDMatrix* M,TwoDMatrix* OUT);

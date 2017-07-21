@@ -81,7 +81,49 @@ Example2 |                         [0,M)
 ExampleN |                         [0,M)
 
  *
+ * Below is an example with real digits, there's only 1 training sample in the mini-batch for simplicity:
+ * score = [[-1, 5, 4, 7, 3, 2]]
+ * correct_label = [[2]], means the 3rd score in score is the correct one
+ * margins = [[0, 2, 0, 4, 0, 0]], after the max(0, wrong - correct + 1) operation
+ * number of positive ones in margins number_of_pos = 2 
+ * dscore = [[0, 1, 0, 1, 0, 0]], element is 1 if margins > 0
+ * then
+ * dscore = [[0, 1, 0 - 2, 1, 0, 0]] = [[0, 1, -2, 1, 0, 0]] 
+ * this can be expressed as the willing to reduce the results of the 2nd and 4th score, 
+ * further increase the 3rd score, which is the correct one, while leaving others unhurt, 
+ * because they are smaller than the delta
  */
 float SVMLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dsocre) {
-    
+    TwoDMatrix* margins = malloc(sizeof(TwoDMatrix));
+    init2DMatrix(margins, score->height, score->width);
+    init2DMatrix(dscore, score->height, score->width);
+    int number_of_examples = score->height;
+    int number_of_pos[number_of_examples] = {0};
+    // Matrix margins contains the values of score undergone the process of max(0, wrong - correct + 1) operation in hinge loss
+    for(int i=0;i<score->height;i++) {
+        int correct_index = correct_label->d[i][0];
+        float correct_score = score->d[i][correct_index];
+        for(int j=0;j!=correct_index&&j<score->width;j++) {
+            margins->d[i][j] = max(0,score->d[i][j] - correct_score + 1);
+            if (margins->d[i][j] > 0) {
+                number_of_pos[i]++;
+                /*
+                 *  Why can't I just use "dscore->d[i][j] = margins->d[i][j]"?
+                 *  Because this seems to be decreasing the larger wrong socres more strongly
+                 */
+                dscore->d[i][j] = 1;
+            } else {
+                dscore->d[i][j] = 0;
+            }
+        }
+        margins->d[i][correct_index] = 0;
+    }
+    float data_loss = sumAll(margins) / number_of_examples;
+    for(int i=0;i<score->height;i++) {
+        int correct_index = correct_label->d[i][0];
+        dscore->d[i][correct_index] -= number_of_pos[i];
+    }
+    elementDiv(dscore,number_of_examples);
+    destroy2DMatrix(margins);
+    return data_loss;
 }

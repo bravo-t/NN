@@ -99,6 +99,16 @@ int sumY2DMatrix(TwoDMatrix* M,TwoDMatrix* OUT) {
     return 0;
 }
 
+float sumAll(TwoDMatrix* M) {
+    float sum = 0;
+    for(int i=0;i<M->height;i++) {
+        for(int j=0;j<M->width;j++) sum += M->d[i][j];
+    }
+    return sum;
+}
+
+}
+
 int elementwiseAdd2DMatrix(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT) {
     if (A->height != B->height) return 1;
     if (A->width != B->width) return 1;
