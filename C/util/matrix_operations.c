@@ -75,7 +75,16 @@ Add all elements horizontally, result matrix will always have width = 1. For exm
 int sumX2DMatrix(TwoDMatrix* M,TwoDMatrix* OUT) {
     init2DMatrix(OUT, M->height,1);
     for(int i=0;i<M->height;i++) {
-        OUT->d[i][0] = 0;
+        OUT->d[i][0] = M->d[i][0];
+        for(int j=0;j<M->width;j++) OUT->d[i][0] = max(OUT->d[i][0], M->d[i][j]);
+    }
+    return 0;
+}
+
+int maxX2DMatrix(TwoDMatrix* M,TwoDMatrix* OUT) {
+    init2DMatrix(OUT, M->height,1);
+    for(int i=0;i<M->height;i++) {
+        OUT->d[i][0] = M->d[i][0];
         for(int j=0;j<M->width;j++) OUT->d[i][0]+= M->d[i][j];
     }
     return 0;
@@ -99,6 +108,15 @@ int sumY2DMatrix(TwoDMatrix* M,TwoDMatrix* OUT) {
     return 0;
 }
 
+int maxY2DMatrix(TwoDMatrix* M,TwoDMatrix* OUT) {
+    init2DMatrix(OUT, 1,M->width);
+    for(int i=0;i<M->width;i++) {
+        OUT->d[0][i] = M->d[0][i];
+        for(int j=0;j<M->height;j++) OUT->d[0][i] = max(OUT->d[0][i], M->d[j][i]);
+    }
+    return 0;
+}
+
 float sumAll(TwoDMatrix* M) {
     float sum = 0;
     for(int i=0;i<M->height;i++) {
@@ -116,6 +134,18 @@ int elementwiseAdd2DMatrix(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT) {
     for(int i=0;i<A->height;i++) {
         for(int j=0;j<A->width;j++) {
             OUT->d[i][j] = A->d[i][j] + B->d[i][j];
+        }
+    }
+    return 0;
+}
+
+int elementwiseSub2DMatrix(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT) {
+    if (A->height != B->height) return 1;
+    if (A->width != B->width) return 1;
+    init2DMatrix(OUT,A->height,A->width);
+    for(int i=0;i<A->height;i++) {
+        for(int j=0;j<A->width;j++) {
+            OUT->d[i][j] = A->d[i][j] - B->d[i][j];
         }
     }
     return 0;
@@ -223,6 +253,26 @@ int broadcastAdd(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
         return 1;
     }
     if (elementwiseAdd2DMatrix(M,broadcasted,OUT)) {
+        destroy2DMatrix(broadcasted);
+        return 1;
+    }
+    destroy2DMatrix(broadcasted);
+    return 0;
+}
+
+int broadcastSub(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
+    TwoDMatrix *broadcasted = malloc(sizeof(TwoDMatrix));
+    int n;
+    if (direction == 0) {
+        n = M->width;
+    } else {
+        n = M->height;
+    }
+    if (broadcastMatrix(M,n,direction,broadcasted)) {
+        destroy2DMatrix(broadcasted);
+        return 1;
+    }
+    if (elementwiseSub2DMatrix(M,broadcasted,OUT)) {
         destroy2DMatrix(broadcasted);
         return 1;
     }

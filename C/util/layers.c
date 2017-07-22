@@ -93,7 +93,7 @@ ExampleN |                         [0,M)
  * further increase the 3rd score, which is the correct one, while leaving others unhurt, 
  * because they are smaller than the delta
  */
-float SVMLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dsocre) {
+float SVMLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dscore) {
     TwoDMatrix* margins = malloc(sizeof(TwoDMatrix));
     init2DMatrix(margins, score->height, score->width);
     init2DMatrix(dscore, score->height, score->width);
@@ -109,7 +109,7 @@ float SVMLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dsocre) 
                 number_of_pos[i]++;
                 /*
                  *  Why can't I just use "dscore->d[i][j] = margins->d[i][j]"?
-                 *  Because this seems to be decreasing the larger wrong socres more strongly
+                 *  Because this seems to be decreasing the larger wrong scores more strongly
                  */
                 dscore->d[i][j] = 1;
             } else {
@@ -126,4 +126,20 @@ float SVMLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dsocre) 
     elementDiv(dscore,number_of_examples);
     destroy2DMatrix(margins);
     return data_loss;
+}
+
+float softmaxLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dscore) {
+    TwoDMatrix* max_scores = malloc(sizeof(TwoDMatrix));
+    init2DMatrix(max_scores,score->height,1);
+    maxX2DMatrix(score,max_scores);
+    TwoDMatrix* shifted = malloc(sizeof(TwoDMatrix));
+    init2DMatrix(shifted,score->height,score->width);
+    broadcastSub(score,max_scores,0,shifted);
+    TwoDMatrix* exp_score = malloc(sizeof(TwoDMatrix));
+    init2DMatrix(exp_score,score->height,score->width);
+    elementExp(score,exp_score);
+    TwoDMatrix* exp_sum = malloc(sizeof(TwoDMatrix));
+    init2DMatrix(exp_sum,score->height,1);
+    sumX2DMatrix(exp_score,exp_sum);
+    
 }
