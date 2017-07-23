@@ -37,6 +37,16 @@ int init2DMatrixNormRand(TwoDMatrix* M, int height, int width, float mean, float
     return 0;
 }
 
+int copyTwoDMatrix(TwoDMatrix* M, TwoDMatrix* OUT) {
+    int retval = init2DMatrix(OUT, M->height, M->width);
+    for(int i=0;i<M->height;i++) {
+        for(int j=0;j<M->width;j++) {
+            OUT->d[i][j] = M->d[i][j];
+        }
+    }
+    return retval;
+}
+
 int destroy2DMatrix(TwoDMatrix* M) {
     for(int i=0;i<M->height;i++) free(M->d[i]);
     free(M);
@@ -163,6 +173,18 @@ int elementwiseMul2DMatrix(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT) {
     return 0;
 }
 
+int elementwiseDiv2DMatrix(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT) {
+    if (A->height != B->height) return 1;
+    if (A->width != B->width) return 1;
+    init2DMatrix(OUT,A->height,A->width);
+    for(int i=0;i<A->height;i++) {
+        for(int j=0;j<A->width;j++) {
+            OUT->d[i][j] = A->d[i][j] / B->d[i][j];
+        }
+    }
+    return 0;
+}
+
 int elementExp(TwoDMatrix* M,TwoDMatrix* OUT) {
     init2DMatrix(OUT,M->height,M->width);
     for(int i=0;i<M->height;i++) {
@@ -273,6 +295,46 @@ int broadcastSub(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
         return 1;
     }
     if (elementwiseSub2DMatrix(M,broadcasted,OUT)) {
+        destroy2DMatrix(broadcasted);
+        return 1;
+    }
+    destroy2DMatrix(broadcasted);
+    return 0;
+}
+
+int broadcastsMul(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
+    TwoDMatrix *broadcasted = malloc(sizeof(TwoDMatrix));
+    int n;
+    if (direction == 0) {
+        n = M->width;
+    } else {
+        n = M->height;
+    }
+    if (broadcastMatrix(M,n,direction,broadcasted)) {
+        destroy2DMatrix(broadcasted);
+        return 1;
+    }
+    if (elementwiseMul2DMatrix(M,broadcasted,OUT)) {
+        destroy2DMatrix(broadcasted);
+        return 1;
+    }
+    destroy2DMatrix(broadcasted);
+    return 0;
+}
+
+int broadcastsDiv(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
+    TwoDMatrix *broadcasted = malloc(sizeof(TwoDMatrix));
+    int n;
+    if (direction == 0) {
+        n = M->width;
+    } else {
+        n = M->height;
+    }
+    if (broadcastMatrix(M,n,direction,broadcasted)) {
+        destroy2DMatrix(broadcasted);
+        return 1;
+    }
+    if (elementwiseDiv2DMatrix(M,broadcasted,OUT)) {
         destroy2DMatrix(broadcasted);
         return 1;
     }
