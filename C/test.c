@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <malloc.h>
+#include "util/misc_utils.h"
 #include "util/matrix_operations.h"
 
 void printMatrix(TwoDMatrix *M) {
@@ -13,17 +13,17 @@ void printMatrix(TwoDMatrix *M) {
 }
 
 int main() {
-    TwoDMatrix *test1 = malloc(sizeof(TwoDMatrix));
+    TwoDMatrix *test1 = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrixNormRand(test1,3,5,0.0,1.0);
-    TwoDMatrix *test2 = malloc(sizeof(TwoDMatrix));
+    TwoDMatrix *test2 = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrixNormRand(test2,5,3,0.0,1.0);
     printMatrix(test1);
     printMatrix(test2);
-    TwoDMatrix *dot = malloc(sizeof(TwoDMatrix));
+    TwoDMatrix *dot = matrixMalloc(sizeof(TwoDMatrix));
     dotProduct(test1,test2,dot);
     printMatrix(dot);
-    TwoDMatrix *addX = malloc(sizeof(TwoDMatrix));
-    TwoDMatrix *addY = malloc(sizeof(TwoDMatrix));
+    TwoDMatrix *addX = matrixMalloc(sizeof(TwoDMatrix));
+    TwoDMatrix *addY = matrixMalloc(sizeof(TwoDMatrix));
     sumX2DMatrix(test1,addX);
     sumY2DMatrix(test1,addY);
     printMatrix(addX);

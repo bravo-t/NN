@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <math.h>
-#include <malloc.h>
+#include "misc_utils.h"
 #include "matrix_type.h"
 #include "matrix_operations.h"
 
@@ -13,11 +13,12 @@ float random_normal(float mean, float std) {
 }
 
 int init2DMatrix(TwoDMatrix* M, int height, int width) {
+    if (M->initialized) return 0;
     M->height = height;
     M->width = width;
-    float** data = (float**) malloc(sizeof(float*)*height);
+    float** data = (float**) matrixMalloc(sizeof(float*)*height);
     for(int i = 0; i<height;i++) {
-        data[i] = (float*) malloc(sizeof(float)*width);
+        data[i] = (float*) matrixMalloc(sizeof(float)*width);
     }
     M->d = data;
     return 0;
@@ -26,9 +27,9 @@ int init2DMatrix(TwoDMatrix* M, int height, int width) {
 int init2DMatrixNormRand(TwoDMatrix* M, int height, int width, float mean, float std) {
     M->height = height;
     M->width = width;
-    float** data = (float**) malloc(sizeof(float*)*height);
+    float** data = (float**) matrixMalloc(sizeof(float*)*height);
     for(int i = 0; i<height;i++) {
-        data[i] = (float*) malloc(sizeof(float)*width);
+        data[i] = (float*) matrixMalloc(sizeof(float)*width);
         for(int j=0;j<width;j++) {
             data[i][j] = random_normal(mean,std);
         }
@@ -263,7 +264,7 @@ int broadcastMatrix(TwoDMatrix* M, int n, int direction, TwoDMatrix* OUT) {
 }
 
 int broadcastAdd(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
-    TwoDMatrix *broadcasted = malloc(sizeof(TwoDMatrix));
+    TwoDMatrix *broadcasted = matrixMalloc(sizeof(TwoDMatrix));
     int n;
     if (direction == 0) {
         n = M->width;
@@ -283,7 +284,7 @@ int broadcastAdd(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
 }
 
 int broadcastSub(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
-    TwoDMatrix *broadcasted = malloc(sizeof(TwoDMatrix));
+    TwoDMatrix *broadcasted = matrixMalloc(sizeof(TwoDMatrix));
     int n;
     if (direction == 0) {
         n = M->width;
@@ -303,7 +304,7 @@ int broadcastSub(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
 }
 
 int broadcastsMul(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
-    TwoDMatrix *broadcasted = malloc(sizeof(TwoDMatrix));
+    TwoDMatrix *broadcasted = matrixMalloc(sizeof(TwoDMatrix));
     int n;
     if (direction == 0) {
         n = M->width;
@@ -323,7 +324,7 @@ int broadcastsMul(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) 
 }
 
 int broadcastsDiv(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
-    TwoDMatrix *broadcasted = malloc(sizeof(TwoDMatrix));
+    TwoDMatrix *broadcasted = matrixMalloc(sizeof(TwoDMatrix));
     int n;
     if (direction == 0) {
         n = M->width;

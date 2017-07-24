@@ -1,6 +1,6 @@
 #include "matrix_operations.h"
 #include <stdlib.h>
-#include <malloc.h>
+#include "misc_utils.h"
 #include <math.h>
 
 int affineLayerForward(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* b, TwoDMatrix* OUT) {
@@ -17,8 +17,8 @@ int affineLayerBackword(TwoDMatrix* dOUT, TwoDMatrix* X, TwoDMatrix* W, TwoDMatr
     init2DMatrix(dX, X->height, X->width);
     init2DMatrix(dW, W->height, W->width);
     init2DMatrix(db, b->height, b->width);
-    TwoDMatrix* XT = malloc(sizeof(TwoDMatrix));
-    TwoDMatrix* WT = malloc(sizeof(TwoDMatrix));
+    TwoDMatrix* XT = matrixMalloc(sizeof(TwoDMatrix));
+    TwoDMatrix* WT = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(XT, X->width, X->height);
     init2DMatrix(WT, W->width, W->height);
     if (dotProduct(dOUT,WT,dX)) {
@@ -45,7 +45,7 @@ int leakyReLUForward(TwoDMatrix* M, float alpha, TwoDMatrix* OUT) {
 
 int vanillaUpdate(TwoDMatrix* M, TwoDMatrix* dM, float learning_rate, TwoDMatrix* OUT) {
     init2DMatrix(OUT, M->height, M->width);
-    TwoDMatrix* dM_scaled = malloc(sizeof(TwoDMatrix));
+    TwoDMatrix* dM_scaled = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(dM_scaled, M->height, M->width);
     elementMul(dM,learning_rate,dM_scaled);
     return elementwiseAdd2DMatrix(M, dM_scaled, OUT);
@@ -103,7 +103,7 @@ ExampleN |                         [0,M)
  * because they are smaller than the delta
  */
 float SVMLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dscore) {
-    TwoDMatrix* margins = malloc(sizeof(TwoDMatrix));
+    TwoDMatrix* margins = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(margins, score->height, score->width);
     init2DMatrix(dscore, score->height, score->width);
     int number_of_examples = score->height;
@@ -139,22 +139,22 @@ float SVMLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dscore) 
 
 float softmaxLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dscore) {
     init2DMatrix(dscore,score->height,score->width);
-    TwoDMatrix* max_scores = malloc(sizeof(TwoDMatrix));
+    TwoDMatrix* max_scores = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(max_scores,score->height,1);
     maxX2DMatrix(score,max_scores);
-    TwoDMatrix* shifted = malloc(sizeof(TwoDMatrix));
+    TwoDMatrix* shifted = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(shifted,score->height,score->width);
     broadcastSub(score,max_scores,0,shifted);
-    TwoDMatrix* exp_score = malloc(sizeof(TwoDMatrix));
+    TwoDMatrix* exp_score = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(exp_score,score->height,score->width);
     elementExp(shifted,exp_score);
-    TwoDMatrix* exp_sum = malloc(sizeof(TwoDMatrix));
+    TwoDMatrix* exp_sum = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(exp_sum,score->height,1);
     sumX2DMatrix(exp_score,exp_sum);
-    TwoDMatrix* probs = malloc(sizeof(TwoDMatrix));
+    TwoDMatrix* probs = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(probs,score->height,score->width);
     broadcastDiv(exp_score,exp_sum,0,probs);
-    TwoDMatrix* correct_probs = malloc(sizeof(TwoDMatrix));
+    TwoDMatrix* correct_probs = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(correct_probs,score->height,1);
     for(int i=0;i<score->height;i++) {
         int correct_index = correct_label->d[i][0];
@@ -180,7 +180,7 @@ float softmaxLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dsco
 float L2RegLoss(TwoDMatrix** Ms,int number_of_weights, float reg_strength) {
     float reg_loss = 0;
     for (int i = 0; i < number_of_weights; i++) {
-        TwoDMatrix* M_squared = malloc(sizeof(TwoDMatrix));
+        TwoDMatrix* M_squared = matrixMalloc(sizeof(TwoDMatrix));
         init2DMatrix(M_squared,Ms[i]->height,Ms[i]->width);
         elementwiseMul2DMatrix(Ms[i],Ms[i],M_squared);
         reg_loss += 0.5*reg_strength*sumAll(M_squared);

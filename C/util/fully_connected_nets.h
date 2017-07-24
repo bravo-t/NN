@@ -5,6 +5,7 @@
 typedef struct {
 	TwoDMatrix* X; // Input data
 	// Below parameters are used in training
+	TwoDMatrix* correct_labels;
 	int minibatch_size; // Size of the minibatch of training examples
 	int labels; // How many scores will the nerual network calculate?
 	float reg_strength; // Regulization strength

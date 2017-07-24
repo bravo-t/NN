@@ -5,6 +5,7 @@ typedef struct {
     int height;
     int width;
     float** d;
+    bool initialized;
 } TwoDMatrix;
 
 #endif
