@@ -21,6 +21,7 @@ int init2DMatrix(TwoDMatrix* M, int height, int width) {
         data[i] = (float*) matrixMalloc(sizeof(float)*width);
     }
     M->d = data;
+    M->initialized = true;
     return 0;
 }
 
@@ -51,6 +52,7 @@ int copyTwoDMatrix(TwoDMatrix* M, TwoDMatrix* OUT) {
 int destroy2DMatrix(TwoDMatrix* M) {
     for(int i=0;i<M->height;i++) free(M->d[i]);
     free(M);
+    M = NULL;
     return 0;
 }
 

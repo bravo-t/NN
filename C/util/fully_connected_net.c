@@ -1,6 +1,6 @@
 #include "matrix_operations.h"
 #include <stdlib.h>
-#include <malloc.h>
+#include "misc_utils.h"
 #include <math.h>
 #include "layers.h"
 #include "fully_connected_net.h"
@@ -9,7 +9,7 @@ int fullyConnectedNets(TwoDMatrix* X, int minibatch_size) {
 
 }
 
-int initNetwork() {
+int initFCNetwork() {
 	/*
 	 How will the size of the Ws and Hs determined?
 	 Like below (X is the input data):
