@@ -3,7 +3,7 @@
 #include <malloc.h>
 
 TwoDMatrix* matrixMalloc(int size) {
-	TwoDMatrix* M = malloc(size);
-	M->initialized = false;
-	return M;
+    TwoDMatrix* M = malloc(size);
+    M->initialized = false;
+    return M;
 }

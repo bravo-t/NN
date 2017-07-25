@@ -94,11 +94,11 @@ int train(parameters* network_params) {
     TwoDMatrix** Hs = malloc(sizeof(TwoDMatrix*)*network_depth);
     int former_width = training_data->width;
     for(int i=0;i<network_depth;i++) {
-        Ws[i] = (TwoDMatrix*) malloc(sizeof(TwoDMatrix));
-        bs[i] = (TwoDMatrix*) malloc(sizeof(TwoDMatrix));
-        Hs[i] = (TwoDMatrix*) malloc(sizeof(TwoDMatrix));
-        init2DMatrix(Ws[i],former_width,hidden_layer_sizes[i]);
-        init2DMatrix(bs[i],1,hidden_layer_sizes[i]);
+        Ws[i] = matrixMalloc(sizeof(TwoDMatrix));
+        bs[i] = matrixMalloc(sizeof(TwoDMatrix));
+        Hs[i] = matrixMalloc(sizeof(TwoDMatrix));
+        init2DMatrixNormRand(Ws[i],former_width,hidden_layer_sizes[i],0.0,1.0);
+        init2DMatrixZero(bs[i],1,hidden_layer_sizes[i]);
         init2DMatrix(Hs[i],minibatch_size,hidden_layer_sizes[i]);
         former_width = hidden_layer_sizes[i];
         // Statistic data
@@ -117,10 +117,24 @@ int train(parameters* network_params) {
 
     // Feed data to the network to train it
     int interations = training_data->height / minibatch_size;
+    TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
     for(int epoch=0;epoch<epochs;epoch++) {
         // find number of minibatch_size example to go into the network as 1 iteration
         for(int iteration=0;iteration<iterations;iteration++) {
-            printf("INFO: Epoch %d, iteration %d");
+            int data_start = iteration*minibatch_size;
+            int data_end = (iteration+1)*minibatch_size-1;
+            chop2DMatrix(training_data,data_start,data_end,X);
+            // Forward propagation
+            TwoDMatrix* layer_input = X;
+            for(int i=0;i<network_depth;i++) {
+
+            }
+            // Backward propagation
+            for (int i=network_depth-1; i>0; i--)
+            {
+                
+            }
+            printf("INFO: Epoch %d, iteration %d, sub-dataset %d - %d, loss %f\n",epoch, iteration, data_start, data_end);
         }
     }
 }

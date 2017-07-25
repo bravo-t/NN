@@ -3,6 +3,7 @@
 #include "misc_utils.h"
 #include "matrix_type.h"
 #include "matrix_operations.h"
+#include <malloc.h>
 
 float frand() {
     return (rand()+1.0)/(RAND_MAX+1.0);
@@ -16,9 +17,9 @@ int init2DMatrix(TwoDMatrix* M, int height, int width) {
     if (M->initialized) return 0;
     M->height = height;
     M->width = width;
-    float** data = (float**) matrixMalloc(sizeof(float*)*height);
+    float** data = (float**) malloc(sizeof(float*)*height);
     for(int i = 0; i<height;i++) {
-        data[i] = (float*) matrixMalloc(sizeof(float)*width);
+        data[i] = (float*) malloc(sizeof(float)*width);
     }
     M->d = data;
     M->initialized = true;
@@ -28,11 +29,25 @@ int init2DMatrix(TwoDMatrix* M, int height, int width) {
 int init2DMatrixNormRand(TwoDMatrix* M, int height, int width, float mean, float std) {
     M->height = height;
     M->width = width;
-    float** data = (float**) matrixMalloc(sizeof(float*)*height);
+    float** data = (float**) malloc(sizeof(float*)*height);
     for(int i = 0; i<height;i++) {
-        data[i] = (float*) matrixMalloc(sizeof(float)*width);
+        data[i] = (float*) malloc(sizeof(float)*width);
         for(int j=0;j<width;j++) {
             data[i][j] = random_normal(mean,std);
+        }
+    }
+    M->d = data;
+    return 0;
+}
+
+int init2DMatrixZero(TwoDMatrix* M, int height, int width) {
+    M->height = height;
+    M->width = width;
+    float** data = (float**) malloc(sizeof(float*)*height);
+    for(int i = 0; i<height;i++) {
+        data[i] = (float*) malloc(sizeof(float)*width);
+        for(int j=0;j<width;j++) {
+            data[i][j] = 0;
         }
     }
     M->d = data;
@@ -349,5 +364,12 @@ int chop2DMatrix(TwoDMatrix* M, int height_start, int height_end, TwoDMatrix* OU
         printf("ERROR: Out of boundary in chop2DMatrix. Requesting %d - %d, but max index of the matrix is %d\n",height_start,height_end, M->height-1);
         return 1;
     }
-    
+    init2DMatrix(OUT,height_end-height_start+1,M->width);
+    for(int i=height_start;i<=height_end;i++) {
+        int index = i - height_start;
+        for(int j=0;j<M->width;j++) {
+            OUT->d[index][j] = M->d[i][j];
+        }
+    }
+    return 0;
 }
