@@ -138,7 +138,6 @@ float sumAll(TwoDMatrix* M) {
     return sum;
 }
 
-}
 
 int elementwiseAdd2DMatrix(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT) {
     if (A->height != B->height) return 1;
@@ -343,4 +342,12 @@ int broadcastsDiv(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) 
     }
     destroy2DMatrix(broadcasted);
     return 0;
+}
+
+int chop2DMatrix(TwoDMatrix* M, int height_start, int height_end, TwoDMatrix* OUT) {
+    if (height_start >= M->height || height_end >= M->height) {
+        printf("ERROR: Out of boundary in chop2DMatrix. Requesting %d - %d, but max index of the matrix is %d\n",height_start,height_end, M->height-1);
+        return 1;
+    }
+    
 }
