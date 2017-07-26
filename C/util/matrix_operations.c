@@ -1,9 +1,10 @@
 #include <stdlib.h>
 #include <math.h>
-#include "misc_utils.h"
-#include "matrix_type.h"
-#include "matrix_operations.h"
 #include <malloc.h>
+#include <stdbool.h>
+#include "matrix_type.h"
+#include "misc_utils.h"
+#include "matrix_operations.h"
 
 float frand() {
     return (rand()+1.0)/(RAND_MAX+1.0);
@@ -104,7 +105,7 @@ int sumX2DMatrix(TwoDMatrix* M,TwoDMatrix* OUT) {
     init2DMatrix(OUT, M->height,1);
     for(int i=0;i<M->height;i++) {
         OUT->d[i][0] = M->d[i][0];
-        for(int j=0;j<M->width;j++) OUT->d[i][0] = max(OUT->d[i][0], M->d[i][j]);
+        for(int j=0;j<M->width;j++) OUT->d[i][0] = fmaxf(OUT->d[i][0], M->d[i][j]);
     }
     return 0;
 }
@@ -140,7 +141,7 @@ int maxY2DMatrix(TwoDMatrix* M,TwoDMatrix* OUT) {
     init2DMatrix(OUT, 1,M->width);
     for(int i=0;i<M->width;i++) {
         OUT->d[0][i] = M->d[0][i];
-        for(int j=0;j<M->height;j++) OUT->d[0][i] = max(OUT->d[0][i], M->d[j][i]);
+        for(int j=0;j<M->height;j++) OUT->d[0][i] = fmaxf(OUT->d[0][i], M->d[j][i]);
     }
     return 0;
 }
@@ -234,7 +235,7 @@ int elementMul(TwoDMatrix* M, float a,TwoDMatrix* OUT) {
 
 int elementDiv(TwoDMatrix* M,float a, TwoDMatrix* OUT) {
     float n = 1/a;
-    return elementMul(TwoDMatrix* M, float n,TwoDMatrix* OUT);
+    return elementMul(M, n, OUT);
 }
 
 
@@ -319,7 +320,7 @@ int broadcastSub(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
     return 0;
 }
 
-int broadcastsMul(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
+int broadcastMul(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
     TwoDMatrix *broadcasted = matrixMalloc(sizeof(TwoDMatrix));
     int n;
     if (direction == 0) {
@@ -339,7 +340,7 @@ int broadcastsMul(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) 
     return 0;
 }
 
-int broadcastsDiv(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
+int broadcastDiv(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
     TwoDMatrix *broadcasted = matrixMalloc(sizeof(TwoDMatrix));
     int n;
     if (direction == 0) {

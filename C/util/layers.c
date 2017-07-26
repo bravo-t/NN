@@ -1,13 +1,16 @@
-#include "matrix_operations.h"
 #include <stdlib.h>
-#include "misc_utils.h"
 #include <math.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include "matrix_type.h"
+#include "misc_utils.h"
+#include "matrix_operations.h"
 
 int affineLayerForward(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* b, TwoDMatrix* OUT) {
     init2DMatrix(OUT, X->height, W->width);
     if (dotProduct(X,W,OUT)) {
         printf("ERROR: Input matrix size mismatch: X->width = %d, W->height = %d\n", X->width,W->height);
-        exit 1;
+        exit(1);
     }
     broadcastAdd(OUT, b, 0, OUT);
     return 0;
@@ -23,11 +26,11 @@ int affineLayerBackword(TwoDMatrix* dOUT, TwoDMatrix* X, TwoDMatrix* W, TwoDMatr
     init2DMatrix(WT, W->width, W->height);
     if (dotProduct(dOUT,WT,dX)) {
         printf("ERROR: Input matrix size mismatch: dOUT->width = %d, W.T->height = %d\n", dOUT->width,WT->height);
-        exit 1;
+        exit(1);
     }
     if (dotProduct(XT,dOUT,dW)) {
         printf("ERROR: Input matrix size mismatch: X.T->width = %d, dOUT->height = %d\n", XT->width,dOUT->height);
-        exit 1;
+        exit(1);
     }
     if (db->height == 1) {
         sumY2DMatrix(dOUT,db);
@@ -40,7 +43,7 @@ int affineLayerBackword(TwoDMatrix* dOUT, TwoDMatrix* X, TwoDMatrix* W, TwoDMatr
 }
 
 int leakyReLUForward(TwoDMatrix* M, float alpha, TwoDMatrix* OUT) {
-    return elementLeakyReLU(TwoDMatrix* M,float alpha, TwoDMatrix* OUT);
+    return elementLeakyReLU(M, alpha, OUT);
 }
 
 int vanillaUpdate(TwoDMatrix* M, TwoDMatrix* dM, float learning_rate, TwoDMatrix* OUT) {
@@ -48,7 +51,9 @@ int vanillaUpdate(TwoDMatrix* M, TwoDMatrix* dM, float learning_rate, TwoDMatrix
     TwoDMatrix* dM_scaled = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(dM_scaled, M->height, M->width);
     elementMul(dM,learning_rate,dM_scaled);
-    return elementwiseAdd2DMatrix(M, dM_scaled, OUT);
+    int retval = elementwiseAdd2DMatrix(M, dM_scaled, OUT);
+    destroy2DMatrix(dM_scaled);
+    return retval;
 }
 
 int leakyReLUBackward(TwoDMatrix* dM, TwoDMatrix* M, float alpha, TwoDMatrix* OUT) {
@@ -107,13 +112,13 @@ float SVMLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dscore) 
     init2DMatrix(margins, score->height, score->width);
     init2DMatrix(dscore, score->height, score->width);
     int number_of_examples = score->height;
-    int number_of_pos[number_of_examples] = {0};
+    int* number_of_pos = calloc(number_of_examples, sizeof(int));
     // Matrix margins contains the values of score undergone the process of max(0, wrong - correct + 1) operation in hinge loss
     for(int i=0;i<score->height;i++) {
         int correct_index = correct_label->d[i][0];
         float correct_score = score->d[i][correct_index];
         for(int j=0;j!=correct_index&&j<score->width;j++) {
-            margins->d[i][j] = max(0,score->d[i][j] - correct_score + 1);
+            margins->d[i][j] = fmaxf(0,score->d[i][j] - correct_score + 1);
             if (margins->d[i][j] > 0) {
                 number_of_pos[i]++;
                 /*
@@ -132,8 +137,9 @@ float SVMLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dscore) 
         int correct_index = correct_label->d[i][0];
         dscore->d[i][correct_index] -= number_of_pos[i];
     }
-    elementDiv(dscore,number_of_examples);
+    elementDiv(dscore,number_of_examples,dscore);
     destroy2DMatrix(margins);
+    free(number_of_pos);
     return data_loss;
 }
 
@@ -164,9 +170,9 @@ float softmaxLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dsco
                 dscore->d[i][j] -= 1;
             }
         }
-        correct_probs->d[i][0] = -log(probs->[i][correct_index]);
+        correct_probs->d[i][0] = -log(probs->d[i][correct_index]);
     }
-    int number_of_examples = socre->height;
+    int number_of_examples = score->height;
     float data_loss = sumAll(correct_probs) / number_of_examples;
     destroy2DMatrix(max_scores);
     destroy2DMatrix(shifted);
@@ -187,4 +193,14 @@ float L2RegLoss(TwoDMatrix** Ms,int network_depth, float reg_strength) {
         destroy2DMatrix(M_squared);
     }
     return reg_loss;
+}
+
+int L2RegLossBackward(TwoDMatrix* dM, TwoDMatrix* M, float reg_strength, TwoDMatrix* OUT) {
+    init2DMatrix(OUT, M->height, M->width);
+    TwoDMatrix* M_scaled = matrixMalloc(sizeof(TwoDMatrix));
+    init2DMatrix(M_scaled, M->height, M->width);
+    elementMul(M,reg_strength,M_scaled);
+    int retval = elementwiseAdd2DMatrix(dM, M_scaled, OUT);
+    destroy2DMatrix(M_scaled);
+    return retval;
 }

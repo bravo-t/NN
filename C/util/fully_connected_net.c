@@ -1,11 +1,12 @@
-#include "matrix_operations.h"
 #include <stdlib.h>
-#include "misc_utils.h"
 #include <math.h>
-#include "layers.h"
-#include "fully_connected_net.h"
 #include <malloc.h>
 #include <stdarg.h>
+#include <stdbool.h>
+#include "matrix_operations.h"
+#include "misc_utils.h"
+#include "layers.h"
+#include "fully_connected_net.h"
 
 //int fullyConnectedNets(TwoDMatrix* X, int minibatch_size) {
 //
@@ -70,7 +71,7 @@ int train(parameters* network_params) {
     TwoDMatrix* training_data = network_params->X;
     TwoDMatrix* correct_labels = network_params->correct_labels;
     int minibatch_size = network_params->minibatch_size;
-    int labels = network_params->labels;
+    //int labels = network_params->labels;
     float reg_strength = network_params->reg_strength;
     float alpha = network_params->alpha;
     float learning_rate = network_params->learning_rate;
@@ -92,11 +93,21 @@ int train(parameters* network_params) {
     TwoDMatrix** bs = malloc(sizeof(TwoDMatrix*)*network_depth);
     // Hidden layers
     TwoDMatrix** Hs = malloc(sizeof(TwoDMatrix*)*network_depth);
+    // Gradient descend values of Weights
+    TwoDMatrix** dWs = malloc(sizeof(TwoDMatrix*)*network_depth);
+    // Gradient descend values of Biases
+    TwoDMatrix** dbs = malloc(sizeof(TwoDMatrix*)*network_depth);
+    // Gradient descend values of Hidden layers
+    TwoDMatrix** dHs = malloc(sizeof(TwoDMatrix*)*network_depth);
+
     int former_width = training_data->width;
     for(int i=0;i<network_depth;i++) {
         Ws[i] = matrixMalloc(sizeof(TwoDMatrix));
         bs[i] = matrixMalloc(sizeof(TwoDMatrix));
         Hs[i] = matrixMalloc(sizeof(TwoDMatrix));
+        dWs[i] = matrixMalloc(sizeof(TwoDMatrix));
+        dbs[i] = matrixMalloc(sizeof(TwoDMatrix));
+        dHs[i] = matrixMalloc(sizeof(TwoDMatrix));
         init2DMatrixNormRand(Ws[i],former_width,hidden_layer_sizes[i],0.0,1.0);
         init2DMatrixZero(bs[i],1,hidden_layer_sizes[i]);
         init2DMatrix(Hs[i],minibatch_size,hidden_layer_sizes[i]);
@@ -105,9 +116,10 @@ int train(parameters* network_params) {
         number_of_weights += former_width*hidden_layer_sizes[i];
         number_of_biases += hidden_layer_sizes[i];
         number_of_hvalues += minibatch_size*hidden_layer_sizes[i];
-        size_of_Ws += former_width*hidden_layer_sizes[i]*sizeof(float) + size_of_a_matrix;
-        size_of_bs += hidden_layer_sizes[i]*sizeof(float) + size_of_a_matrix;
-        size_of_Hs += minibatch_size*hidden_layer_sizes[i]*sizeof(float) + size_of_a_matrix;
+        // The 2 in front of every equation is because there's a gradient descend version of each matrix
+        size_of_Ws += 2*(former_width*hidden_layer_sizes[i]*sizeof(float) + size_of_a_matrix);
+        size_of_bs += 2*(hidden_layer_sizes[i]*sizeof(float) + size_of_a_matrix);
+        size_of_Hs += 2*(minibatch_size*hidden_layer_sizes[i]*sizeof(float) + size_of_a_matrix);
     }
     
     printf("INFO: %d W matrixes, %d learnable weights initialized, %.2f KB meomry used\n", network_depth, number_of_weights, size_of_Ws/1024.0f);
@@ -116,7 +128,7 @@ int train(parameters* network_params) {
     printf("INFO: A total number of %.2f KB memory is used by learnable parameters in the network\n",(size_of_Ws+size_of_bs+size_of_Hs)/1024.0f);
 
     // Feed data to the network to train it
-    int interations = training_data->height / minibatch_size;
+    int iterations = training_data->height / minibatch_size;
     TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
     for(int epoch=0;epoch<epochs;epoch++) {
         // find number of minibatch_size example to go into the network as 1 iteration
@@ -137,24 +149,31 @@ int train(parameters* network_params) {
                 layer_X = Hs[i];
             }
             
-            TwoDMatrix* scores = matrixMalloc(sizeof(TwoDMatrix));
-            TwoDMatrix* dscores = matrixMalloc(sizeof(TwoDMatrix));
-            TwoDMatrix* dW = matrixMalloc(sizeof(TwoDMatrix));
-            TwoDMatrix* db = matrixMalloc(sizeof(TwoDMatrix));
-            TwoDMatrix* dH = matrixMalloc(sizeof(TwoDMatrix));
-            scores = Hs[network_depth-1];
-            float data_loss = softmaxLoss(scores, correct_labels, dscores);
+            float data_loss = softmaxLoss(Hs[network_depth-1], correct_labels, dHs[network_depth-1]);
             float reg_loss = L2RegLoss(Ws, network_depth, reg_strength);
             float loss = data_loss + reg_loss;
-            // Backward propagation
-            for (int i=network_depth-1; i>0; i--)
-            {
-                if (i != network_depth-1) {
-                    
-                }
-            }
             printf("INFO: Epoch %d, iteration %d, sub-dataset %d - %d, data loss: %f, regulization loss: %f, total loss: %f\n",
                 epoch, iteration, data_start, data_end, data_loss, reg_loss, loss);
+            // Backward propagation
+            // This dX is only a placeholder to babysit the backword function, of course we are not going to modify X
+            TwoDMatrix* dX = matrixMalloc(sizeof(TwoDMatrix));
+            for (int i=network_depth-1; i>0; i--) {
+                if (i != network_depth-1) {
+                    leakyReLUBackward(dHs[i],Hs[i],alpha,dHs[i]);
+                }
+                if (i != 0) {
+                    affineLayerBackword(dHs[i],Hs[i-1],Ws[i],bs[i],dHs[i-1],dWs[i],dbs[i]);
+                } else {
+                    affineLayerBackword(dHs[i],X,Ws[i],bs[i],dX,dWs[i],dbs[i]);
+                }
+                // Weight changes contributed by L2 regulization
+                L2RegLossBackward(dWs[i],Ws[i],reg_strength,dWs[i]);
+            }
+            // Update weights
+            for (int i=0;i<network_depth;i++)
+                vanillaUpdate(Ws[i],dWs[i],learning_rate,Ws[i]);
         }
     }
+    
+    return 0;
 }

@@ -16,5 +16,16 @@ typedef struct {
 	int* hidden_layer_sizes; // Sizes of these hidden layers
 } parameters;
 
+parameters* initTrainParameters(TwoDMatrix* X, 
+    TwoDMatrix* correct_labels, 
+    int minibatch_size, 
+    int labels, 
+    float learning_rate, 
+    float reg_strength, 
+    float alpha, 
+    int epochs,
+    int network_depth, ...);
+
+int train(parameters* network_params);
 
 #endif

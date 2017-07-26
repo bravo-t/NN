@@ -1,6 +1,13 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <malloc.h>
+#include <stdbool.h>
+#include "util/matrix_type.h"
 #include "util/misc_utils.h"
 #include "util/matrix_operations.h"
+#include "util/layers.h"
+#include "util/fully_connected_net.h"
 
 void printMatrix(TwoDMatrix *M) {
     printf("Height of matrix: %d, width: %d\n",M->height,M->width);
@@ -12,24 +19,45 @@ void printMatrix(TwoDMatrix *M) {
     }
 }
 
+int loadTestData(char* filename, TwoDMatrix* training_data, TwoDMatrix* correct_labels) {
+    FILE* fp = fopen(filename, "r");
+    if (fp == NULL) {
+        printf("ERROR: Cannot open %s to read\n",filename);
+        exit(1);
+    }
+    char buff[8192];
+    fscanf(fp,"%s",buff);
+    int height,width;
+    fscanf(fp,"%d",&height);
+    fscanf(fp,"%d",&width);
+    float value;
+    init2DMatrix(training_data,height,width);
+    for(int i=0;i<height;i++) {
+        for(int j=0;j<width;j++) {
+            fscanf(fp,"%f",&value);
+            training_data->d[i][j] = value;
+        }
+    }
+    fscanf(fp,"%s",buff);
+    fscanf(fp,"%d",&height);
+    fscanf(fp,"%d",&width);
+    init2DMatrix(correct_labels,height,width);
+    for(int i=0;i<height;i++) {
+        for(int j=0;j<width;j++) {
+            fscanf(fp,"%f",&value);
+            correct_labels->d[i][j] = value;
+        }
+    }
+    return 0;
+}
+
 int main() {
-    TwoDMatrix *test1 = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrixNormRand(test1,3,5,0.0,1.0);
-    TwoDMatrix *test2 = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrixNormRand(test2,5,3,0.0,1.0);
-    printMatrix(test1);
-    printMatrix(test2);
-    TwoDMatrix *dot = matrixMalloc(sizeof(TwoDMatrix));
-    dotProduct(test1,test2,dot);
-    printMatrix(dot);
-    TwoDMatrix *addX = matrixMalloc(sizeof(TwoDMatrix));
-    TwoDMatrix *addY = matrixMalloc(sizeof(TwoDMatrix));
-    sumX2DMatrix(test1,addX);
-    sumY2DMatrix(test1,addY);
-    printMatrix(addX);
-    printMatrix(addY);
-    destroy2DMatrix(test1);
-    destroy2DMatrix(test2);
-    destroy2DMatrix(dot);
+    TwoDMatrix* training_data = matrixMalloc(sizeof(TwoDMatrix));
+    TwoDMatrix* correct_labels = matrixMalloc(sizeof(TwoDMatrix));
+    loadTestData("test_data.txt",training_data, correct_labels);
+    printMatrix(training_data);
+    printMatrix(correct_labels);
+    destroy2DMatrix(training_data);
+    destroy2DMatrix(correct_labels);
     return 0;
 }

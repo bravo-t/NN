@@ -34,6 +34,7 @@ int broadcastAdd(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT);
 int broadcastSub(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT);
 int broadcastMul(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT);
 int broadcastDiv(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT);
+int chop2DMatrix(TwoDMatrix* M, int height_start, int height_end, TwoDMatrix* OUT);
 
 
 #endif
