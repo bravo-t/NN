@@ -57,6 +57,18 @@ int main() {
     loadTestData("test_data.txt",training_data, correct_labels);
     printMatrix(training_data);
     printMatrix(correct_labels);
+    parameters* train_params = malloc(sizeof(parameters));
+    train_params = initTrainParameters(training_data,
+        correct_labels,
+        300,
+        3,
+        0.01,
+        0.01,
+        0,
+        10000,
+        2,
+        100,3);
+    train(train_params);
     destroy2DMatrix(training_data);
     destroy2DMatrix(correct_labels);
     return 0;
