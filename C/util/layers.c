@@ -177,9 +177,9 @@ float softmaxLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dsco
     return data_loss;
 }
 
-float L2RegLoss(TwoDMatrix** Ms,int number_of_weights, float reg_strength) {
+float L2RegLoss(TwoDMatrix** Ms,int network_depth, float reg_strength) {
     float reg_loss = 0;
-    for (int i = 0; i < number_of_weights; i++) {
+    for (int i = 0; i < network_depth; i++) {
         TwoDMatrix* M_squared = matrixMalloc(sizeof(TwoDMatrix));
         init2DMatrix(M_squared,Ms[i]->height,Ms[i]->width);
         elementwiseMul2DMatrix(Ms[i],Ms[i],M_squared);

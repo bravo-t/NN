@@ -125,16 +125,36 @@ int train(parameters* network_params) {
             int data_end = (iteration+1)*minibatch_size-1;
             chop2DMatrix(training_data,data_start,data_end,X);
             // Forward propagation
-            TwoDMatrix* layer_input = X;
+            TwoDMatrix* layer_X = matrixMalloc(sizeof(TwoDMatrix));
+            layer_X = X;
             for(int i=0;i<network_depth;i++) {
-
+                affineLayerForward(layer_X,Ws[i],bs[i],Hs[i]);
+                // The last layer in the network will calculate the scores
+                // So there will not be a activation function put to it
+                if (i != network_depth - 1) {
+                    leakyReLUForward(Hs[i],alpha,Hs[i]);
+                }
+                layer_X = Hs[i];
             }
+            
+            TwoDMatrix* scores = matrixMalloc(sizeof(TwoDMatrix));
+            TwoDMatrix* dscores = matrixMalloc(sizeof(TwoDMatrix));
+            TwoDMatrix* dW = matrixMalloc(sizeof(TwoDMatrix));
+            TwoDMatrix* db = matrixMalloc(sizeof(TwoDMatrix));
+            TwoDMatrix* dH = matrixMalloc(sizeof(TwoDMatrix));
+            scores = Hs[network_depth-1];
+            float data_loss = softmaxLoss(scores, correct_labels, dscores);
+            float reg_loss = L2RegLoss(Ws, network_depth, reg_strength);
+            float loss = data_loss + reg_loss;
             // Backward propagation
             for (int i=network_depth-1; i>0; i--)
             {
-                
+                if (i != network_depth-1) {
+                    
+                }
             }
-            printf("INFO: Epoch %d, iteration %d, sub-dataset %d - %d, loss %f\n",epoch, iteration, data_start, data_end);
+            printf("INFO: Epoch %d, iteration %d, sub-dataset %d - %d, data loss: %f, regulization loss: %f, total loss: %f\n",
+                epoch, iteration, data_start, data_end, data_loss, reg_loss, loss);
         }
     }
 }
