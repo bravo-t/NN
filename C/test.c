@@ -53,22 +53,11 @@ int loadTestData(char* filename, TwoDMatrix* training_data, TwoDMatrix* correct_
 
 int main() {
     TwoDMatrix* training_data = matrixMalloc(sizeof(TwoDMatrix));
+    training_data = load2DMatrixFromFile("test_data/X.txt");
     TwoDMatrix* correct_labels = matrixMalloc(sizeof(TwoDMatrix));
-    loadTestData("test_data.txt",training_data, correct_labels);
+    correct_labels = load2DMatrixFromFile("test_data/y.txt");
     printMatrix(training_data);
     printMatrix(correct_labels);
-    parameters* train_params = malloc(sizeof(parameters));
-    train_params = initTrainParameters(training_data,
-        correct_labels,
-        300,
-        3,
-        0.001,
-        0.1,
-        0.001,
-        10000,
-        2,
-        100,3);
-    train(train_params);
     destroy2DMatrix(training_data);
     destroy2DMatrix(correct_labels);
     return 0;

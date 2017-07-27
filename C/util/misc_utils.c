@@ -41,4 +41,16 @@ TwoDMatrix* load2DMatrixFromFile(char* filename) {
     return M;
 }
 
-
+float matrixError(TwoDMatrix* a, TwoDMatrix* b) {
+    if (a->height != b->height) {
+        printf("ERROR: Height does not match\n");
+        return 1.0/0.0;
+    }
+    if (a->width != b->width) {
+        printf("ERROR: Width does not match\n");
+        return 1.0/0.0;
+    }
+    float sum_a = sumAll(a);
+    float sum_b = sumAll(b);
+    return sum_a - sum_b;
+}
