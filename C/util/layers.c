@@ -12,7 +12,7 @@ int affineLayerForward(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* b, TwoDMatrix* 
         printf("ERROR: Input matrix size mismatch: X->width = %d, W->height = %d\n", X->width,W->height);
         exit(1);
     }
-    broadcastAdd(OUT, b, 0, OUT);
+    broadcastAdd(OUT, b, 1, OUT);
     return 0;
 }
 
@@ -51,7 +51,7 @@ int vanillaUpdate(TwoDMatrix* M, TwoDMatrix* dM, float learning_rate, TwoDMatrix
     TwoDMatrix* dM_scaled = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(dM_scaled, M->height, M->width);
     elementMul(dM,learning_rate,dM_scaled);
-    int retval = elementwiseAdd2DMatrix(M, dM_scaled, OUT);
+    int retval = elementwiseSub2DMatrix(M, dM_scaled, OUT);
     destroy2DMatrix(dM_scaled);
     return retval;
 }

@@ -288,7 +288,7 @@ int broadcastAdd(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
     } else {
         n = M->height;
     }
-    if (broadcastMatrix(M,n,direction,broadcasted)) {
+    if (broadcastMatrix(b,n,direction,broadcasted)) {
         destroy2DMatrix(broadcasted);
         return 1;
     }
@@ -308,7 +308,7 @@ int broadcastSub(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
     } else {
         n = M->height;
     }
-    if (broadcastMatrix(M,n,direction,broadcasted)) {
+    if (broadcastMatrix(b,n,direction,broadcasted)) {
         destroy2DMatrix(broadcasted);
         return 1;
     }
@@ -328,7 +328,7 @@ int broadcastMul(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
     } else {
         n = M->height;
     }
-    if (broadcastMatrix(M,n,direction,broadcasted)) {
+    if (broadcastMatrix(b,n,direction,broadcasted)) {
         destroy2DMatrix(broadcasted);
         return 1;
     }
@@ -348,7 +348,7 @@ int broadcastDiv(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT) {
     } else {
         n = M->height;
     }
-    if (broadcastMatrix(M,n,direction,broadcasted)) {
+    if (broadcastMatrix(b,n,direction,broadcasted)) {
         destroy2DMatrix(broadcasted);
         return 1;
     }
