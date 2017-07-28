@@ -1,5 +1,6 @@
 #include <malloc.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include "matrix_type.h"
 #include "misc_utils.h"
 
@@ -30,11 +31,11 @@ TwoDMatrix* load2DMatrixFromFile(char* filename) {
     fscanf(fp,"%d",&width);
     float value;
     TwoDMatrix* M = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(training_data,height,width);
+    init2DMatrix(M,height,width);
     for(int i=0;i<height;i++) {
         for(int j=0;j<width;j++) {
             fscanf(fp,"%f",&value);
-            training_data->d[i][j] = value;
+            M->d[i][j] = value;
         }
     }
     fclose(fp);
@@ -43,11 +44,11 @@ TwoDMatrix* load2DMatrixFromFile(char* filename) {
 
 float matrixError(TwoDMatrix* a, TwoDMatrix* b) {
     if (a->height != b->height) {
-        printf("ERROR: Height does not match\n");
+        printf("HOLY ERROR: Height does not match, your code is really messed up\n");
         return 1.0/0.0;
     }
     if (a->width != b->width) {
-        printf("ERROR: Width does not match\n");
+        printf("ANOTHER ERROR: Width doesn't match. FIX THEM\n");
         return 1.0/0.0;
     }
     float sum_a = sumAll(a);
