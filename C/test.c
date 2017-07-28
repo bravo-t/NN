@@ -9,15 +9,7 @@
 #include "util/layers.h"
 #include "util/fully_connected_net.h"
 
-void printMatrix(TwoDMatrix *M) {
-    printf("Height of matrix: %d, width: %d\n",M->height,M->width);
-    for(int i=0;i<M->height;i++) {
-        for(int j=0;j<M->width;j++) {
-            printf("%f\t",M->d[i][j]);
-        }
-        printf("\n");
-    }
-}
+
 
 int loadTestData(char* filename, TwoDMatrix* training_data, TwoDMatrix* correct_labels) {
     FILE* fp = fopen(filename, "r");
