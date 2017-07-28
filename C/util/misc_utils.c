@@ -54,3 +54,24 @@ float matrixError(TwoDMatrix* a, TwoDMatrix* b) {
     float sum_b = sumAll(b);
     return sum_a - sum_b;
 }
+
+void printMatrix(TwoDMatrix *M) {
+    printf("Height of matrix: %d, width: %d\n",M->height,M->width);
+    for(int i=0;i<M->height;i++) {
+        for(int j=0;j<M->width;j++) {
+            printf("%f\t",M->d[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+void checkMatrixDiff(TwoDMatrix* a, TwoDMatrix* b, float thres) {
+    float diff = matrixError(a, b);
+    if (diff >= thres) {
+        printf("ERROR: Too much differences between ref and impl\n");
+        printf("ref = \n");
+        printMatrix(a);
+        printf("impl = \n");
+        printMatrix(b);
+    }
+}
