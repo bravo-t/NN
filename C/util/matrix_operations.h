@@ -35,6 +35,8 @@ int broadcastSub(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT);
 int broadcastMul(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT);
 int broadcastDiv(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT);
 int chop2DMatrix(TwoDMatrix* M, int height_start, int height_end, TwoDMatrix* OUT);
-
+float matrixError(TwoDMatrix* a, TwoDMatrix* b); 
+void printMatrix(TwoDMatrix *M);
+void checkMatrixDiff(TwoDMatrix* a, TwoDMatrix* b, float thres);
 
 #endif
