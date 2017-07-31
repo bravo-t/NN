@@ -170,7 +170,7 @@ int train(parameters* network_params) {
             // Backward propagation
             // This dX is only a placeholder to babysit the backword function, of course we are not going to modify X
             TwoDMatrix* dX = matrixMalloc(sizeof(TwoDMatrix));
-            for (int i=network_depth-1; i>0; i--) {
+            for (int i=network_depth-1; i>=0; i--) {
                 printf("DEBUG: Dumping dH %d before ReLU\n", i);
                 printMatrix(dHs[i]);
                 printf("DEBUG: Dumping H %d\n", i);
