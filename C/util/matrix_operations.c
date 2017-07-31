@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <malloc.h>
@@ -104,8 +105,8 @@ Add all elements horizontally, result matrix will always have width = 1. For exm
 int sumX2DMatrix(TwoDMatrix* M,TwoDMatrix* OUT) {
     init2DMatrix(OUT, M->height,1);
     for(int i=0;i<M->height;i++) {
-        OUT->d[i][0] = M->d[i][0];
-        for(int j=0;j<M->width;j++) OUT->d[i][0] = fmaxf(OUT->d[i][0], M->d[i][j]);
+        OUT->d[i][0] = 0;
+        for(int j=0;j<M->width;j++) OUT->d[i][0] += M->d[i][j];
     }
     return 0;
 }
@@ -114,7 +115,7 @@ int maxX2DMatrix(TwoDMatrix* M,TwoDMatrix* OUT) {
     init2DMatrix(OUT, M->height,1);
     for(int i=0;i<M->height;i++) {
         OUT->d[i][0] = M->d[i][0];
-        for(int j=0;j<M->width;j++) OUT->d[i][0]+= M->d[i][j];
+        for(int j=0;j<M->width;j++) OUT->d[i][0] = fmaxf(OUT->d[i][0], M->d[i][j]);
     }
     return 0;
 }
@@ -132,7 +133,7 @@ int sumY2DMatrix(TwoDMatrix* M,TwoDMatrix* OUT) {
     init2DMatrix(OUT, 1,M->width);
     for(int i=0;i<M->width;i++) {
         OUT->d[0][i] = 0;
-        for(int j=0;j<M->height;j++) OUT->d[0][i]+= M->d[j][i];
+        for(int j=0;j<M->height;j++) OUT->d[0][i] += M->d[j][i];
     }
     return 0;
 }
