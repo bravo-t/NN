@@ -147,7 +147,7 @@ int train(parameters* network_params) {
                 if (i != network_depth - 1) {
                     leakyReLUForward(Hs[i],alpha,Hs[i]);
                 }
-                // DEBUG
+                /* DEBUG
                 printf("DEBUG: Dumping X %d\n", i);
                 printMatrix(layer_X);
                 printf("DEBUG: Dumping W %d\n", i);
@@ -156,13 +156,13 @@ int train(parameters* network_params) {
                 printMatrix(bs[i]);
                 printf("DEBUG: Dumping H %d\n", i);
                 printMatrix(Hs[i]);
-                // DEBUG
+                */
                 layer_X = Hs[i];
             }
             
             float data_loss = softmaxLoss(Hs[network_depth-1], correct_labels, dHs[network_depth-1]);
-            printf("DEBUG: Dumping dscore\n");
-            printMatrix(dHs[network_depth-1]);
+            //printf("DEBUG: Dumping dscore\n");
+            //printMatrix(dHs[network_depth-1]);
             float reg_loss = L2RegLoss(Ws, network_depth, reg_strength);
             float loss = data_loss + reg_loss;
             printf("INFO: Epoch %d, iteration %d, sub-dataset %d - %d, data loss: %f, regulization loss: %f, total loss: %f\n",
@@ -171,30 +171,30 @@ int train(parameters* network_params) {
             // This dX is only a placeholder to babysit the backword function, of course we are not going to modify X
             TwoDMatrix* dX = matrixMalloc(sizeof(TwoDMatrix));
             for (int i=network_depth-1; i>=0; i--) {
-                printf("DEBUG: Dumping dH %d before ReLU\n", i);
-                printMatrix(dHs[i]);
-                printf("DEBUG: Dumping H %d\n", i);
-                printMatrix(Hs[i]);
+                //printf("DEBUG: Dumping dH %d before ReLU\n", i);
+                //printMatrix(dHs[i]);
+                //printf("DEBUG: Dumping H %d\n", i);
+                //printMatrix(Hs[i]);
                 if (i != network_depth-1) {
                     leakyReLUBackward(dHs[i],Hs[i],alpha,dHs[i]);
                 }
-                printf("DEBUG: Dumping dH %d after ReLU\n", i);
-                printMatrix(dHs[i]);
+                //printf("DEBUG: Dumping dH %d after ReLU\n", i);
+                //printMatrix(dHs[i]);
                 if (i != 0) {
                     affineLayerBackword(dHs[i],Hs[i-1],Ws[i],bs[i],dHs[i-1],dWs[i],dbs[i]);
                 } else {
                     affineLayerBackword(dHs[i],X,Ws[i],bs[i],dX,dWs[i],dbs[i]);
                 }
-                printf("DEBUG: Dumping dW %d before reg backprop\n", i);
-                printMatrix(dWs[i]);
-                printf("DEBUG: Dumping W %d\n", i);
-                printMatrix(Ws[i]);
+                //printf("DEBUG: Dumping dW %d before reg backprop\n", i);
+                //printMatrix(dWs[i]);
+                //printf("DEBUG: Dumping W %d\n", i);
+                //printMatrix(Ws[i]);
                 // Weight changes contributed by L2 regulization
                 L2RegLossBackward(dWs[i],Ws[i],reg_strength,dWs[i]);
-                printf("DEBUG: Dumping dW %d after reg backprop\n", i);
-                printMatrix(dWs[i]);
+                //printf("DEBUG: Dumping dW %d after reg backprop\n", i);
+                //printMatrix(dWs[i]);
             }
-            //destroy2DMatrix(dX);
+            destroy2DMatrix(dX);
             // Update weights
             for (int i=0;i<network_depth;i++) {
                 vanillaUpdate(Ws[i],dWs[i],learning_rate,Ws[i]);
@@ -202,6 +202,6 @@ int train(parameters* network_params) {
             }
         }
     }
-    
+    destroy2DMatrix(X);
     return 0;
 }
