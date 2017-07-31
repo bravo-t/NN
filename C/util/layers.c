@@ -24,6 +24,8 @@ int affineLayerBackword(TwoDMatrix* dOUT, TwoDMatrix* X, TwoDMatrix* W, TwoDMatr
     TwoDMatrix* WT = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(XT, X->width, X->height);
     init2DMatrix(WT, W->width, W->height);
+    transpose2DMatrix(X, XT);
+    transpose2DMatrix(W, WT);
     if (dotProduct(dOUT,WT,dX)) {
         printf("ERROR: Input matrix size mismatch: dOUT->width = %d, W.T->height = %d\n", dOUT->width,WT->height);
         exit(1);
@@ -58,9 +60,10 @@ int vanillaUpdate(TwoDMatrix* M, TwoDMatrix* dM, float learning_rate, TwoDMatrix
 
 int leakyReLUBackward(TwoDMatrix* dM, TwoDMatrix* M, float alpha, TwoDMatrix* OUT) {
     init2DMatrix(OUT,dM->height,dM->width);
+
     for(int i=0;i<dM->height;i++) {
         for(int j=0;j<dM->width;j++) {
-            if (M->d[i][j] >= 0) {
+            if (M->d[i][j] > 0) {
                 OUT->d[i][j] = dM->d[i][j];
             } else {
                 OUT->d[i][j] = alpha * dM->d[i][j];
@@ -148,30 +151,30 @@ float softmaxLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dsco
     TwoDMatrix* max_scores = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(max_scores,score->height,1);
     maxX2DMatrix(score,max_scores);
-    printf("score = \n");
-    printMatrix(score);
-    printf("max_scores = \n");
-    printMatrix(max_scores);
+    //printf("score = \n");
+    //printMatrix(score);
+    //printf("max_scores = \n");
+    //printMatrix(max_scores);
     TwoDMatrix* shifted = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(shifted,score->height,score->width);
     broadcastSub(score,max_scores,0,shifted);
-    printf("shifted = \n");
-    printMatrix(shifted);
+    //printf("shifted = \n");
+    //printMatrix(shifted);
     TwoDMatrix* exp_score = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(exp_score,score->height,score->width);
     elementExp(shifted,exp_score);
-    printf("exp_score = \n");
-    printMatrix(exp_score);
+    //printf("exp_score = \n");
+    //printMatrix(exp_score);
     TwoDMatrix* exp_sum = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(exp_sum,score->height,1);
     sumX2DMatrix(exp_score,exp_sum);
-    printf("exp_sum = \n");
-    printMatrix(exp_sum);
+    //printf("exp_sum = \n");
+    //printMatrix(exp_sum);
     TwoDMatrix* probs = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(probs,score->height,score->width);
     broadcastDiv(exp_score,exp_sum,0,probs);
-    printf("probs = \n");
-    printMatrix(probs);
+    //printf("probs = \n");
+    //printMatrix(probs);
     TwoDMatrix* correct_probs = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(correct_probs,score->height,1);
     for(int i=0;i<score->height;i++) {
@@ -184,8 +187,8 @@ float softmaxLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dsco
         }
         correct_probs->d[i][0] = -log(probs->d[i][correct_index]);
     }
-    printf("correct_probs = \n");
-    printMatrix(correct_probs);
+    //printf("correct_probs = \n");
+    //printMatrix(correct_probs);
     int number_of_examples = score->height;
     float data_loss = sumAll(correct_probs) / number_of_examples;
     destroy2DMatrix(max_scores);
