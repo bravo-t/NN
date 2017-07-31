@@ -424,6 +424,7 @@ float matrixError(TwoDMatrix* a, TwoDMatrix* b) {
             }
         }
     }
+    destroy2DMatrix(sub);
     return error;
 }
 
