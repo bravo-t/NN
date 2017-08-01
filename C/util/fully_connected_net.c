@@ -72,7 +72,7 @@ int train(parameters* network_params) {
     TwoDMatrix* training_data = network_params->X;
     TwoDMatrix* correct_labels = network_params->correct_labels;
     int minibatch_size = network_params->minibatch_size;
-    //int labels = network_params->labels;
+    int labels = network_params->labels;
     float reg_strength = network_params->reg_strength;
     float alpha = network_params->alpha;
     float learning_rate = network_params->learning_rate;
@@ -189,7 +189,9 @@ int train(parameters* network_params) {
             }
         }
     }
-
+    // Verify the result with training data
+    float correctness = verifyWithTrainingData(training_data,Ws,bs,network_depth,minibatch_size,labels,correct_labels);
+    printf("INFO: %f%% correct on training data\n",correctness);
     // Shutdown
     destroy2DMatrix(X);
     for(int i=0;i<network_depth;i++) {
@@ -207,6 +209,7 @@ int test(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, int network_depth, Two
     TwoDMatrix** Hs = malloc(sizeof(TwoDMatrix*)*network_depth);
     for(int i=0;i<network_depth;i++) Hs[i] = matrixMalloc(sizeof(TwoDMatrix));
     TwoDMatrix* layer_X = malloc(sizeof(TwoDMatrix));
+    layer_X = X;
     for(int i=0;i<network_depth;i++) {
         affineLayerForward(layer_X,Ws[i],bs[i],Hs[i]);
         layer_X = Hs[i];
@@ -223,18 +226,19 @@ float verifyWithTrainingData(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoDMat
     TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
     TwoDMatrix* scores = matrixMalloc(sizeof(TwoDMatrix));
     for(int i=0;i<iterations;i++) {
-        int data_start = iteration*minibatch_size;
-        int data_end = (iteration+1)*minibatch_size-1;
+        int data_start = i*minibatch_size;
+        int data_end = (i+1)*minibatch_size-1;
         chop2DMatrix(training_data,data_start,data_end,X);
         test(X,Ws,bs,network_depth,scores);
         for(int j=data_start;j<data_end;j++) {
             int correct_label = correct_labels->d[j][0];
             int predicted = 0;
             float max_score = -1e99;
+            int score_index = j - data_start;
             for(int k=0;k<labels;k++) {
-                if (scores->d[j][k] > max_score) {
+                if (scores->d[score_index][k] > max_score) {
                     predicted = k;
-                    max_score = scores->d[j][k];
+                    max_score = scores->d[score_index][k];
                 }
             }
             if (correct_label == predicted) correct_count++;

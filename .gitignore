@@ -4,3 +4,4 @@
 *.h~
 *.o
 *.exe
+*.stackdump

@@ -1,7 +1,7 @@
 ifeq ($(DEBUG),1)
 	PRE_CFLAGS = -DDEBUG -g
 else
-	PRE_CFLAGS = -O2
+	PRE_CFLAGS = -g
 endif
 CC=gcc
 LIBS=-lm

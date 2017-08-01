@@ -27,5 +27,8 @@ parameters* initTrainParameters(TwoDMatrix* X,
     int network_depth, ...);
 
 int train(parameters* network_params);
+int test(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, int network_depth, TwoDMatrix* scores);
+float verifyWithTrainingData(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoDMatrix** bs, int network_depth, int minibatch_size, int labels, TwoDMatrix* correct_labels);
+
 
 #endif
