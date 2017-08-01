@@ -207,21 +207,38 @@ int test(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, int network_depth, Two
     TwoDMatrix** Hs = malloc(sizeof(TwoDMatrix*)*network_depth);
     for(int i=0;i<network_depth;i++) Hs[i] = matrixMalloc(sizeof(TwoDMatrix));
     TwoDMatrix* layer_X = malloc(sizeof(TwoDMatrix));
-    for(int i=0;i<network_depth;i++) affineLayerForward(layer_X,Ws[i],bs[i],Hs[i]);
+    for(int i=0;i<network_depth;i++) {
+        affineLayerForward(layer_X,Ws[i],bs[i],Hs[i]);
+        layer_X = Hs[i];
+    }
     init2DMatrix(scores,Hs[network_depth-1]->height,Hs[network_depth-1]->width);
     copyTwoDMatrix(Hs[network_depth-1],scores);
     for(int i=0;i<network_depth;i++) destroy2DMatrix(Hs[i]);
     return 0;
 }
 
-float verifyWithTrainingData(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoDMatrix** bs, int network_depth, int minibatch_size, TwoDMatrix* correct_labels) {
-    float correctness = 0;
+float verifyWithTrainingData(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoDMatrix** bs, int network_depth, int minibatch_size, int labels, TwoDMatrix* correct_labels) {
+    int correct_count = 0;
     int iterations = training_data->height / minibatch_size;
     TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
+    TwoDMatrix* scores = matrixMalloc(sizeof(TwoDMatrix));
     for(int i=0;i<iterations;i++) {
         int data_start = iteration*minibatch_size;
         int data_end = (iteration+1)*minibatch_size-1;
         chop2DMatrix(training_data,data_start,data_end,X);
-        
+        test(X,Ws,bs,network_depth,scores);
+        for(int j=data_start;j<data_end;j++) {
+            int correct_label = correct_labels->d[j][0];
+            int predicted = 0;
+            float max_score = -1e99;
+            for(int k=0;k<labels;k++) {
+                if (scores->d[j][k] > max_score) {
+                    predicted = k;
+                    max_score = scores->d[j][k];
+                }
+            }
+            if (correct_label == predicted) correct_count++;
+        }
     }
+    return 100.0f*correct_count/(iterations*minibatch_size);
 }
