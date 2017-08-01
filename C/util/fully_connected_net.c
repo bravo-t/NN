@@ -147,22 +147,15 @@ int train(parameters* network_params) {
                 if (i != network_depth - 1) {
                     leakyReLUForward(Hs[i],alpha,Hs[i]);
                 }
-                /* DEBUG
-                printf("DEBUG: Dumping X %d\n", i);
-                printMatrix(layer_X);
-                printf("DEBUG: Dumping W %d\n", i);
-                printMatrix(Ws[i]);
-                printf("DEBUG: Dumping b %d\n", i);
-                printMatrix(bs[i]);
-                printf("DEBUG: Dumping H %d\n", i);
-                printMatrix(Hs[i]);
-                */
+                debugPrintMatrix(layer_X);
+                debugPrintMatrix(Ws[i]);
+                debugPrintMatrix(bs[i]);
+                debugPrintMatrix(Hs[i]);
                 layer_X = Hs[i];
             }
             
             float data_loss = softmaxLoss(Hs[network_depth-1], correct_labels, dHs[network_depth-1]);
-            //printf("DEBUG: Dumping dscore\n");
-            //printMatrix(dHs[network_depth-1]);
+            debugPrintMatrix(dHs[network_depth-1]);
             float reg_loss = L2RegLoss(Ws, network_depth, reg_strength);
             float loss = data_loss + reg_loss;
             printf("INFO: Epoch %d, iteration %d, sub-dataset %d - %d, data loss: %f, regulization loss: %f, total loss: %f\n",
@@ -171,28 +164,22 @@ int train(parameters* network_params) {
             // This dX is only a placeholder to babysit the backword function, of course we are not going to modify X
             TwoDMatrix* dX = matrixMalloc(sizeof(TwoDMatrix));
             for (int i=network_depth-1; i>=0; i--) {
-                //printf("DEBUG: Dumping dH %d before ReLU\n", i);
-                //printMatrix(dHs[i]);
-                //printf("DEBUG: Dumping H %d\n", i);
-                //printMatrix(Hs[i]);
+                debugPrintMatrix(dHs[i]);
+                debugPrintMatrix(Hs[i]);
                 if (i != network_depth-1) {
                     leakyReLUBackward(dHs[i],Hs[i],alpha,dHs[i]);
                 }
-                //printf("DEBUG: Dumping dH %d after ReLU\n", i);
-                //printMatrix(dHs[i]);
+                debugPrintMatrix(dHs[i]);
                 if (i != 0) {
                     affineLayerBackword(dHs[i],Hs[i-1],Ws[i],bs[i],dHs[i-1],dWs[i],dbs[i]);
                 } else {
                     affineLayerBackword(dHs[i],X,Ws[i],bs[i],dX,dWs[i],dbs[i]);
                 }
-                //printf("DEBUG: Dumping dW %d before reg backprop\n", i);
-                //printMatrix(dWs[i]);
-                //printf("DEBUG: Dumping W %d\n", i);
-                //printMatrix(Ws[i]);
+                debugPrintMatrix(dWs[i]);
+                debugPrintMatrix(Ws[i]);
                 // Weight changes contributed by L2 regulization
                 L2RegLossBackward(dWs[i],Ws[i],reg_strength,dWs[i]);
-                //printf("DEBUG: Dumping dW %d after reg backprop\n", i);
-                //printMatrix(dWs[i]);
+                debugPrintMatrix(dWs[i]);
             }
             destroy2DMatrix(dX);
             // Update weights
@@ -202,6 +189,39 @@ int train(parameters* network_params) {
             }
         }
     }
+
+    // Shutdown
     destroy2DMatrix(X);
+    for(int i=0;i<network_depth;i++) {
+        destroy2DMatrix(Ws[i]);
+        destroy2DMatrix(dWs[i]);
+        destroy2DMatrix(bs[i]);
+        destroy2DMatrix(dbs[i]);
+        destroy2DMatrix(Hs[i]);
+        destroy2DMatrix(dHs[i]);
+    }
     return 0;
+}
+
+int test(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, int network_depth, TwoDMatrix* scores) {
+    TwoDMatrix** Hs = malloc(sizeof(TwoDMatrix*)*network_depth);
+    for(int i=0;i<network_depth;i++) Hs[i] = matrixMalloc(sizeof(TwoDMatrix));
+    TwoDMatrix* layer_X = malloc(sizeof(TwoDMatrix));
+    for(int i=0;i<network_depth;i++) affineLayerForward(layer_X,Ws[i],bs[i],Hs[i]);
+    init2DMatrix(scores,Hs[network_depth-1]->height,Hs[network_depth-1]->width);
+    copyTwoDMatrix(Hs[network_depth-1],scores);
+    for(int i=0;i<network_depth;i++) destroy2DMatrix(Hs[i]);
+    return 0;
+}
+
+float verifyWithTrainingData(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoDMatrix** bs, int network_depth, int minibatch_size, TwoDMatrix* correct_labels) {
+    float correctness = 0;
+    int iterations = training_data->height / minibatch_size;
+    TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
+    for(int i=0;i<iterations;i++) {
+        int data_start = iteration*minibatch_size;
+        int data_end = (iteration+1)*minibatch_size-1;
+        chop2DMatrix(training_data,data_start,data_end,X);
+        
+    }
 }

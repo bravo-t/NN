@@ -11,10 +11,10 @@
 
 
 int main() {
-    float alpha = 1e-3;
+    float alpha = 0;
     float reg = 1e-2;
     float learning_rate = 0.001;
-    int minibatch_size = 3;
+    int minibatch_size = 10;
     int epochs = 100;
     TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
     X = load2DMatrixFromFile("test_data/X.txt");
@@ -28,7 +28,7 @@ int main() {
         reg,
         alpha,
         epochs,
-        2, 10,3);
+        3, 10, 10,3);
     train(train_params);
     return 0;
 }

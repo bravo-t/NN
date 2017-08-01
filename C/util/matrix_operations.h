@@ -2,6 +2,12 @@
 #define __OPERATION_HEADER__
 #include "matrix_type.h"
 
+#ifdef DEBUG
+#define debugPrintMatrix(M) __debugPrintMatrix(M,#M)
+#else
+#define debugPrintMatrix(M) ((void)0)
+#endif
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -37,6 +43,7 @@ int broadcastDiv(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT);
 int chop2DMatrix(TwoDMatrix* M, int height_start, int height_end, TwoDMatrix* OUT);
 float matrixError(TwoDMatrix* a, TwoDMatrix* b); 
 void printMatrix(TwoDMatrix *M);
+void __debugPrintMatrix(TwoDMatrix *M, char* name);
 void checkMatrixDiff(TwoDMatrix* a, TwoDMatrix* b, float thres);
 
 #endif

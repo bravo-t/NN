@@ -1,6 +1,13 @@
+ifeq ($(DEBUG),1)
+	PRE_CFLAGS = -DDEBUG -g
+else
+	PRE_CFLAGS = -O2
+endif
 CC=gcc
 LIBS=-lm
-CFLAGS=-g -std=c99 -Wall
+CFLAGS=$(PRE_CFLAGS) -std=c99 -Wall
+
+default: test
 
 test: test.c misc_utils.o matrix_operations.o layers.o fully_connected_net.o
 	$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
@@ -20,4 +27,4 @@ fully_connected_net.o: util/fully_connected_net.c util/fully_connected_net.h lay
 
 .PHONY: clean
 clean:
-	rm -f *.o *~ util/*~
+	rm -f *.o *~ util/*~ test

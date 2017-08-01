@@ -438,6 +438,18 @@ void printMatrix(TwoDMatrix *M) {
     }
 }
 
+void __debugPrintMatrix(TwoDMatrix *M, char* M_name) {
+    printf("%s = \n",M_name);
+    printf("Height of matrix: %d, width: %d\n",M->height,M->width);
+    for(int i=0;i<M->height;i++) {
+        for(int j=0;j<M->width;j++) {
+            printf("%f\t",M->d[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+
 void checkMatrixDiff(TwoDMatrix* a, TwoDMatrix* b, float thres) {
     float diff = matrixError(a, b);
     if (diff >= thres) {
