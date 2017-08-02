@@ -230,6 +230,8 @@ float verifyWithTrainingData(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoDMat
         int data_end = (i+1)*minibatch_size-1;
         chop2DMatrix(training_data,data_start,data_end,X);
         test(X,Ws,bs,network_depth,scores);
+        printf("DEBUG: scores for %d iteration:\n",i);
+        printMaxtrix(scores);
         for(int j=data_start;j<data_end;j++) {
             int correct_label = correct_labels->d[j][0];
             int predicted = 0;
@@ -241,6 +243,7 @@ float verifyWithTrainingData(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoDMat
                     max_score = scores->d[score_index][k];
                 }
             }
+            printf("DEBUG: for the %d sample, correct label is %d, predicted is %d\n",j,correct_label,predicted);
             if (correct_label == predicted) correct_count++;
         }
     }
