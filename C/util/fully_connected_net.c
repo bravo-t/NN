@@ -158,8 +158,10 @@ int train(parameters* network_params) {
             debugPrintMatrix(dHs[network_depth-1]);
             float reg_loss = L2RegLoss(Ws, network_depth, reg_strength);
             float loss = data_loss + reg_loss;
-            printf("INFO: Epoch %d, iteration %d, sub-dataset %d - %d, data loss: %f, regulization loss: %f, total loss: %f\n",
-                epoch, iteration, data_start, data_end, data_loss, reg_loss, loss);
+            if (epoch % 1000 == 0 && iteration == 0) {
+                printf("INFO: Epoch %d, data loss: %f, regulization loss: %f, total loss: %f\n",
+                    epoch, data_loss, reg_loss, loss);
+            }
             // Backward propagation
             // This dX is only a placeholder to babysit the backword function, of course we are not going to modify X
             TwoDMatrix* dX = matrixMalloc(sizeof(TwoDMatrix));
@@ -190,7 +192,15 @@ int train(parameters* network_params) {
         }
     }
     // Verify the result with training data
-    float correctness = verifyWithTrainingData(training_data,Ws,bs,network_depth,minibatch_size,labels,correct_labels);
+    float correctness = verifyWithTrainingData(
+        training_data,
+        Ws,
+        bs,
+        network_depth,
+        minibatch_size, 
+        alpha,
+        labels,
+        correct_labels);
     printf("INFO: %f%% correct on training data\n",correctness);
     // Shutdown
     destroy2DMatrix(X);
@@ -202,16 +212,25 @@ int train(parameters* network_params) {
         destroy2DMatrix(Hs[i]);
         destroy2DMatrix(dHs[i]);
     }
+    free(Ws);
+    free(dWs);
+    free(bs);
+    free(dbs);
+    free(Hs);
+    free(dHs);
     return 0;
 }
 
-int test(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, int network_depth, TwoDMatrix* scores) {
+int test(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, float alpha, int network_depth, TwoDMatrix* scores) {
     TwoDMatrix** Hs = malloc(sizeof(TwoDMatrix*)*network_depth);
     for(int i=0;i<network_depth;i++) Hs[i] = matrixMalloc(sizeof(TwoDMatrix));
     TwoDMatrix* layer_X = malloc(sizeof(TwoDMatrix));
     layer_X = X;
     for(int i=0;i<network_depth;i++) {
         affineLayerForward(layer_X,Ws[i],bs[i],Hs[i]);
+        if (i != network_depth - 1) {
+            leakyReLUForward(Hs[i],alpha,Hs[i]);
+        }
         layer_X = Hs[i];
     }
     init2DMatrix(scores,Hs[network_depth-1]->height,Hs[network_depth-1]->width);
@@ -220,7 +239,7 @@ int test(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, int network_depth, Two
     return 0;
 }
 
-float verifyWithTrainingData(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoDMatrix** bs, int network_depth, int minibatch_size, int labels, TwoDMatrix* correct_labels) {
+float verifyWithTrainingData(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoDMatrix** bs, int network_depth, int minibatch_size, float alpha, int labels, TwoDMatrix* correct_labels) {
     int correct_count = 0;
     int iterations = training_data->height / minibatch_size;
     TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
@@ -229,10 +248,8 @@ float verifyWithTrainingData(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoDMat
         int data_start = i*minibatch_size;
         int data_end = (i+1)*minibatch_size-1;
         chop2DMatrix(training_data,data_start,data_end,X);
-        test(X,Ws,bs,network_depth,scores);
-        printf("DEBUG: scores for %d iteration:\n",i);
-        printMaxtrix(scores);
-        for(int j=data_start;j<data_end;j++) {
+        test(X,Ws,bs, alpha,network_depth,scores);
+        for(int j=data_start;j<=data_end;j++) {
             int correct_label = correct_labels->d[j][0];
             int predicted = 0;
             float max_score = -1e99;
@@ -243,9 +260,10 @@ float verifyWithTrainingData(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoDMat
                     max_score = scores->d[score_index][k];
                 }
             }
-            printf("DEBUG: for the %d sample, correct label is %d, predicted is %d\n",j,correct_label,predicted);
             if (correct_label == predicted) correct_count++;
         }
     }
+    destroy2DMatrix(X);
+    destroy2DMatrix(scores);
     return 100.0f*correct_count/(iterations*minibatch_size);
 }

@@ -2,7 +2,7 @@
 
 import numpy as np
 
-number_of_iterations = 1
+number_of_iterations = 20000
 reg = 1e-3
 step_size =  1
 
@@ -110,6 +110,8 @@ for iteration in range(number_of_iterations):
 hidden = np.maximum(0,np.dot(X,W) + b)
 test_scores = np.dot(hidden, W2) + b2
 predicted = np.argmax(test_scores, axis=1)
+print("Predicted socres:")
+print(predicted)
 print("Correctness: %f" % (np.mean(predicted == y)))
 
 

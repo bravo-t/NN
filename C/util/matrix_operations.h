@@ -34,6 +34,7 @@ int elementExp(TwoDMatrix* M,TwoDMatrix* OUT);
 int elementAdd(TwoDMatrix* M, float a,TwoDMatrix* OUT);
 int elementMul(TwoDMatrix* M, float a,TwoDMatrix* OUT);
 int elementDiv(TwoDMatrix* M,float a, TwoDMatrix* OUT);
+int elementSqrt(TwoDMatrix* M, TwoDMatrix* OUT);
 int elementLeakyReLU(TwoDMatrix* M,float alpha, TwoDMatrix* OUT);
 int broadcastMatrix(TwoDMatrix* M, int n, int direction, TwoDMatrix* OUT);
 int broadcastAdd(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT);

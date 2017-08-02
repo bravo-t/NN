@@ -67,7 +67,10 @@ int copyTwoDMatrix(TwoDMatrix* M, TwoDMatrix* OUT) {
 }
 
 int destroy2DMatrix(TwoDMatrix* M) {
-    for(int i=0;i<M->height;i++) free(M->d[i]);
+    for(int i=0;i<M->height;i++) {
+        free(M->d[i]);
+        M->d[i] = NULL;
+    }
     free(M);
     M = NULL;
     return 0;
@@ -239,6 +242,15 @@ int elementDiv(TwoDMatrix* M,float a, TwoDMatrix* OUT) {
     return elementMul(M, n, OUT);
 }
 
+int elementSqrt(TwoDMatrix* M, TwoDMatrix* OUT) {
+    init2DMatrix(OUT,M->height,M->width);
+    for(int i=0;i<M->height;i++) {
+        for(int j=0;j<M->width;j++) {
+            OUT->d[i][j] = sqrt(M->d[i][j]);
+        }
+    }
+    return 0;
+}
 
 int elementLeakyReLU(TwoDMatrix* M,float alpha, TwoDMatrix* OUT) {
     init2DMatrix(OUT,M->height,M->width);

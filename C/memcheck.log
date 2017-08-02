@@ -1,0 +1,1916 @@
+==6070== Memcheck, a memory error detector
+==6070== Copyright (C) 2002-2015, and GNU GPL'd, by Julian Seward et al.
+==6070== Using Valgrind-3.12.0 and LibVEX; rerun with -h for copyright info
+==6070== Command: ./test
+==6070== 
+--6070-- Valgrind options:
+--6070--    --leak-check=full
+--6070--    --track-origins=yes
+--6070--    --show-reachable=yes
+--6070--    -v
+--6070-- Contents of /proc/version:
+--6070--   Linux version 2.6.32-573.el6.x86_64 (mockbuild@x86-027.build.eng.bos.redhat.com) (gcc version 4.4.7 20120313 (Red Hat 4.4.7-16) (GCC) ) #1 SMP Wed Jul 1 18:23:37 EDT 2015
+--6070-- 
+--6070-- Arch and hwcaps: AMD64, LittleEndian, amd64-cx16-lzcnt-rdtscp-sse3-avx
+--6070-- Page sizes: currently 4096, max supported 4096
+--6070-- Valgrind library directory: /tool/pandora64/.package/valgrind-3.12.0-mmap-fix/lib/valgrind
+--6070-- Reading syms from /proj/soc_analysis/regression/bitang/NN/C/test
+--6070-- Reading syms from /tool/pandora64/.package/valgrind-3.12.0-mmap-fix/lib/valgrind/memcheck-amd64-linux
+--6070--    object doesn't have a dynamic symbol table
+--6070-- Reading syms from /lib64/ld-2.12.so
+--6070-- Scheduler: using generic scheduler lock implementation.
+--6070-- Reading suppressions file: /tool/pandora64/.package/valgrind-3.12.0-mmap-fix/lib/valgrind/default.supp
+==6070== embedded gdbserver: reading from /tmp/vgdb-pipe-from-vgdb-to-6070-by-bitang-on-gram1663
+==6070== embedded gdbserver: writing to   /tmp/vgdb-pipe-to-vgdb-from-6070-by-bitang-on-gram1663
+==6070== embedded gdbserver: shared mem   /tmp/vgdb-pipe-shared-mem-vgdb-6070-by-bitang-on-gram1663
+==6070== 
+==6070== TO CONTROL THIS PROCESS USING vgdb (which you probably
+==6070== don't want to do, unless you know exactly what you're doing,
+==6070== or are doing some strange experiment):
+==6070==   /tool/pandora64/.package/valgrind-3.12.0-mmap-fix/lib/valgrind/../../bin/vgdb --pid=6070 ...command...
+==6070== 
+==6070== TO DEBUG THIS PROCESS USING GDB: start GDB like this
+==6070==   /path/to/gdb ./test
+==6070== and then give GDB the following command
+==6070==   target remote | /tool/pandora64/.package/valgrind-3.12.0-mmap-fix/lib/valgrind/../../bin/vgdb --pid=6070
+==6070== --pid is optional if only one valgrind process is running
+==6070== 
+--6070-- REDIR: 0x33bd817c30 (ld-linux-x86-64.so.2:strlen) redirected to 0x6809fc01 (vgPlain_amd64_linux_REDIR_FOR_strlen)
+--6070-- REDIR: 0x33bd817a40 (ld-linux-x86-64.so.2:index) redirected to 0x6809fc1b (vgPlain_amd64_linux_REDIR_FOR_index)
+--6070-- Reading syms from /tool/pandora64/.package/valgrind-3.12.0-mmap-fix/lib/valgrind/vgpreload_core-amd64-linux.so
+--6070-- Reading syms from /tool/pandora64/.package/valgrind-3.12.0-mmap-fix/lib/valgrind/vgpreload_memcheck-amd64-linux.so
+==6070== WARNING: new redirection conflicts with existing -- ignoring it
+--6070--     old: 0x33bd817c30 (strlen              ) R-> (0000.0) 0x6809fc01 vgPlain_amd64_linux_REDIR_FOR_strlen
+--6070--     new: 0x33bd817c30 (strlen              ) R-> (2007.0) 0x04809bf0 strlen
+--6070-- REDIR: 0x33bd817ac0 (ld-linux-x86-64.so.2:strcmp) redirected to 0x480acf0 (strcmp)
+--6070-- REDIR: 0x33bd818a10 (ld-linux-x86-64.so.2:mempcpy) redirected to 0x480e0c0 (mempcpy)
+--6070-- Reading syms from /lib64/libm-2.12.so
+--6070-- Reading syms from /lib64/libc-2.12.so
+--6070-- REDIR: 0x33bdc84d30 (libc.so.6:strcasecmp) redirected to 0x4801772 (_vgnU_ifunc_wrapper)
+--6070-- REDIR: 0x33bdc86ff0 (libc.so.6:strncasecmp) redirected to 0x4801772 (_vgnU_ifunc_wrapper)
+--6070-- REDIR: 0x33bdc82ca0 (libc.so.6:__GI_strrchr) redirected to 0x48095b0 (__GI_strrchr)
+--6070-- REDIR: 0x33bdc7aaf0 (libc.so.6:malloc) redirected to 0x4806aaf (malloc)
+--6070-- REDIR: 0x33bdc8e9e0 (libc.so.6:__GI_strstr) redirected to 0x480e320 (__strstr_sse2)
+--6070-- REDIR: 0x33bdc811c0 (libc.so.6:__GI_strlen) redirected to 0x4809b50 (__GI_strlen)
+--6070-- REDIR: 0x33bdc896d0 (libc.so.6:memcpy) redirected to 0x480b440 (memcpy)
+--6070-- REDIR: 0x33bdc7b950 (libc.so.6:free) redirected to 0x4807c5c (free)
+--6070-- REDIR: 0x33bdc84560 (libc.so.6:mempcpy) redirected to 0x480dd00 (mempcpy)
+--6070-- REDIR: 0x33bdc8ab50 (libc.so.6:strchrnul) redirected to 0x480dbf0 (strchrnul)
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x401E5D: elementLeakyReLU (matrix_operations.c:250)
+==6070==    by 0x402BFA: leakyReLUForward (layers.c:48)
+==6070==    by 0x403FC7: train (fully_connected_net.c:148)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE030893: fmaxf (in /lib64/libm-2.12.so)
+==6070==    by 0x4013EA: maxX2DMatrix (matrix_operations.c:121)
+==6070==    by 0x4031DC: softmaxLoss (layers.c:153)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE00E826: __ieee754_exp (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE024B51: exp (in /lib64/libm-2.12.so)
+==6070==    by 0x401BE8: elementExp (matrix_operations.c:214)
+==6070==    by 0x40325D: softmaxLoss (layers.c:165)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Use of uninitialised value of size 8
+==6070==    at 0x33BE00E8DC: __ieee754_exp (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE024B51: exp (in /lib64/libm-2.12.so)
+==6070==    by 0x401BE8: elementExp (matrix_operations.c:214)
+==6070==    by 0x40325D: softmaxLoss (layers.c:165)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Use of uninitialised value of size 8
+==6070==    at 0x33BE00E8E8: __ieee754_exp (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE024B51: exp (in /lib64/libm-2.12.so)
+==6070==    by 0x401BE8: elementExp (matrix_operations.c:214)
+==6070==    by 0x40325D: softmaxLoss (layers.c:165)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Use of uninitialised value of size 8
+==6070==    at 0x33BE00E8F6: __ieee754_exp (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE024B51: exp (in /lib64/libm-2.12.so)
+==6070==    by 0x401BE8: elementExp (matrix_operations.c:214)
+==6070==    by 0x40325D: softmaxLoss (layers.c:165)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Use of uninitialised value of size 8
+==6070==    at 0x33BE00E90B: __ieee754_exp (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE024B51: exp (in /lib64/libm-2.12.so)
+==6070==    by 0x401BE8: elementExp (matrix_operations.c:214)
+==6070==    by 0x40325D: softmaxLoss (layers.c:165)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE00E964: __ieee754_exp (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE024B51: exp (in /lib64/libm-2.12.so)
+==6070==    by 0x401BE8: elementExp (matrix_operations.c:214)
+==6070==    by 0x40325D: softmaxLoss (layers.c:165)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE00E96A: __ieee754_exp (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE024B51: exp (in /lib64/libm-2.12.so)
+==6070==    by 0x401BE8: elementExp (matrix_operations.c:214)
+==6070==    by 0x40325D: softmaxLoss (layers.c:165)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE024B83: exp (in /lib64/libm-2.12.so)
+==6070==    by 0x401BE8: elementExp (matrix_operations.c:214)
+==6070==    by 0x40325D: softmaxLoss (layers.c:165)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE024B8D: exp (in /lib64/libm-2.12.so)
+==6070==    by 0x401BE8: elementExp (matrix_operations.c:214)
+==6070==    by 0x40325D: softmaxLoss (layers.c:165)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE024B97: exp (in /lib64/libm-2.12.so)
+==6070==    by 0x401BE8: elementExp (matrix_operations.c:214)
+==6070==    by 0x40325D: softmaxLoss (layers.c:165)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE00E9A6: __ieee754_exp (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE024B51: exp (in /lib64/libm-2.12.so)
+==6070==    by 0x401BE8: elementExp (matrix_operations.c:214)
+==6070==    by 0x40325D: softmaxLoss (layers.c:165)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE01164D: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE012366: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE01169C: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE0116AE: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE0123CD: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Use of uninitialised value of size 8
+==6070==    at 0x33BE012424: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Use of uninitialised value of size 8
+==6070==    at 0x33BE01247F: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Use of uninitialised value of size 8
+==6070==    at 0x33BE01248B: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Use of uninitialised value of size 8
+==6070==    at 0x33BE01249D: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Use of uninitialised value of size 8
+==6070==    at 0x33BE0124B5: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Use of uninitialised value of size 8
+==6070==    at 0x33BE0124BB: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE01252B: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE012556: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE0125D9: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE0125DB: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE025493: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE02549D: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE01268E: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE0126A1: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE01276A: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE012781: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE012793: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE0127FF: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE012814: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE01296A: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE012982: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE012995: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE0129D2: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE0129EA: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE0129FD: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE012A47: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE012A49: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x402D1F: leakyReLUBackward (layers.c:66)
+==6070==    by 0x404175: train (fully_connected_net.c:172)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE01171A: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE012D96: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE012E29: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE01181D: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE01181F: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x401E5D: elementLeakyReLU (matrix_operations.c:250)
+==6070==    by 0x402BFA: leakyReLUForward (layers.c:48)
+==6070==    by 0x404776: test (fully_connected_net.c:232)
+==6070==    by 0x4048FE: verifyWithTrainingData (fully_connected_net.c:251)
+==6070==    by 0x4044C6: train (fully_connected_net.c:195)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x404980: verifyWithTrainingData (fully_connected_net.c:258)
+==6070==    by 0x4044C6: train (fully_connected_net.c:195)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+INFO: Setting up basic parameters for the network
+INFO: Sizes of networks are: 30 3 
+INFO: Initializing all required learnable parameters for the network
+INFO: 2 W matrixes, 909 learnable weights initialized, 7.20 KB meomry used
+INFO: 2 b matrixes, 33 learnable biases initialized, 0.35 KB meomry used
+INFO: 2 H matrixes, 9900 learnable hidden layer values initialized, 77.44 KB meomry used
+INFO: A total number of 84.98 KB memory is used by learnable parameters in the network
+INFO: Epoch 0, data loss: 1.826064, regulization loss: 0.596010, total loss: 2.422074
+INFO: 42.666668% correct on training data
+==6070== 
+==6070== HEAP SUMMARY:
+==6070==     in use at exit: 591,164 bytes in 1,148 blocks
+==6070==   total heap usage: 74,263 allocs, 73,115 frees, 2,862,796 bytes allocated
+==6070== 
+==6070== Searching for pointers to 1,148 not-freed blocks
+==6070== Checked 75,264 bytes
+==6070== 
+==6070== 8 bytes in 1 blocks are indirectly lost in loss record 1 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x40372D: initTrainParameters (fully_connected_net.c:26)
+==6070==    by 0x400B62: main (test.c:24)
+==6070== 
+==6070== 8 bytes in 1 blocks are definitely lost in loss record 2 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x402A7D: affineLayerBackword (layers.c:22)
+==6070==    by 0x404242: train (fully_connected_net.c:176)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 8 bytes in 1 blocks are definitely lost in loss record 3 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x402A7D: affineLayerBackword (layers.c:22)
+==6070==    by 0x4042E8: train (fully_connected_net.c:178)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 16 bytes in 1 blocks are definitely lost in loss record 4 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x402A65: affineLayerBackword (layers.c:21)
+==6070==    by 0x4042E8: train (fully_connected_net.c:178)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 16 bytes in 1 blocks are definitely lost in loss record 5 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x404679: test (fully_connected_net.c:225)
+==6070==    by 0x4048FE: verifyWithTrainingData (fully_connected_net.c:251)
+==6070==    by 0x4044C6: train (fully_connected_net.c:195)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 16 bytes in 2 blocks are definitely lost in loss record 6 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 24 bytes in 1 blocks are indirectly lost in loss record 7 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400B95: matrixMalloc (misc_utils.c:8)
+==6070==    by 0x402526: load2DMatrixFromFile (matrix_operations.c:396)
+==6070==    by 0x400AE6: main (test.c:20)
+==6070== 
+==6070== 24 bytes in 1 blocks are indirectly lost in loss record 8 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400B95: matrixMalloc (misc_utils.c:8)
+==6070==    by 0x402526: load2DMatrixFromFile (matrix_operations.c:396)
+==6070==    by 0x400B02: main (test.c:22)
+==6070== 
+==6070== 24 bytes in 1 blocks are definitely lost in loss record 9 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400B95: matrixMalloc (misc_utils.c:8)
+==6070==    by 0x400AD8: main (test.c:19)
+==6070== 
+==6070== 24 bytes in 1 blocks are definitely lost in loss record 10 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400B95: matrixMalloc (misc_utils.c:8)
+==6070==    by 0x400AF4: main (test.c:21)
+==6070== 
+==6070== 24 bytes in 1 blocks are definitely lost in loss record 11 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x4046BE: test (fully_connected_net.c:227)
+==6070==    by 0x4048FE: verifyWithTrainingData (fully_connected_net.c:251)
+==6070==    by 0x4044C6: train (fully_connected_net.c:195)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 56 bytes in 1 blocks are definitely lost in loss record 12 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400B10: main (test.c:23)
+==6070== 
+==6070== 132 bytes in 2 blocks are indirectly lost in loss record 13 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400E89: init2DMatrixZero (matrix_operations.c:50)
+==6070==    by 0x403C4E: train (fully_connected_net.c:113)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 148 (16 direct, 132 indirect) bytes in 2 blocks are definitely lost in loss record 14 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400E56: init2DMatrixZero (matrix_operations.c:48)
+==6070==    by 0x403C4E: train (fully_connected_net.c:113)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 240 bytes in 1 blocks are definitely lost in loss record 15 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x402A65: affineLayerBackword (layers.c:21)
+==6070==    by 0x404242: train (fully_connected_net.c:176)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 256 bytes in 2 blocks are definitely lost in loss record 16 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x4043E9: train (fully_connected_net.c:189)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 320 bytes in 20 blocks are definitely lost in loss record 17 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x402AB4: affineLayerBackword (layers.c:25)
+==6070==    by 0x4042E8: train (fully_connected_net.c:178)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 320 bytes in 40 blocks are definitely lost in loss record 18 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x402C59: vanillaUpdate (layers.c:54)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 480 bytes in 20 blocks are definitely lost in loss record 19 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400B95: matrixMalloc (misc_utils.c:8)
+==6070==    by 0x403EF7: train (fully_connected_net.c:141)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 480 bytes in 20 blocks are definitely lost in loss record 20 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x402ACF: affineLayerBackword (layers.c:26)
+==6070==    by 0x404242: train (fully_connected_net.c:176)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 600 bytes in 32 blocks are indirectly lost in loss record 21 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400D9C: init2DMatrixNormRand (matrix_operations.c:36)
+==6070==    by 0x403C11: train (fully_connected_net.c:112)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 856 (256 direct, 600 indirect) bytes in 2 blocks are definitely lost in loss record 22 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400D66: init2DMatrixNormRand (matrix_operations.c:34)
+==6070==    by 0x403C11: train (fully_connected_net.c:112)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 1,200 bytes in 300 blocks are indirectly lost in loss record 23 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402544: load2DMatrixFromFile (matrix_operations.c:397)
+==6070==    by 0x400B02: main (test.c:22)
+==6070== 
+==6070== 2,400 bytes in 1 blocks are indirectly lost in loss record 24 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x402544: load2DMatrixFromFile (matrix_operations.c:397)
+==6070==    by 0x400AE6: main (test.c:20)
+==6070== 
+==6070== 2,400 bytes in 1 blocks are indirectly lost in loss record 25 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x402544: load2DMatrixFromFile (matrix_operations.c:397)
+==6070==    by 0x400B02: main (test.c:22)
+==6070== 
+==6070== 2,400 bytes in 300 blocks are indirectly lost in loss record 26 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402544: load2DMatrixFromFile (matrix_operations.c:397)
+==6070==    by 0x400AE6: main (test.c:20)
+==6070== 
+==6070== 2,400 bytes in 1 blocks are definitely lost in loss record 27 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x4023E2: chop2DMatrix (matrix_operations.c:372)
+==6070==    by 0x403EED: train (fully_connected_net.c:139)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 2,400 bytes in 1 blocks are definitely lost in loss record 28 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x4031A2: softmaxLoss (layers.c:150)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 2,400 bytes in 1 blocks are definitely lost in loss record 29 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x402A4A: affineLayerBackword (layers.c:20)
+==6070==    by 0x404242: train (fully_connected_net.c:176)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 2,400 bytes in 1 blocks are definitely lost in loss record 30 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x4023E2: chop2DMatrix (matrix_operations.c:372)
+==6070==    by 0x4048D8: verifyWithTrainingData (fully_connected_net.c:250)
+==6070==    by 0x4044C6: train (fully_connected_net.c:195)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 2,400 bytes in 1 blocks are definitely lost in loss record 31 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x4047E2: test (fully_connected_net.c:236)
+==6070==    by 0x4048FE: verifyWithTrainingData (fully_connected_net.c:251)
+==6070==    by 0x4044C6: train (fully_connected_net.c:195)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 4,800 bytes in 2 blocks are definitely lost in loss record 32 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x403C8B: train (fully_connected_net.c:114)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 4,800 bytes in 2 blocks are definitely lost in loss record 33 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x4029A9: affineLayerForward (layers.c:10)
+==6070==    by 0x404727: test (fully_connected_net.c:230)
+==6070==    by 0x4048FE: verifyWithTrainingData (fully_connected_net.c:251)
+==6070==    by 0x4044C6: train (fully_connected_net.c:195)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 4,800 bytes in 2 blocks are definitely lost in loss record 34 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x40203C: broadcastMatrix (matrix_operations.c:277)
+==6070==    by 0x40210C: broadcastAdd (matrix_operations.c:295)
+==6070==    by 0x402A08: affineLayerForward (layers.c:15)
+==6070==    by 0x404727: test (fully_connected_net.c:230)
+==6070==    by 0x4048FE: verifyWithTrainingData (fully_connected_net.c:251)
+==6070==    by 0x4044C6: train (fully_connected_net.c:195)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 4,800 bytes in 20 blocks are definitely lost in loss record 35 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x402AB4: affineLayerBackword (layers.c:25)
+==6070==    by 0x404242: train (fully_connected_net.c:176)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 4,800 bytes in 20 blocks are definitely lost in loss record 36 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x402ACF: affineLayerBackword (layers.c:26)
+==6070==    by 0x4042E8: train (fully_connected_net.c:178)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 5,120 bytes in 40 blocks are definitely lost in loss record 37 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x403573: L2RegLoss (layers.c:207)
+==6070==    by 0x404067: train (fully_connected_net.c:159)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 5,120 bytes in 40 blocks are definitely lost in loss record 38 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x40366D: L2RegLossBackward (layers.c:218)
+==6070==    by 0x404356: train (fully_connected_net.c:183)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 5,120 bytes in 40 blocks are definitely lost in loss record 39 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x402C59: vanillaUpdate (layers.c:54)
+==6070==    by 0x4043E9: train (fully_connected_net.c:189)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 8,512 (56 direct, 8,456 indirect) bytes in 1 blocks are definitely lost in loss record 40 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x40387E: initTrainParameters (fully_connected_net.c:41)
+==6070==    by 0x400B62: main (test.c:24)
+==6070== 
+==6070== 48,000 bytes in 20 blocks are definitely lost in loss record 41 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x4031C9: softmaxLoss (layers.c:152)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 48,000 bytes in 20 blocks are definitely lost in loss record 42 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x403205: softmaxLoss (layers.c:159)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 48,000 bytes in 20 blocks are definitely lost in loss record 43 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x401F8E: broadcastMatrix (matrix_operations.c:266)
+==6070==    by 0x4021BA: broadcastSub (matrix_operations.c:315)
+==6070==    by 0x403221: softmaxLoss (layers.c:160)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 48,000 bytes in 20 blocks are definitely lost in loss record 44 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x40324A: softmaxLoss (layers.c:164)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 48,000 bytes in 20 blocks are definitely lost in loss record 45 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x403284: softmaxLoss (layers.c:169)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 48,000 bytes in 20 blocks are definitely lost in loss record 46 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x4032C0: softmaxLoss (layers.c:174)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 48,000 bytes in 20 blocks are definitely lost in loss record 47 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x401F8E: broadcastMatrix (matrix_operations.c:266)
+==6070==    by 0x402316: broadcastDiv (matrix_operations.c:355)
+==6070==    by 0x4032DC: softmaxLoss (layers.c:175)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 48,000 bytes in 20 blocks are definitely lost in loss record 48 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x403303: softmaxLoss (layers.c:179)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 48,000 bytes in 20 blocks are definitely lost in loss record 49 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x402A4A: affineLayerBackword (layers.c:20)
+==6070==    by 0x4042E8: train (fully_connected_net.c:178)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 96,000 bytes in 40 blocks are definitely lost in loss record 50 of 50
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CC3: init2DMatrix (matrix_operations.c:22)
+==6070==    by 0x40203C: broadcastMatrix (matrix_operations.c:277)
+==6070==    by 0x40210C: broadcastAdd (matrix_operations.c:295)
+==6070==    by 0x402A08: affineLayerForward (layers.c:15)
+==6070==    by 0x403F6C: train (fully_connected_net.c:144)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== LEAK SUMMARY:
+==6070==    definitely lost: 581,976 bytes in 509 blocks
+==6070==    indirectly lost: 9,188 bytes in 639 blocks
+==6070==      possibly lost: 0 bytes in 0 blocks
+==6070==    still reachable: 0 bytes in 0 blocks
+==6070==         suppressed: 0 bytes in 0 blocks
+==6070== 
+==6070== ERROR SUMMARY: 608279 errors from 94 contexts (suppressed: 4 from 4)
+==6070== 
+==6070== 2 errors in context 1 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE012A49: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 2 errors in context 2 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE012A47: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 2 errors in context 3 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE0129FD: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 2 errors in context 4 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE0129EA: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 2 errors in context 5 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE0129D2: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 2 errors in context 6 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE012995: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 2 errors in context 7 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE012982: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 2 errors in context 8 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE01296A: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 2 errors in context 9 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE012814: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 2 errors in context 10 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE0127FF: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 2 errors in context 11 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE012793: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 2 errors in context 12 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE012781: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 2 errors in context 13 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE01276A: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 2 errors in context 14 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE0126A1: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 2 errors in context 15 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE01268E: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 32 errors in context 16 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE01181F: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 32 errors in context 17 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE01181D: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 32 errors in context 18 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE012E29: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 32 errors in context 19 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE012D96: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 32 errors in context 20 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE01171A: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 900 errors in context 21 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x404980: verifyWithTrainingData (fully_connected_net.c:258)
+==6070==    by 0x4044C6: train (fully_connected_net.c:195)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 5668 errors in context 22 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE0125DB: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 5668 errors in context 23 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE0125D9: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 5668 errors in context 24 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE012556: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 5668 errors in context 25 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE01252B: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 5668 errors in context 26 of 94:
+==6070== Use of uninitialised value of size 8
+==6070==    at 0x33BE0124BB: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 5668 errors in context 27 of 94:
+==6070== Use of uninitialised value of size 8
+==6070==    at 0x33BE0124B5: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 5668 errors in context 28 of 94:
+==6070== Use of uninitialised value of size 8
+==6070==    at 0x33BE01249D: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 5668 errors in context 29 of 94:
+==6070== Use of uninitialised value of size 8
+==6070==    at 0x33BE01248B: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 5668 errors in context 30 of 94:
+==6070== Use of uninitialised value of size 8
+==6070==    at 0x33BE01247F: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 5668 errors in context 31 of 94:
+==6070== Use of uninitialised value of size 8
+==6070==    at 0x33BE012424: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 5668 errors in context 32 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE0123CD: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 5700 errors in context 33 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE02549D: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 5700 errors in context 34 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE025493: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 5700 errors in context 35 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE0116AE: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 5700 errors in context 36 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE01169C: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 5700 errors in context 37 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE012366: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 5700 errors in context 38 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE01164D: __ieee754_log (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE025461: log (in /lib64/libm-2.12.so)
+==6070==    by 0x403454: softmaxLoss (layers.c:188)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 5700 errors in context 39 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE00E9A6: __ieee754_exp (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE024B51: exp (in /lib64/libm-2.12.so)
+==6070==    by 0x401BE8: elementExp (matrix_operations.c:214)
+==6070==    by 0x40325D: softmaxLoss (layers.c:165)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 9000 errors in context 40 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x401E5D: elementLeakyReLU (matrix_operations.c:250)
+==6070==    by 0x402BFA: leakyReLUForward (layers.c:48)
+==6070==    by 0x404776: test (fully_connected_net.c:232)
+==6070==    by 0x4048FE: verifyWithTrainingData (fully_connected_net.c:251)
+==6070==    by 0x4044C6: train (fully_connected_net.c:195)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 11400 errors in context 41 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE00E96A: __ieee754_exp (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE024B51: exp (in /lib64/libm-2.12.so)
+==6070==    by 0x401BE8: elementExp (matrix_operations.c:214)
+==6070==    by 0x40325D: softmaxLoss (layers.c:165)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 11400 errors in context 42 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE00E964: __ieee754_exp (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE024B51: exp (in /lib64/libm-2.12.so)
+==6070==    by 0x401BE8: elementExp (matrix_operations.c:214)
+==6070==    by 0x40325D: softmaxLoss (layers.c:165)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 11400 errors in context 43 of 94:
+==6070== Use of uninitialised value of size 8
+==6070==    at 0x33BE00E90B: __ieee754_exp (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE024B51: exp (in /lib64/libm-2.12.so)
+==6070==    by 0x401BE8: elementExp (matrix_operations.c:214)
+==6070==    by 0x40325D: softmaxLoss (layers.c:165)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 11400 errors in context 44 of 94:
+==6070== Use of uninitialised value of size 8
+==6070==    at 0x33BE00E8F6: __ieee754_exp (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE024B51: exp (in /lib64/libm-2.12.so)
+==6070==    by 0x401BE8: elementExp (matrix_operations.c:214)
+==6070==    by 0x40325D: softmaxLoss (layers.c:165)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 11400 errors in context 45 of 94:
+==6070== Use of uninitialised value of size 8
+==6070==    at 0x33BE00E8E8: __ieee754_exp (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE024B51: exp (in /lib64/libm-2.12.so)
+==6070==    by 0x401BE8: elementExp (matrix_operations.c:214)
+==6070==    by 0x40325D: softmaxLoss (layers.c:165)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 11400 errors in context 46 of 94:
+==6070== Use of uninitialised value of size 8
+==6070==    at 0x33BE00E8DC: __ieee754_exp (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE024B51: exp (in /lib64/libm-2.12.so)
+==6070==    by 0x401BE8: elementExp (matrix_operations.c:214)
+==6070==    by 0x40325D: softmaxLoss (layers.c:165)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 17100 errors in context 47 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE024B97: exp (in /lib64/libm-2.12.so)
+==6070==    by 0x401BE8: elementExp (matrix_operations.c:214)
+==6070==    by 0x40325D: softmaxLoss (layers.c:165)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 17100 errors in context 48 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE024B8D: exp (in /lib64/libm-2.12.so)
+==6070==    by 0x401BE8: elementExp (matrix_operations.c:214)
+==6070==    by 0x40325D: softmaxLoss (layers.c:165)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 17100 errors in context 49 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE024B83: exp (in /lib64/libm-2.12.so)
+==6070==    by 0x401BE8: elementExp (matrix_operations.c:214)
+==6070==    by 0x40325D: softmaxLoss (layers.c:165)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 17100 errors in context 50 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE00E826: __ieee754_exp (in /lib64/libm-2.12.so)
+==6070==    by 0x33BE024B51: exp (in /lib64/libm-2.12.so)
+==6070==    by 0x401BE8: elementExp (matrix_operations.c:214)
+==6070==    by 0x40325D: softmaxLoss (layers.c:165)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 17100 errors in context 51 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x33BE030893: fmaxf (in /lib64/libm-2.12.so)
+==6070==    by 0x4013EA: maxX2DMatrix (matrix_operations.c:121)
+==6070==    by 0x4031DC: softmaxLoss (layers.c:153)
+==6070==    by 0x404038: train (fully_connected_net.c:157)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 171000 errors in context 52 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x402D1F: leakyReLUBackward (layers.c:66)
+==6070==    by 0x404175: train (fully_connected_net.c:172)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+==6070== 
+==6070== 171000 errors in context 53 of 94:
+==6070== Conditional jump or move depends on uninitialised value(s)
+==6070==    at 0x401E5D: elementLeakyReLU (matrix_operations.c:250)
+==6070==    by 0x402BFA: leakyReLUForward (layers.c:48)
+==6070==    by 0x403FC7: train (fully_connected_net.c:148)
+==6070==    by 0x400B76: main (test.c:32)
+==6070==  Uninitialised value was created by a heap allocation
+==6070==    at 0x4806B1D: malloc (vg_replace_malloc.c:299)
+==6070==    by 0x400CF6: init2DMatrix (matrix_operations.c:24)
+==6070==    by 0x402C30: vanillaUpdate (layers.c:52)
+==6070==    by 0x404453: train (fully_connected_net.c:190)
+==6070==    by 0x400B76: main (test.c:32)
+==6070== 
+--6070-- 
+--6070-- used_suppression:      4 U1004-ARM-_dl_relocate_object /tool/pandora64/.package/valgrind-3.12.0-mmap-fix/lib/valgrind/default.supp:1413
+==6070== 
+==6070== ERROR SUMMARY: 608279 errors from 94 contexts (suppressed: 4 from 4)
