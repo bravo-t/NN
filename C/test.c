@@ -15,7 +15,7 @@ int main() {
     float reg = 1e-2;
     float learning_rate = 0.01;
     int minibatch_size = 300;
-    int epochs = 20;
+    int epochs = 20000;
     TwoDMatrix* training_data = matrixMalloc(sizeof(TwoDMatrix));
     training_data = load2DMatrixFromFile("test_data/training_data.txt");
     TwoDMatrix* correct_labels = matrixMalloc(sizeof(TwoDMatrix));

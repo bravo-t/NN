@@ -79,6 +79,13 @@ int train(parameters* network_params) {
     int network_depth = network_params->network_depth;
     int* hidden_layer_sizes = network_params->hidden_layer_sizes;
     int epochs = network_params->epochs;
+    // Below are control variables for optimizers
+    bool use_momentum_update = true;
+    bool use_nag_update = false;
+    bool use_rmsprop = false;
+    float mu = 0.5f; // or 0.5,0.95, 0.99
+    float decay_rate = 0.99f; // or with more 9s in it
+    float eps = 1e-6;
     // Initialize all learnable parameters
     printf("INFO: Initializing all required learnable parameters for the network\n");
     int number_of_weights = 0;
@@ -100,9 +107,35 @@ int train(parameters* network_params) {
     TwoDMatrix** dbs = malloc(sizeof(TwoDMatrix*)*network_depth);
     // Gradient descend values of Hidden layers
     TwoDMatrix** dHs = malloc(sizeof(TwoDMatrix*)*network_depth);
+    // Below variables are used in optimization algorithms
+    TwoDMatrix** vWs = NULL;
+    TwoDMatrix** vW_prevs = NULL;
+    TwoDMatrix** vbs = NULL;
+    TwoDMatrix** vb_prevs = NULL;
+    TwoDMatrix** Wcaches = NULL;
+    TwoDMatrix** bcaches = NULL;
+
+    if (use_momentum_update) {
+        printf("INFO: Momentum update is used\n");
+        vWs = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        vbs = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+    }
+    if (use_nag_update) {
+        printf("INFO: NAG update is used\n");
+        vWs = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        vbs = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        vW_prevs = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        vb_prevs = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+    }
+    if (use_rmsprop) {
+        printf("INFO: RMSProp is used\n");
+        Wcaches = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        bcaches = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+    }
 
     int former_width = training_data->width;
     for(int i=0;i<network_depth;i++) {
+        // Initialize layer data holders
         Ws[i] = matrixMalloc(sizeof(TwoDMatrix));
         bs[i] = matrixMalloc(sizeof(TwoDMatrix));
         Hs[i] = matrixMalloc(sizeof(TwoDMatrix));
@@ -112,7 +145,6 @@ int train(parameters* network_params) {
         init2DMatrixNormRand(Ws[i],former_width,hidden_layer_sizes[i],0.0,1.0);
         init2DMatrixZero(bs[i],1,hidden_layer_sizes[i]);
         init2DMatrix(Hs[i],minibatch_size,hidden_layer_sizes[i]);
-        former_width = hidden_layer_sizes[i];
         // Statistic data
         number_of_weights += former_width*hidden_layer_sizes[i];
         number_of_biases += hidden_layer_sizes[i];
@@ -121,6 +153,31 @@ int train(parameters* network_params) {
         size_of_Ws += 2*(former_width*hidden_layer_sizes[i]*sizeof(float) + size_of_a_matrix);
         size_of_bs += 2*(hidden_layer_sizes[i]*sizeof(float) + size_of_a_matrix);
         size_of_Hs += 2*(minibatch_size*hidden_layer_sizes[i]*sizeof(float) + size_of_a_matrix);
+
+        // Initialize variables for optimization
+        if (use_momentum_update) {
+            vWs[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrixZero(vWs[i],former_width,hidden_layer_sizes[i]);
+            vbs[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrixZero(vbs[i],1,hidden_layer_sizes[i]);
+        }
+        if (use_nag_update) {
+            vWs[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrixZero(vWs[i],former_width,hidden_layer_sizes[i]);
+            vbs[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrixZero(vbs[i],1,hidden_layer_sizes[i]);
+            vW_prevs[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrixZero(vW_prevs[i],former_width,hidden_layer_sizes[i]);
+            vb_prevs[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrixZero(vb_prevs[i],1,hidden_layer_sizes[i]);
+        }
+        if (use_rmsprop) {
+            Wcaches[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrixZero(Wcaches[i],former_width,hidden_layer_sizes[i]);
+            bcaches[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrixZero(bcaches[i],1,hidden_layer_sizes[i]);
+        }
+        former_width = hidden_layer_sizes[i];
     }
     
     printf("INFO: %d W matrixes, %d learnable weights initialized, %.2f KB meomry used\n", network_depth, number_of_weights, size_of_Ws/1024.0f);
@@ -187,8 +244,19 @@ int train(parameters* network_params) {
             destroy2DMatrix(dX);
             // Update weights
             for (int i=0;i<network_depth;i++) {
-                vanillaUpdate(Ws[i],dWs[i],learning_rate,Ws[i]);
-                vanillaUpdate(bs[i],dbs[i],learning_rate,bs[i]);
+                if (use_momentum_update) {
+                    momentumUpdate(Ws[i], dWs[i], vWs[i], mu, learning_rate, Ws[i]);
+                    momentumUpdate(bs[i], dbs[i], vbs[i], mu, learning_rate, bs[i]);
+                } else if (use_nag_update) {
+                    NAGUpdate(Ws[i], dWs[i], vWs[i], vW_prevs[i], mu, learning_rate, Ws[i]);
+                    NAGUpdate(bs[i], dbs[i], vbs[i], vb_prevs[i], mu, learning_rate, bs[i]);
+                } else if (use_rmsprop) {
+                    RMSProp(Ws[i], dWs[i], Wcaches[i], learning_rate, decay_rate, eps, Ws[i]);
+                    RMSProp(bs[i], dbs[i], bcaches[i], learning_rate, decay_rate, eps, bs[i]);
+                } else {
+                    vanillaUpdate(Ws[i],dWs[i],learning_rate,Ws[i]);
+                    vanillaUpdate(bs[i],dbs[i],learning_rate,bs[i]);
+                }
             }
         }
     }
@@ -212,6 +280,20 @@ int train(parameters* network_params) {
         destroy2DMatrix(dbs[i]);
         destroy2DMatrix(Hs[i]);
         destroy2DMatrix(dHs[i]);
+        if (use_momentum_update) {
+            destroy2DMatrix(vWs[i]);
+            destroy2DMatrix(vbs[i]);
+        }
+        if (use_nag_update) {
+            destroy2DMatrix(vWs[i]);
+            destroy2DMatrix(vbs[i]);
+            destroy2DMatrix(vW_prevs[i]);
+            destroy2DMatrix(vb_prevs[i]);
+        }
+        if (use_rmsprop) {
+            destroy2DMatrix(Wcaches[i]);
+            destroy2DMatrix(bcaches[i]);
+        }
     }
     free(Ws);
     free(dWs);
@@ -219,6 +301,20 @@ int train(parameters* network_params) {
     free(dbs);
     free(Hs);
     free(dHs);
+    if (use_momentum_update) {
+        free(vWs);
+        free(vbs);
+    }
+    if (use_nag_update) {
+        free(vWs);
+        free(vbs);
+        free(vW_prevs);
+        free(vb_prevs);
+    }
+    if (use_rmsprop) {
+        free(Wcaches);
+        free(bcaches);
+    }
     // Remeber to free struct parameter
     destroy2DMatrix(network_params->X);
     destroy2DMatrix(network_params->correct_labels);
