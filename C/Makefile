@@ -24,6 +24,8 @@ layers.o: util/layers.c util/layers.h matrix_operations.o
 fully_connected_net.o: util/fully_connected_net.c util/fully_connected_net.h layers.o
 	$(CC) -c -o $@ $< $(LIBS) $(CFLAGS)
 
+unit_test: unit_test.c misc_utils.o matrix_operations.o layers.o fully_connected_net.o
+	$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
 
 .PHONY: clean
 clean:

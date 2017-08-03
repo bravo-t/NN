@@ -2,7 +2,7 @@
 
 import numpy as np
 
-number_of_iterations = 20000
+number_of_iterations = 100
 reg = 1e-3
 step_size =  1
 
@@ -10,6 +10,7 @@ N = 3
 D = 2
 K = 3
 h = 2
+mu=0.5
 X = np.zeros((N*K,D))
 y = np.zeros(N*K,dtype='uint8')
 for j in range(K):
@@ -23,6 +24,10 @@ W = 0.01*np.random.randn(D,h);
 b = np.zeros((1,h))
 W2 = 0.01*np.random.randn(h,K);
 b2 = np.zeros((1,K))
+vW = np.zeros((D,h))
+vb = np.zeros((1,h))
+vW2 = np.zeros((h,K))
+vb2 = np.zeros((1,K))
 
 print("X=")
 print(X)
@@ -36,6 +41,15 @@ print("W2 initialized as:")
 print(W2)
 print("b2 initialized as:")
 print(b2)
+
+print("vW initialized as:")
+print(vW)
+print("vb initialized as:")
+print(vb)
+print("vW2 initialized as:")
+print(vW2)
+print("vb2 initialized as:")
+print(vb2)
 
 
 data_size = X.shape[0];
@@ -92,10 +106,21 @@ for iteration in range(number_of_iterations):
     print(dW2)
     print("After Reg backprop, dW = ")
     print(dW)
+    """
     b += -step_size*db
     W += -step_size*dW
     b2 += -step_size*db2
     W2 += -step_size*dW2
+    """
+    vW = mu*vW + step_size*dW
+    W -= vW
+    vb = mu*vb + step_size*db
+    b -= vb
+    vW2 = mu*vW2 + step_size*dW2
+    W2 -= vW2
+    vb2 = mu*vb2 + step_size*db2
+    b2 -= vb2
+    
     print("After update")
     print("W = ")
     print(W)
