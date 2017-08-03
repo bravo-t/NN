@@ -71,6 +71,8 @@ int destroy2DMatrix(TwoDMatrix* M) {
         free(M->d[i]);
         M->d[i] = NULL;
     }
+    free(M->d);
+    M->d=NULL;
     free(M);
     M = NULL;
     return 0;
