@@ -14,12 +14,12 @@ int main() {
     float alpha = 0;
     float reg = 1e-2;
     float learning_rate = 0.01;
-    int minibatch_size = 9;
-    int epochs = 1;
+    int minibatch_size = 300;
+    int epochs = 20;
     TwoDMatrix* training_data = matrixMalloc(sizeof(TwoDMatrix));
-    training_data = load2DMatrixFromFile("test_data/X.txt");
+    training_data = load2DMatrixFromFile("test_data/training_data.txt");
     TwoDMatrix* correct_labels = matrixMalloc(sizeof(TwoDMatrix));
-    correct_labels = load2DMatrixFromFile("test_data/y.txt");
+    correct_labels = load2DMatrixFromFile("test_data/correct_labels.txt");
     parameters* train_params = malloc(sizeof(parameters));
     train_params = initTrainParameters(training_data, correct_labels,
         minibatch_size, // Size of the minibatch of training examples

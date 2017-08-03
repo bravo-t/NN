@@ -19,9 +19,9 @@ int init2DMatrix(TwoDMatrix* M, int height, int width) {
     if (M->initialized) return 0;
     M->height = height;
     M->width = width;
-    float** data = (float**) malloc(sizeof(float*)*height);
+    float** data = (float**) calloc(height, sizeof(float*));
     for(int i = 0; i<height;i++) {
-        data[i] = (float*) malloc(sizeof(float)*width);
+        data[i] = (float*) calloc(width,sizeof(float));
     }
     M->d = data;
     M->initialized = true;
@@ -31,9 +31,9 @@ int init2DMatrix(TwoDMatrix* M, int height, int width) {
 int init2DMatrixNormRand(TwoDMatrix* M, int height, int width, float mean, float std) {
     M->height = height;
     M->width = width;
-    float** data = (float**) malloc(sizeof(float*)*height);
+    float** data = (float**) calloc(height,sizeof(float*));
     for(int i = 0; i<height;i++) {
-        data[i] = (float*) malloc(sizeof(float)*width);
+        data[i] = (float*) calloc(width,sizeof(float));
         for(int j=0;j<width;j++) {
             data[i][j] = random_normal(mean,std);
         }
@@ -45,9 +45,9 @@ int init2DMatrixNormRand(TwoDMatrix* M, int height, int width, float mean, float
 int init2DMatrixZero(TwoDMatrix* M, int height, int width) {
     M->height = height;
     M->width = width;
-    float** data = (float**) malloc(sizeof(float*)*height);
+    float** data = (float**) calloc(height,sizeof(float*));
     for(int i = 0; i<height;i++) {
-        data[i] = (float*) malloc(sizeof(float)*width);
+        data[i] = (float*) calloc(width,sizeof(float));
         for(int j=0;j<width;j++) {
             data[i][j] = 0;
         }
@@ -72,7 +72,7 @@ int destroy2DMatrix(TwoDMatrix* M) {
         M->d[i] = NULL;
     }
     free(M->d);
-    M->d=NULL;
+    M->d = NULL;
     free(M);
     M = NULL;
     return 0;

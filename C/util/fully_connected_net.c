@@ -138,7 +138,7 @@ int train(parameters* network_params) {
             int data_end = (iteration+1)*minibatch_size-1;
             chop2DMatrix(training_data,data_start,data_end,X);
             // Forward propagation
-            TwoDMatrix* layer_X = matrixMalloc(sizeof(TwoDMatrix));
+            TwoDMatrix* layer_X = NULL;
             layer_X = X;
             for(int i=0;i<network_depth;i++) {
                 affineLayerForward(layer_X,Ws[i],bs[i],Hs[i]);
@@ -153,6 +153,7 @@ int train(parameters* network_params) {
                 debugPrintMatrix(Hs[i]);
                 layer_X = Hs[i];
             }
+            
             
             float data_loss = softmaxLoss(Hs[network_depth-1], correct_labels, dHs[network_depth-1]);
             debugPrintMatrix(dHs[network_depth-1]);
@@ -218,13 +219,20 @@ int train(parameters* network_params) {
     free(dbs);
     free(Hs);
     free(dHs);
+    // Remeber to free struct parameter
+    destroy2DMatrix(network_params->X);
+    destroy2DMatrix(network_params->correct_labels);
+    free(network_params->hidden_layer_sizes);
+    network_params->hidden_layer_sizes = NULL;
+    free(network_params);
+    network_params = NULL;
     return 0;
 }
 
 int test(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, float alpha, int network_depth, TwoDMatrix* scores) {
     TwoDMatrix** Hs = malloc(sizeof(TwoDMatrix*)*network_depth);
     for(int i=0;i<network_depth;i++) Hs[i] = matrixMalloc(sizeof(TwoDMatrix));
-    TwoDMatrix* layer_X = malloc(sizeof(TwoDMatrix));
+    TwoDMatrix* layer_X = NULL;
     layer_X = X;
     for(int i=0;i<network_depth;i++) {
         affineLayerForward(layer_X,Ws[i],bs[i],Hs[i]);
@@ -236,6 +244,8 @@ int test(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, float alpha, int netwo
     init2DMatrix(scores,Hs[network_depth-1]->height,Hs[network_depth-1]->width);
     copyTwoDMatrix(Hs[network_depth-1],scores);
     for(int i=0;i<network_depth;i++) destroy2DMatrix(Hs[i]);
+    free(Hs);
+    Hs = NULL;
     return 0;
 }
 
