@@ -390,6 +390,51 @@ int chop2DMatrix(TwoDMatrix* M, int height_start, int height_end, TwoDMatrix* OU
     return 0;
 }
 
+int matrixYMeanVar(TwoDMatrix* M, TwoDMatrix* mean, TwoDMatrix* var) {
+    init2DMatrix(mean, 1, M->width);
+    if (var != NULL) {
+        init2DMatrix(var, 1, M->width);
+    }
+    for(int i=0;i<M->width;i++) {
+        float sum = 0;
+        for(int j=0;j<M->height;j++) {
+            sum += M->d[j][i];
+        }
+        mean->d[0][i] = sum/M->height;
+        if (var != NULL) {
+            float variance = 0;
+            for(int j=0;j<M->height;j++) {
+                variance += (M->d[j][i] - mean->d[0][i])*(M->d[j][i] - mean->d[0][i]);
+            }
+            var->d[0][i] = variance/M->height;
+        }
+    }
+    return 0;
+}
+
+int matrixXMeanVar(TwoDMatrix* M, TwoDMatrix* mean, TwoDMatrix* var) {
+    init2DMatrix(mean, M->height, 1);
+    if (var != NULL) {
+        init2DMatrix(var, M->height, 1);
+    }
+    for(int i=0;i<M->height;i++) {
+        float sum = 0;
+        for(int j=0;j<M->width;j++) {
+            sum += M->d[i][j];
+        }
+        mean->d[i][0] = sum/M->width;
+        if (var != NULL) {
+            float variance = 0;
+            for(int j=0;j<M->width;j++) {
+                variance += (M->d[i][j] - mean->d[i][0])*(M->d[i][j] - mean->d[i][0]);
+            }
+            var->d[0][i] = variance/M->width;
+        }
+    }
+    return 0;
+}
+
+
 // misc functions
 
 TwoDMatrix* load2DMatrixFromFile(char* filename) {

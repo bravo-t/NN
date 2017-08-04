@@ -46,5 +46,7 @@ float matrixError(TwoDMatrix* a, TwoDMatrix* b);
 void printMatrix(TwoDMatrix *M);
 void __debugPrintMatrix(TwoDMatrix *M, char* name);
 void checkMatrixDiff(TwoDMatrix* a, TwoDMatrix* b, float thres);
+int matrixYMeanVar(TwoDMatrix* M, TwoDMatrix* mean, TwoDMatrix* var);
+int matrixXMeanVar(TwoDMatrix* M, TwoDMatrix* mean, TwoDMatrix* var);
 
 #endif

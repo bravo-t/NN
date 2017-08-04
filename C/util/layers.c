@@ -297,3 +297,65 @@ int RMSProp(TwoDMatrix* X, TwoDMatrix* dX, TwoDMatrix* cache, float learning_rat
     return 0;
 }
 
+int batchnorm_training_forward(TwoDMatrix* M, float momentum, float eps, float gamma, float beta, TwoDMatrix* OUT, TwoDMatrix* mean_cache, TwoDMatrix* var_cache) {
+    TwoDMatrix* mean = matrixMalloc(sizeof(TwoDMatrix));
+    TwoDMatrix* var = matrixMalloc(sizeof(TwoDMatrix));
+    matrixYMeanVar(M, mean, var);
+    TwoDMatrix* M_centered = matrixMalloc(sizeof(TwoDMatrix));
+    init2DMatrix(M_centered,M->height,M->width);
+    broadcastSub(M,mean,1,M_centered);
+    TwoDMatrix* var_eps = matrixMalloc(sizeof(TwoDMatrix));
+    init2DMatrix(var_eps,var->height,var->width);
+    TwoDMatrix* std_var = matrixMalloc(sizeof(TwoDMatrix));
+    init2DMatrix(std_var,var->height,var->width);
+    elementAdd(var,eps,var_eps);
+    elementSqrt(var_eps,std_var);
+    TwoDMatrix* M_normalized = matrixMalloc(sizeof(TwoDMatrix));
+    init2DMatrix(M_normalized,M->height,M->width);
+    broadcastDiv(M_centered,std_var,1,M_normalized);
+    init2DMatrix(OUT, M->height, M->width);
+    elementMul(M_normalized,gamma,M_normalized);
+    elementAdd(M_normalized,beta,OUT);
+    TwoDMatrix* mean_scaled = matrixMalloc(sizeof(TwoDMatrix));
+    init2DMatrix(mean_scaled,mean->height,mean->width);
+    TwoDMatrix* var_scaled = matrixMalloc(sizeof(TwoDMatrix));
+    init2DMatrix(var_scaled,var->height,var->width);
+    elementMul(mean_cache,momentum,mean_cache);
+    elementMul(mean,1-momentum,mean_scaled);
+    elementwiseAdd2DMatrix(mean_cache,mean_scaled,mean_cache);
+    elementMul(var_cache,momentum,var_cache);
+    elementMul(var,1-momentum,var_scaled);
+    elementwiseAdd2DMatrix(var_cache,var_scaled,var_cache);
+    destroy2DMatrix(mean);
+    destroy2DMatrix(var);
+    destroy2DMatrix(M_centered);
+    destroy2DMatrix(var_eps);
+    destroy2DMatrix(std_var);
+    destroy2DMatrix(M_normalized);
+    destroy2DMatrix(mean_scaled);
+    destroy2DMatrix(var_scaled);
+    return 0;
+}
+
+int batchnorm_test_forward(TwoDMatrix* M, TwoDMatrix* mean_cache, TwoDMatrix* var_cache, float eps, float gamma, float beta, TwoDMatrix* OUT) {
+    TwoDMatrix* M_centered = matrixMalloc(sizeof(TwoDMatrix));
+    init2DMatrix(M_centered,M->height,M->width);
+    broadcastSub(M,mean_cache,1,M_centered);
+    TwoDMatrix* var_eps = matrixMalloc(sizeof(TwoDMatrix));
+    init2DMatrix(var_eps,var_cache->height,var_cache->width);
+    TwoDMatrix* std_var = matrixMalloc(sizeof(TwoDMatrix));
+    init2DMatrix(std_var,var_cache->height,var_cache->width);
+    elementAdd(var_cache,eps,var_eps);
+    elementSqrt(var_eps,std_var);
+    TwoDMatrix* M_normalized = matrixMalloc(sizeof(TwoDMatrix));
+    init2DMatrix(M_normalized,M->height,M->width);
+    broadcastDiv(M_centered,std_var,1,M_normalized);
+    init2DMatrix(OUT, M->height, M->width);
+    elementMul(M_normalized,gamma,M_normalized);
+    elementAdd(M_normalized,beta,OUT);
+    return 0;
+}
+
+int batchnorm_backward() {
+    
+}
