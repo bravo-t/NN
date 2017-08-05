@@ -297,7 +297,7 @@ int RMSProp(TwoDMatrix* X, TwoDMatrix* dX, TwoDMatrix* cache, float learning_rat
     return 0;
 }
 
-int batchnorm_training_forward(TwoDMatrix* M, float momentum, float eps, float gamma, float beta, TwoDMatrix* OUT, TwoDMatrix* mean_cache, TwoDMatrix* var_cache) {
+int batchnorm_training_forward(TwoDMatrix* M, float momentum, float eps, TwoDMatrix* gamma, TwoDMatrix* beta, TwoDMatrix* OUT, TwoDMatrix* mean_cache, TwoDMatrix* var_cache) {
     TwoDMatrix* mean = matrixMalloc(sizeof(TwoDMatrix));
     TwoDMatrix* var = matrixMalloc(sizeof(TwoDMatrix));
     matrixYMeanVar(M, mean, var);
@@ -314,8 +314,8 @@ int batchnorm_training_forward(TwoDMatrix* M, float momentum, float eps, float g
     init2DMatrix(M_normalized,M->height,M->width);
     broadcastDiv(M_centered,std_var,1,M_normalized);
     init2DMatrix(OUT, M->height, M->width);
-    elementMul(M_normalized,gamma,M_normalized);
-    elementAdd(M_normalized,beta,OUT);
+    broadcastMul(M_normalized,gamma,1,M_normalized);
+    broadcastAdd(M_normalized,beta,1,OUT);
     TwoDMatrix* mean_scaled = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(mean_scaled,mean->height,mean->width);
     TwoDMatrix* var_scaled = matrixMalloc(sizeof(TwoDMatrix));
@@ -337,7 +337,7 @@ int batchnorm_training_forward(TwoDMatrix* M, float momentum, float eps, float g
     return 0;
 }
 
-int batchnorm_test_forward(TwoDMatrix* M, TwoDMatrix* mean_cache, TwoDMatrix* var_cache, float eps, float gamma, float beta, TwoDMatrix* OUT) {
+int batchnorm_test_forward(TwoDMatrix* M, TwoDMatrix* mean_cache, TwoDMatrix* var_cache, float eps, TwoDMatrix* gamma, TwoDMatrix* beta, TwoDMatrix* OUT) {
     TwoDMatrix* M_centered = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(M_centered,M->height,M->width);
     broadcastSub(M,mean_cache,1,M_centered);
@@ -351,8 +351,8 @@ int batchnorm_test_forward(TwoDMatrix* M, TwoDMatrix* mean_cache, TwoDMatrix* va
     init2DMatrix(M_normalized,M->height,M->width);
     broadcastDiv(M_centered,std_var,1,M_normalized);
     init2DMatrix(OUT, M->height, M->width);
-    elementMul(M_normalized,gamma,M_normalized);
-    elementAdd(M_normalized,beta,OUT);
+    broadcastMul(M_normalized,gamma,1,M_normalized);
+    broadcastAdd(M_normalized,beta,1,OUT);
     return 0;
 }
 

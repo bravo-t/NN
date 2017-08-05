@@ -56,6 +56,20 @@ int init2DMatrixZero(TwoDMatrix* M, int height, int width) {
     return 0;
 }
 
+int init2DMatrixOne(TwoDMatrix* M, int height, int width) {
+    M->height = height;
+    M->width = width;
+    float** data = (float**) calloc(height,sizeof(float*));
+    for(int i = 0; i<height;i++) {
+        data[i] = (float*) calloc(width,sizeof(float));
+        for(int j=0;j<width;j++) {
+            data[i][j] = 1;
+        }
+    }
+    M->d = data;
+    return 0;
+}
+
 int copyTwoDMatrix(TwoDMatrix* M, TwoDMatrix* OUT) {
     int retval = init2DMatrix(OUT, M->height, M->width);
     for(int i=0;i<M->height;i++) {

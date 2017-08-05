@@ -17,6 +17,7 @@ float random_normal(float mean, float std);
 int init2DMatrix(TwoDMatrix* M, int height, int width);
 int init2DMatrixNormRand(TwoDMatrix* M, int height, int width, float mean, float std);
 int init2DMatrixZero(TwoDMatrix* M, int height, int width);
+int init2DMatrixOne(TwoDMatrix* M, int height, int width);
 int copyTwoDMatrix(TwoDMatrix* M, TwoDMatrix* OUT);
 int destroy2DMatrix(TwoDMatrix* M);
 int transpose2DMatrix(TwoDMatrix* M,TwoDMatrix* OUT);
