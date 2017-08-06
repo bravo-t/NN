@@ -356,6 +356,6 @@ int batchnorm_test_forward(TwoDMatrix* M, TwoDMatrix* mean_cache, TwoDMatrix* va
     return 0;
 }
 
-int batchnorm_backward() {
+int batchnorm_backward(TwoDMatrix* dOUT, TwoDMatrix* dM, TwoDMatrix* dgamma, TwoDMatrix* dbeta) {
     
 }
