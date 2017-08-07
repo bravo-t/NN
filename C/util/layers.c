@@ -385,7 +385,32 @@ int batchnorm_backward(TwoDMatrix* dOUT, TwoDMatrix* M, TwoDMatrix* M_normalized
     TwoDMatrix* M_mu_mean = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(M_mu_mean,mean->height,mean->width);
     matrixYMeanVar(M_mu, M_mu_mean, NULL);
+    TwoDMatrix* var_tmp = matrixMalloc(sizeof(TwoDMatrix));
+    init2DMatrix(var_tmp,var->height,var->width);
+    elementwiseMul2DMatrix(dvar,M_mu_mean,var_tmp);
+    elementMul(var_tmp,2.0,var_tmp);
     TwoDMatrix* dmean = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(dmean, mean->height, mean->width);
-    
+    TwoDMatrix* M_tmp2 = matrixMalloc(sizeof(TwoDMatrix));
+    init2DMatrix(M_tmp2,M->height,M->width);
+    broadcastMul(dM_normalized,std_var_inv,1,M_tmp2);
+    TwoDMatrix* mean_tmp = matrixMalloc(sizeof(TwoDMatrix));
+    init2DMatrix(mean_tmp,mean->height,mean->width);
+    sumY2DMatrix(M_tmp2,mean_tmp);
+    elementMul(M_tmp2,-1.0,M_tmp2);
+    elementwiseSub2DMatrix(M_tmp2,var_tmp,dmean);
+    TwoDMatrix* dM1 = matrixMalloc(sizeof(TwoDMatrix));
+    init2DMatrix(dM1,M->height,M->width);
+    broadcastMul(dM_normalized,std_var_inv,1,dM1);
+    TwoDMatrix* dM2 = matrixMalloc(sizeof(TwoDMatrix));
+    init2DMatrix(dM2,M->height,M->width);
+    broadcastMul(M_mu,dvar,1,dM2);
+    elementMul(dM2,2.0,dM2);
+    elementDiv(dM2,dM2->height,dM2);
+    elementwiseAdd2DMatrix(dM1,dM2,dM);
+    TwoDMatrix* dmean_tmp = matrixMalloc(sizeof(TwoDMatrix));
+    init2DMatrix(dmean_tmp,dmean->height,dmean->width);
+    elementDiv(dmean,M->height,dmean_tmp);
+    broadcastAdd(dM,dmean_tmp,1,dM);
+    return 0;
 }
