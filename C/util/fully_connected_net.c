@@ -79,6 +79,8 @@ int train(parameters* network_params) {
     int network_depth = network_params->network_depth;
     int* hidden_layer_sizes = network_params->hidden_layer_sizes;
     int epochs = network_params->epochs;
+
+    bool verbose = true;
     // Below are control variables for optimizers
     bool use_momentum_update = true;
     bool use_nag_update = false;
@@ -86,6 +88,8 @@ int train(parameters* network_params) {
     float mu = 0.5f; // or 0.5,0.95, 0.99
     float decay_rate = 0.99f; // or with more 9s in it
     float eps = 1e-6;
+
+    bool use_batchnorm = false;
     // Initialize all learnable parameters
     printf("INFO: Initializing all required learnable parameters for the network\n");
     int number_of_weights = 0;
@@ -216,7 +220,7 @@ int train(parameters* network_params) {
             debugPrintMatrix(dHs[network_depth-1]);
             float reg_loss = L2RegLoss(Ws, network_depth, reg_strength);
             float loss = data_loss + reg_loss;
-            if (epoch % 1000 == 0 && iteration == 0) {
+            if ((epoch % 1000 == 0 && iteration == 0) || verbose) {
                 printf("INFO: Epoch %d, data loss: %f, regulization loss: %f, total loss: %f\n",
                     epoch, data_loss, reg_loss, loss);
             }
