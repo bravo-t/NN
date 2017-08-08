@@ -118,6 +118,15 @@ int train(parameters* network_params) {
     TwoDMatrix** vb_prevs = NULL;
     TwoDMatrix** Wcaches = NULL;
     TwoDMatrix** bcaches = NULL;
+    // Batch normalization layers;
+    TwoDMatrix** gammas = NULL;
+    TwoDMatrix** betas = NULL;
+    TwoDMatrix** dgammas = NULL;
+    TwoDMatrix** dbetas = NULL;
+    TwoDMatrix** mean_caches = NULL;
+    TwoDMatrix** var_caches = NULL;
+    TwoDMatrix** means = NULL;
+    TwoDMatrix** vars = NULL;
 
     if (use_momentum_update) {
         printf("INFO: Momentum update is used\n");
@@ -135,6 +144,17 @@ int train(parameters* network_params) {
         printf("INFO: RMSProp is used\n");
         Wcaches = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
         bcaches = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+    }
+    if (use_batchnorm) {
+        printf("INFO: Batch normalization is used\n");
+        gammas = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        betas = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        dgammas = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        dbetas = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        means = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        vars = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        mean_caches = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        var_caches = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
     }
 
     int former_width = training_data->width;
@@ -180,6 +200,24 @@ int train(parameters* network_params) {
             init2DMatrixZero(Wcaches[i],former_width,hidden_layer_sizes[i]);
             bcaches[i] = matrixMalloc(sizeof(TwoDMatrix));
             init2DMatrixZero(bcaches[i],1,hidden_layer_sizes[i]);
+        }
+        if (use_batchnorm) {
+            gammars[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrixOne(gammas[i],1,hidden_layer_sizes[i]);
+            betas[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrixZero(betas[i],1,hidden_layer_sizes[i]);
+            dgammars[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrix(dgammas[i],1,hidden_layer_sizes[i]);
+            dbetas[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrix(dbetas[i],1,hidden_layer_sizes[i]);
+            means[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrix(means[i],1,hidden_layer_sizes[i]);
+            vars[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrix(vars[i],1,hidden_layer_sizes[i]);
+            mean_caches[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrixZero(mean_caches[i],1,hidden_layer_sizes[i]);
+            var_caches[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrixZero(var_caches[i],1,hidden_layer_sizes[i]);
         }
         former_width = hidden_layer_sizes[i];
     }

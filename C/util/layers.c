@@ -347,6 +347,10 @@ int batchnorm_test_forward(TwoDMatrix* M, TwoDMatrix* mean_cache, TwoDMatrix* va
     init2DMatrix(OUT, M->height, M->width);
     broadcastMul(M_normalized,gamma,1,M_normalized);
     broadcastAdd(M_normalized,beta,1,OUT);
+    destroy2DMatrix(M_centered);
+    destroy2DMatrix(var_eps);
+    destroy2DMatrix(std_var);
+    destroy2DMatrix(M_normalized);
     return 0;
 }
 
@@ -412,5 +416,20 @@ int batchnorm_backward(TwoDMatrix* dOUT, TwoDMatrix* M, TwoDMatrix* M_normalized
     init2DMatrix(dmean_tmp,dmean->height,dmean->width);
     elementDiv(dmean,M->height,dmean_tmp);
     broadcastAdd(dM,dmean_tmp,1,dM);
+    destroy2DMatrix(dM_normalized);
+    destroy2DMatrix(M_mu);
+    destroy2DMatrix(std_var);
+    destroy2DMatrix(std_var_inv);
+    destroy2DMatrix(std_var_inv_cube);
+    destroy2DMatrix(M_tmp);
+    destroy2DMatrix(dvar);
+    destroy2DMatrix(M_mu_mean);
+    destroy2DMatrix(var_tmp);
+    destroy2DMatrix(dmean);
+    destroy2DMatrix(M_tmp2);
+    destroy2DMatrix(mean_tmp);
+    destroy2DMatrix(dM1);
+    destroy2DMatrix(dM2);
+    destroy2DMatrix(dmean_tmp);
     return 0;
 }
