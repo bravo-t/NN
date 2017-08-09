@@ -90,6 +90,7 @@ int train(parameters* network_params) {
     float eps = 1e-6;
 
     bool use_batchnorm = false;
+    float batchnorm_momentum = 0.9f;
     // Initialize all learnable parameters
     printf("INFO: Initializing all required learnable parameters for the network\n");
     int number_of_weights = 0;
@@ -127,6 +128,13 @@ int train(parameters* network_params) {
     TwoDMatrix** var_caches = NULL;
     TwoDMatrix** means = NULL;
     TwoDMatrix** vars = NULL;
+    TwoDMatrix** Hs_normalized = NULL;
+    TwoDMatrix** vgammas = NULL;
+    TwoDMatrix** vgamma_prevs = NULL;
+    TwoDMatrix** vbetas = NULL;
+    TwoDMatrix** vbeta_prevs = NULL;
+    TwoDMatrix** gamma_caches = NULL;
+    TwoDMatrix** beta_caches = NULL;
 
     if (use_momentum_update) {
         printf("INFO: Momentum update is used\n");
@@ -155,6 +163,21 @@ int train(parameters* network_params) {
         vars = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
         mean_caches = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
         var_caches = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        Hs_normalized = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        if (use_momentum_update) {
+            vgammas = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+            vbetas = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        }
+        if (use_nag_update) {
+            vgammas = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+            vbetas = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+            vgamma_prevs = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+            vbeta_prevs = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        }
+        if (use_rmsprop) {
+            gamma_caches = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+            beta_caches = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        }
     }
 
     int former_width = training_data->width;
@@ -202,11 +225,11 @@ int train(parameters* network_params) {
             init2DMatrixZero(bcaches[i],1,hidden_layer_sizes[i]);
         }
         if (use_batchnorm) {
-            gammars[i] = matrixMalloc(sizeof(TwoDMatrix));
+            gammas[i] = matrixMalloc(sizeof(TwoDMatrix));
             init2DMatrixOne(gammas[i],1,hidden_layer_sizes[i]);
             betas[i] = matrixMalloc(sizeof(TwoDMatrix));
             init2DMatrixZero(betas[i],1,hidden_layer_sizes[i]);
-            dgammars[i] = matrixMalloc(sizeof(TwoDMatrix));
+            dgammas[i] = matrixMalloc(sizeof(TwoDMatrix));
             init2DMatrix(dgammas[i],1,hidden_layer_sizes[i]);
             dbetas[i] = matrixMalloc(sizeof(TwoDMatrix));
             init2DMatrix(dbetas[i],1,hidden_layer_sizes[i]);
@@ -218,6 +241,30 @@ int train(parameters* network_params) {
             init2DMatrixZero(mean_caches[i],1,hidden_layer_sizes[i]);
             var_caches[i] = matrixMalloc(sizeof(TwoDMatrix));
             init2DMatrixZero(var_caches[i],1,hidden_layer_sizes[i]);
+            Hs_normalized[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrixZero(Hs_normalized[i],minibatch_size,hidden_layer_sizes[i]);
+            if (use_momentum_update) {
+                vgammas[i] = matrixMalloc(sizeof(TwoDMatrix));
+                init2DMatrixZero(vgammas[i],1,hidden_layer_sizes[i]);
+                vbetas[i] = matrixMalloc(sizeof(TwoDMatrix));
+                init2DMatrixZero(vbetas[i],1,hidden_layer_sizes[i]);
+            }
+            if (use_nag_update) {
+                vgamma_prevs[i] = matrixMalloc(sizeof(TwoDMatrix));
+                init2DMatrixZero(vgamma_prevs[i],1,hidden_layer_sizes[i]);
+                vbeta_prevs[i] = matrixMalloc(sizeof(TwoDMatrix));
+                init2DMatrixZero(vbeta_prevs[i],1,hidden_layer_sizes[i]);
+                vgammas[i] = matrixMalloc(sizeof(TwoDMatrix));
+                init2DMatrixZero(vgammas[i],1,hidden_layer_sizes[i]);
+                vbetas[i] = matrixMalloc(sizeof(TwoDMatrix));
+                init2DMatrixZero(vbetas[i],1,hidden_layer_sizes[i]);
+            }
+            if (use_rmsprop) {
+                gamma_caches[i] = matrixMalloc(sizeof(TwoDMatrix));
+                init2DMatrixZero(gamma_caches[i],1,hidden_layer_sizes[i]);
+                beta_caches[i] = matrixMalloc(sizeof(TwoDMatrix));
+                init2DMatrixZero(beta_caches[i],1,hidden_layer_sizes[i]);
+            }
         }
         former_width = hidden_layer_sizes[i];
     }
@@ -244,6 +291,9 @@ int train(parameters* network_params) {
                 // The last layer in the network will calculate the scores
                 // So there will not be a activation function put to it
                 if (i != network_depth - 1) {
+                    if (use_batchnorm) {
+                        batchnorm_training_forward(Hs[i], batchnorm_momentum, eps, gammas[i], betas[i], Hs[i], mean_caches[i], var_caches[i], means[i], vars[i], Hs_normalized[i]);
+                    }
                     leakyReLUForward(Hs[i],alpha,Hs[i]);
                 }
                 debugPrintMatrix(layer_X);
@@ -270,6 +320,9 @@ int train(parameters* network_params) {
                 debugPrintMatrix(Hs[i]);
                 if (i != network_depth-1) {
                     leakyReLUBackward(dHs[i],Hs[i],alpha,dHs[i]);
+                    if (use_batchnorm) {
+                        batchnorm_backward(dHs[i], Hs[i], Hs_normalized[i], gammas[i], betas[i], means[i], vars[i], eps, dHs[i],  dgammas[i], dbetas[i]);
+                    }
                 }
                 debugPrintMatrix(dHs[i]);
                 if (i != 0) {
@@ -289,6 +342,9 @@ int train(parameters* network_params) {
                 if (use_momentum_update) {
                     momentumUpdate(Ws[i], dWs[i], vWs[i], mu, learning_rate, Ws[i]);
                     momentumUpdate(bs[i], dbs[i], vbs[i], mu, learning_rate, bs[i]);
+                    //if (use_batchnorm) {
+                    //    momentumUpdate(gammas[i],dgammas[i],)
+                    //}
                 } else if (use_nag_update) {
                     NAGUpdate(Ws[i], dWs[i], vWs[i], vW_prevs[i], mu, learning_rate, Ws[i]);
                     NAGUpdate(bs[i], dbs[i], vbs[i], vb_prevs[i], mu, learning_rate, bs[i]);
@@ -299,6 +355,9 @@ int train(parameters* network_params) {
                     vanillaUpdate(Ws[i],dWs[i],learning_rate,Ws[i]);
                     vanillaUpdate(bs[i],dbs[i],learning_rate,bs[i]);
                 }
+                // Let's just use normal SGD update for batchnorm parameters to make it simpler
+                vanillaUpdate(gammas[i],dgammas[i],learning_rate,gammas[i]);
+                vanillaUpdate(betas[i],dbetas[i],learning_rate,betas[i]);
             }
         }
     }
