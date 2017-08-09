@@ -356,8 +356,10 @@ int train(parameters* network_params) {
                     vanillaUpdate(bs[i],dbs[i],learning_rate,bs[i]);
                 }
                 // Let's just use normal SGD update for batchnorm parameters to make it simpler
-                vanillaUpdate(gammas[i],dgammas[i],learning_rate,gammas[i]);
-                vanillaUpdate(betas[i],dbetas[i],learning_rate,betas[i]);
+                if (use_batchnorm) {
+                    vanillaUpdate(gammas[i],dgammas[i],learning_rate,gammas[i]);
+                    vanillaUpdate(betas[i],dbetas[i],learning_rate,betas[i]);
+                }
             }
         }
     }
