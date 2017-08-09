@@ -369,7 +369,7 @@ int batchnorm_backward(TwoDMatrix* dOUT, TwoDMatrix* M, TwoDMatrix* M_normalized
     elementSqrt(std_var,std_var);
     TwoDMatrix* std_var_inv = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(std_var_inv, var->height, var->width);
-    for(int i=0;j<std_var_inv->height;i++) {
+    for(int i=0;i<std_var_inv->height;i++) {
         for(int j=0;j<std_var_inv->width;j++) {
             std_var_inv->d[i][j] = 1.0/std_var->d[i][j];
         }

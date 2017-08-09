@@ -370,6 +370,12 @@ int train(parameters* network_params) {
         minibatch_size, 
         alpha,
         labels,
+        use_batchnorm,
+        mean_caches,
+        var_caches,
+        eps,
+        gammas,
+        betas,
         correct_labels);
     printf("INFO: %f%% correct on training data\n",correctness);
     // Shutdown
@@ -426,7 +432,7 @@ int train(parameters* network_params) {
     return 0;
 }
 
-int test(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, float alpha, int network_depth, TwoDMatrix* scores) {
+int test(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, float alpha, int network_depth, bool use_batchnorm, TwoDMatrix** mean_caches, TwoDMatrix** var_caches, float eps, TwoDMatrix** gammas, TwoDMatrix** betas, TwoDMatrix* scores) {
     TwoDMatrix** Hs = malloc(sizeof(TwoDMatrix*)*network_depth);
     for(int i=0;i<network_depth;i++) Hs[i] = matrixMalloc(sizeof(TwoDMatrix));
     TwoDMatrix* layer_X = NULL;
@@ -434,6 +440,9 @@ int test(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, float alpha, int netwo
     for(int i=0;i<network_depth;i++) {
         affineLayerForward(layer_X,Ws[i],bs[i],Hs[i]);
         if (i != network_depth - 1) {
+            if (use_batchnorm) {
+                batchnorm_test_forward(Hs[i], mean_caches[i], var_caches[i], eps, gammas[i], betas[i], Hs[i]);
+            }
             leakyReLUForward(Hs[i],alpha,Hs[i]);
         }
         layer_X = Hs[i];
@@ -446,7 +455,7 @@ int test(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, float alpha, int netwo
     return 0;
 }
 
-float verifyWithTrainingData(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoDMatrix** bs, int network_depth, int minibatch_size, float alpha, int labels, TwoDMatrix* correct_labels) {
+float verifyWithTrainingData(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoDMatrix** bs, int network_depth, int minibatch_size, float alpha, int labels, bool use_batchnorm, TwoDMatrix** mean_caches, TwoDMatrix** var_caches, float eps, TwoDMatrix** gammas, TwoDMatrix** betas, TwoDMatrix* correct_labels) {
     int correct_count = 0;
     int iterations = training_data->height / minibatch_size;
     TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
@@ -455,7 +464,7 @@ float verifyWithTrainingData(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoDMat
         int data_start = i*minibatch_size;
         int data_end = (i+1)*minibatch_size-1;
         chop2DMatrix(training_data,data_start,data_end,X);
-        test(X,Ws,bs, alpha,network_depth,scores);
+        test(X,Ws,bs, alpha, network_depth, use_batchnorm, mean_caches, var_caches, eps, gammas, betas, scores);
         for(int j=data_start;j<=data_end;j++) {
             int correct_label = correct_labels->d[j][0];
             int predicted = 0;
