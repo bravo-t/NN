@@ -224,6 +224,83 @@ int main() {
     vanillaUpdate(b2_self,db2,learning_rate,b2_self);
     checkMatrixDiff(ref_b2_after_update,b2_self,thres);
 
+    TwoDMatrix* H_before_batchnorm_forward = matrixMalloc(sizeof(TwoDMatrix));
+    H_before_batchnorm_forward = load2DMatrixFromFile("test_data/H_before_batchnorm_forward.txt");
+    TwoDMatrix* gamma_before_batchnorm_forward = matrixMalloc(sizeof(TwoDMatrix));
+    gamma_before_batchnorm_forward = load2DMatrixFromFile("test_data/gamma_before_batchnorm_forward.txt");
+    TwoDMatrix* beta_before_batchnorm_forward = matrixMalloc(sizeof(TwoDMatrix));
+    beta_before_batchnorm_forward = load2DMatrixFromFile("test_data/beta_before_batchnorm_forward.txt");
+    TwoDMatrix* mean_caches_before_batchnorm_forward = matrixMalloc(sizeof(TwoDMatrix));
+    mean_caches_before_batchnorm_forward = load2DMatrixFromFile("test_data/beta_before_batchnorm_forward.txt");
+    TwoDMatrix* var_caches_before_batchnorm_forward = matrixMalloc(sizeof(TwoDMatrix));
+    var_caches_before_batchnorm_forward = load2DMatrixFromFile("test_data/beta_before_batchnorm_forward.txt");
+
+    TwoDMatrix* H_after_batchnorm_forward = matrixMalloc(sizeof(TwoDMatrix));
+    TwoDMatrix* sample_mean_after_batchnorm_forward = matrixMalloc(sizeof(TwoDMatrix));
+    TwoDMatrix* sample_var_after_batchnorm_forward = matrixMalloc(sizeof(TwoDMatrix));
+    TwoDMatrix* H_normalized_after_batchnorm_forward = matrixMalloc(sizeof(TwoDMatrix));
+    TwoDMatrix* ref_H_after_batchnorm_forward = matrixMalloc(sizeof(TwoDMatrix));
+    ref_H_after_batchnorm_forward = load2DMatrixFromFile("test_data/H_after_batchnorm_forward.txt");
+    TwoDMatrix* ref_H_normalized_after_batchnorm_forward = matrixMalloc(sizeof(TwoDMatrix));
+    ref_H_normalized_after_batchnorm_forward = load2DMatrixFromFile("test_data/H_normalized_after_batchnorm_forward.txt");
+    TwoDMatrix* ref_sample_mean_after_batchnorm_forward = matrixMalloc(sizeof(TwoDMatrix));
+    ref_sample_mean_after_batchnorm_forward = load2DMatrixFromFile("test_data/mean_after_batchnorm_forward.txt");
+    TwoDMatrix* ref_sample_var_after_batchnorm_forward = matrixMalloc(sizeof(TwoDMatrix));
+    ref_sample_var_after_batchnorm_forward = load2DMatrixFromFile("test_data/var_after_batchnorm_forward.txt");
+    TwoDMatrix* ref_mean_caches_after_batchnorm_forward = matrixMalloc(sizeof(TwoDMatrix));
+    ref_mean_mean_caches_after_batchnorm_forward = load2DMatrixFromFile("test_data/mean_after_batchnorm_forward.txt");
+    TwoDMatrix* ref_var_caches_after_batchnorm_forward = matrixMalloc(sizeof(TwoDMatrix));
+    ref_var_caches_after_batchnorm_forward = load2DMatrixFromFile("test_data/var_after_batchnorm_forward.txt");
+//    TwoDMatrix* ref__after_batchnorm_forward = matrixMalloc(sizeof(TwoDMatrix));
+//    ref__after_batchnorm_forward = load2DMatrixFromFile("test_data/_after_batchnorm_forward.txt");
+//    TwoDMatrix* ref__after_batchnorm_forward = matrixMalloc(sizeof(TwoDMatrix));
+//    ref__after_batchnorm_forward = load2DMatrixFromFile("test_data/_after_batchnorm_forward.txt");
+
+
+    batchnorm_training_forward(H_before_batchnorm_forward, 
+        0.0, 
+        1e-5, 
+        gamma_before_batchnorm_forward, 
+        beta_before_batchnorm_forward, 
+        H_after_batchnorm_forward, 
+        mean_caches_before_batchnorm_forward, 
+        var_caches_before_batchnorm_forward, 
+        sample_mean_after_batchnorm_forward, 
+        sample_var_after_batchnorm_forward, 
+        H_normalized_after_batchnorm_forward);
+
+    printf("Comparing H_after_batchnorm_forward\n");
+    checkMatrixDiff(ref_H_after_batchnorm_forward,H_after_batchnorm_forward);
+    printf("Comparing mean_caches_after_batchnorm_forward\n");
+    checkMatrixDiff(ref_mean_caches_after_batchnorm_forward,mean_caches_after_batchnorm_forward);
+    printf("Comparing var_caches_after_batchnorm_forward\n");
+    checkMatrixDiff(ref_var_caches_after_batchnorm_forward,var_caches_after_batchnorm_forward);
+    printf("Comparing sample_mean_after_batchnorm_forward\n");
+    checkMatrixDiff(ref_sample_mean_after_batchnorm_forward,sample_mean_after_batchnorm_forward);
+    printf("Comparing sample_var_after_batchnorm_forward\n");
+    checkMatrixDiff(ref_sample_var_after_batchnorm_forward,sample_var_after_batchnorm_forward);
+    printf("Comparing H_normalized_after_batchnorm_forward\n");
+    checkMatrixDiff(ref_H_normalized_after_batchnorm_forward,H_normalized_after_batchnorm_forward);
+
+    TwoDMatrix* dH_before_batchnorm_backward = matrixMalloc(sizeof(TwoDMatrix));
+    dH_before_batchnorm_backward = load2DMatrixFromFile("test_data/dH_before_batchnorm_backward.txt");
+    TwoDMatrix* ref_dgamma_after_batchnorm_backward = matrixMalloc(sizeof(TwoDMatrix));
+    ref_dgamma_after_batchnorm_backward = load2DMatrixFromFile("test_data/dgamma.txt");
+    TwoDMatrix* ref_dbeta_after_batchnorm_backward = matrixMalloc(sizeof(TwoDMatrix));
+    ref_dbeta_after_batchnorm_backward = load2DMatrixFromFile("test_data/dbeta.txt");
+    batchnorm_backward(TwoDMatrix* dOUT, 
+        TwoDMatrix* M, 
+        TwoDMatrix* M_normalized, 
+        TwoDMatrix* gamma, 
+        TwoDMatrix* beta, 
+        TwoDMatrix* mean, 
+        TwoDMatrix* var, 
+        float eps, 
+        TwoDMatrix* dM, 
+        TwoDMatrix* dgamma, 
+        TwoDMatrix* dbeta);
+
+
     destroy2DMatrix(X);
     destroy2DMatrix(correct_labels);
     return 0;

@@ -82,15 +82,15 @@ int train(parameters* network_params) {
 
     bool verbose = true;
     // Below are control variables for optimizers
-    bool use_momentum_update = true;
+    bool use_momentum_update = false;
     bool use_nag_update = false;
     bool use_rmsprop = false;
     float mu = 0.5f; // or 0.5,0.95, 0.99
     float decay_rate = 0.99f; // or with more 9s in it
     float eps = 1e-6;
 
-    bool use_batchnorm = false;
-    float batchnorm_momentum = 0.9f;
+    bool use_batchnorm = true;
+    float batchnorm_momentum = 0.5f;
     // Initialize all learnable parameters
     printf("INFO: Initializing all required learnable parameters for the network\n");
     int number_of_weights = 0;
@@ -292,6 +292,8 @@ int train(parameters* network_params) {
                 // So there will not be a activation function put to it
                 if (i != network_depth - 1) {
                     if (use_batchnorm) {
+                        // 
+                        // is an intermediate variable need here? ---------------------------------------v
                         batchnorm_training_forward(Hs[i], batchnorm_momentum, eps, gammas[i], betas[i], Hs[i], mean_caches[i], var_caches[i], means[i], vars[i], Hs_normalized[i]);
                     }
                     leakyReLUForward(Hs[i],alpha,Hs[i]);
