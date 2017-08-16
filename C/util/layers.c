@@ -357,6 +357,10 @@ int batchnorm_test_forward(TwoDMatrix* M, TwoDMatrix* mean_cache, TwoDMatrix* va
 int batchnorm_backward(TwoDMatrix* dOUT, TwoDMatrix* M, TwoDMatrix* M_normalized, TwoDMatrix* gamma, TwoDMatrix* beta, TwoDMatrix* mean, TwoDMatrix* var, float eps, TwoDMatrix* dM, TwoDMatrix* dgamma, TwoDMatrix* dbeta) {
     init2DMatrix(dbeta,beta->height,beta->width);
     sumY2DMatrix(dOUT,dbeta);
+    init2DMatrix(dgamma,gamma->height,gamma->width);
+    TwoDMatrix* dOUT_M_normalized = matrixMalloc(sizeof(TwoDMatrix));
+    elementwiseMul2DMatrix(dOUT, M_normalized,dOUT_M_normalized);
+    sumY2DMatrix(dOUT_M_normalized,dgamma);
     TwoDMatrix* dM_normalized = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(dM_normalized, M_normalized->height, M_normalized->width);
     broadcastMul(dOUT,gamma,1,dM_normalized);
@@ -431,5 +435,6 @@ int batchnorm_backward(TwoDMatrix* dOUT, TwoDMatrix* M, TwoDMatrix* M_normalized
     destroy2DMatrix(dM1);
     destroy2DMatrix(dM2);
     destroy2DMatrix(dmean_tmp);
+    destroy2DMatrix(dOUT_M_normalized);
     return 0;
 }
