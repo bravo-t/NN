@@ -14,6 +14,15 @@ typedef struct {
     int epochs;
 	int network_depth; // Network depth
 	int* hidden_layer_sizes; // Sizes of these hidden layers
+    bool verbose;
+    bool use_momentum_update;
+    bool use_nag_update;
+    bool use_rmsprop;
+    float mu;
+    float decay_rate;
+    float eps;
+    bool use_batchnorm;
+    float batchnorm_momentum;
 } parameters;
 
 parameters* initTrainParameters(TwoDMatrix* X, 

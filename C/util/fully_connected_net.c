@@ -89,7 +89,7 @@ int train(parameters* network_params) {
     float decay_rate = 0.99f; // or with more 9s in it
     float eps = 1e-6;
 
-    bool use_batchnorm = true;
+    bool use_batchnorm = false;
     float batchnorm_momentum = 0.5f;
     // Initialize all learnable parameters
     printf("INFO: Initializing all required learnable parameters for the network\n");
@@ -382,6 +382,10 @@ int train(parameters* network_params) {
         betas,
         correct_labels);
     printf("INFO: %f%% correct on training data\n",correctness);
+
+    // Dump the whole network configuration for testing
+    
+
     // Shutdown
     destroy2DMatrix(X);
     for(int i=0;i<network_depth;i++) {
