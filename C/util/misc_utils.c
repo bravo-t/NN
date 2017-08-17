@@ -105,7 +105,7 @@ int dumpNetworkConfig(int network_depth, int alpha, TwoDMatrix** Ws, TwoDMatrix*
     return 0;
 }
 
-int loadLearnableParams(char* dir, int* network_depth, int* alpha, TwoDMatrix** Ws, TwoDMatrix** bs, bool* use_batchnorm, TwoDMatrix** mean_caches, TwoDMatrix** var_caches, TwoDMatrix** gammas, TwoDMatrix** betas, float* batchnorm_eps) {
+int loadNetworkConfig(char* dir, int* network_depth, int* alpha, TwoDMatrix** Ws, TwoDMatrix** bs, bool* use_batchnorm, TwoDMatrix** mean_caches, TwoDMatrix** var_caches, TwoDMatrix** gammas, TwoDMatrix** betas, float* batchnorm_eps) {
     int file_name_length = strlen(dir) + strlen("/network.params") + 10;
     char* filename = malloc(sizeof(char)*file_name_length);
     strcpy(filename,dir);
@@ -176,5 +176,44 @@ parameters* readNetworkConfigFile(char* filename) {
         exit(1);
     }
     parameters* network_params = malloc(sizeof(parameters));
+    // Assign default values 
     
+    char key_values[2][8192];
+    bool network_depth_defined = false;
+    while (! feof(fp)) {
+        getKeyValueFromFile(fp,key_values);
+        if (! strcmp(key_values[0],"training_data")) {
+            network_params->X = load2DMatrixFromFile(key_values[1]);
+        } else if (! strcmp(key_values[0],"correct_labels")) {
+            network_params->correct_labels = load2DMatrixFromFile(key_values[1]);
+        } else if (! strcmp(key_values[0],"hidden_layer_sizes")) {
+            int layers[8192];
+            int network_depth = 0;
+            for(token = strsep(&key_values[1], " "); token != NULL; token = strsep(&key_values[1], " ")) {
+                if (token[0] != '\0') {
+                    network_depth++;
+                    layers[network_depth] = strtol(token,NULL,10);;
+                }
+            }
+            network_params->hidden_layer_sizes = (int*) malloc(sizeof(int)*network_depth);
+            for(int i=0;i<network_depth;i++) {
+                network_params->hidden_layer_sizes[i] = layers[i];
+            }
+            network_params->network_depth = network_depth;
+        } else if (! strcmp(key_values[0],"")) {
+
+        } else if (! strcmp(key_values[0],"")) {
+
+        } else if (! strcmp(key_values[0],"")) {
+
+        } else if (! strcmp(key_values[0],"")) {
+
+        } else if (! strcmp(key_values[0],"")) {
+
+        } else if (! strcmp(key_values[0],"")) {
+
+        } else if (! strcmp(key_values[0],"")) {
+
+        } else 
+    }
 }
