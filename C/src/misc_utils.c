@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <malloc.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -130,19 +131,23 @@ void getKeyValueFromFile(FILE* fp, char** retval) {
         }
     }
     char* token=strsep(&line,delim);
-    printf("DEBUG: token=%s\n",token);
+    //printf("DEBUG: token=%s,line=%s\n",token,line);
     while (token[0] == '\0' || token[0] == ' ' || token[0] == '=') {
         token=strsep(&line,delim);
-        printf("DEBUG: token=%s\n",token);
+        //printf("DEBUG: token=%s,line=%s\n",token,line);
     }
     strcpy(retval[0],token);
     token=strsep(&line,delim);
-    printf("DEBUG: token=%s\n",token);
+    //printf("DEBUG: token=%s,line=%s\n",token,line);
     while (token[0] == '\0' || token[0] == ' ' || token[0] == '=') {
         token=strsep(&line,delim);
-        printf("DEBUG: token=%s\n",token);
+        //printf("DEBUG: token=%s,line=%s\n",token,line);
     }
-    strcpy(retval[1],token);
+    if (line != NULL) {
+        strcpy(retval[1],strcat(token,line));
+    } else {
+        strcpy(retval[1],token);
+    }
 }
 
 
