@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "matrix_type.h"
-#include "misc_utils.h"
 #include "matrix_operations.h"
 
 int affineLayerForward(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* b, TwoDMatrix* OUT) {

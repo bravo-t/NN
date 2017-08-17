@@ -23,21 +23,15 @@ typedef struct {
     float eps;
     bool use_batchnorm;
     float batchnorm_momentum;
+    float batchnorm_eps;
+    char* params_save_dir;
+    char* mode;
 } parameters;
 
-parameters* initTrainParameters(TwoDMatrix* X, 
-    TwoDMatrix* correct_labels, 
-    int minibatch_size, 
-    int labels, 
-    float learning_rate, 
-    float reg_strength, 
-    float alpha, 
-    int epochs,
-    int network_depth, ...);
-
+parameters* readNetworkConfigFile(char* filename);
 int train(parameters* network_params);
-int test(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, float alpha, int network_depth, bool use_batchnorm, TwoDMatrix** mean_caches, TwoDMatrix** var_caches, float eps, TwoDMatrix** gammas, TwoDMatrix** betas, TwoDMatrix* scores);
+int selftest(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, float alpha, int network_depth, bool use_batchnorm, TwoDMatrix** mean_caches, TwoDMatrix** var_caches, float eps, TwoDMatrix** gammas, TwoDMatrix** betas, TwoDMatrix* scores);
 float verifyWithTrainingData(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoDMatrix** bs, int network_depth, int minibatch_size, float alpha, int labels, bool use_batchnorm, TwoDMatrix** mean_caches, TwoDMatrix** var_caches, float eps, TwoDMatrix** gammas, TwoDMatrix** betas, TwoDMatrix* correct_labels);
-
+int test(parameters* network_params);
 
 #endif

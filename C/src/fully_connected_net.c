@@ -4,57 +4,11 @@
 #include <malloc.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <string.h>
 #include "matrix_operations.h"
-#include "misc_utils.h"
 #include "layers.h"
+#include "misc_utils.h"
 #include "fully_connected_net.h"
-
-//int fullyConnectedNets(TwoDMatrix* X, int minibatch_size) {
-//
-//}
-
-parameters* initTrainParameters(TwoDMatrix* X, 
-    TwoDMatrix* correct_labels, 
-    int minibatch_size, 
-    int labels, 
-    float learning_rate, 
-    float reg_strength, 
-    float alpha, 
-    int epochs,
-    int network_depth, ...) {
-    va_list size_configs;
-    int* layer_sizes = malloc(sizeof(int)*network_depth);
-    va_start(size_configs,network_depth);
-    for(int i=0;i<network_depth;i++) {
-        layer_sizes[i] = va_arg(size_configs,int);
-    }
-    va_end(size_configs);
-    // The last layer is the label layer, so you don't have control on the size of it
-    layer_sizes[network_depth-1] = labels;
-
-    printf("INFO: Setting up basic parameters for the network\n");
-    printf("INFO: Sizes of networks are: ");
-    for(int i=0;i<network_depth;i++) {
-        printf("%d ",layer_sizes[i]);
-    }
-    printf("\n");
-    parameters* network_params = malloc(sizeof(parameters));
-    if(network_params == NULL) {
-        printf("ERROR: Cannot allocate memory for parameters, exiting...\n");
-        exit(1);
-    }
-    network_params->X = X;
-    network_params->correct_labels = correct_labels;
-    network_params->minibatch_size = minibatch_size;
-    network_params->labels = labels;
-    network_params->reg_strength = reg_strength;
-    network_params->alpha = alpha;
-    network_params->learning_rate = learning_rate;
-    network_params->epochs = epochs;
-    network_params->network_depth = network_depth;
-    network_params->hidden_layer_sizes = layer_sizes;
-    return network_params;
-}
 
 /*
  How will the size of the Ws and Hs determined?
@@ -80,17 +34,18 @@ int train(parameters* network_params) {
     int* hidden_layer_sizes = network_params->hidden_layer_sizes;
     int epochs = network_params->epochs;
 
-    bool verbose = true;
+    bool verbose = network_params->verbose;
     // Below are control variables for optimizers
-    bool use_momentum_update = false;
-    bool use_nag_update = false;
-    bool use_rmsprop = false;
-    float mu = 0.5f; // or 0.5,0.95, 0.99
-    float decay_rate = 0.99f; // or with more 9s in it
-    float eps = 1e-6;
+    bool use_momentum_update =  network_params->use_momentum_update;
+    bool use_nag_update =  network_params->use_nag_update;
+    bool use_rmsprop =  network_params->use_rmsprop;
+    float mu =  network_params->mu; // or 0.5,0.95, 0.99
+    float decay_rate =  network_params->decay_rate; // or with more 9s in it
+    float eps =  network_params->eps;
 
-    bool use_batchnorm = false;
-    float batchnorm_momentum = 0.5f;
+    bool use_batchnorm =  network_params->use_batchnorm;
+    float batchnorm_momentum =  network_params->batchnorm_momentum;
+    float batchnorm_eps =  network_params->batchnorm_eps;
     // Initialize all learnable parameters
     printf("INFO: Initializing all required learnable parameters for the network\n");
     int number_of_weights = 0;
@@ -292,9 +247,7 @@ int train(parameters* network_params) {
                 // So there will not be a activation function put to it
                 if (i != network_depth - 1) {
                     if (use_batchnorm) {
-                        // 
-                        // is an intermediate variable need here? ---------------------------------------v
-                        batchnorm_training_forward(Hs[i], batchnorm_momentum, eps, gammas[i], betas[i], Hs[i], mean_caches[i], var_caches[i], means[i], vars[i], Hs_normalized[i]);
+                        batchnorm_training_forward(Hs[i], batchnorm_momentum, batchnorm_eps, gammas[i], betas[i], Hs[i], mean_caches[i], var_caches[i], means[i], vars[i], Hs_normalized[i]);
                     }
                     leakyReLUForward(Hs[i],alpha,Hs[i]);
                 }
@@ -323,7 +276,7 @@ int train(parameters* network_params) {
                 if (i != network_depth-1) {
                     leakyReLUBackward(dHs[i],Hs[i],alpha,dHs[i]);
                     if (use_batchnorm) {
-                        batchnorm_backward(dHs[i], Hs[i], Hs_normalized[i], gammas[i], betas[i], means[i], vars[i], eps, dHs[i],  dgammas[i], dbetas[i]);
+                        batchnorm_backward(dHs[i], Hs[i], Hs_normalized[i], gammas[i], betas[i], means[i], vars[i], batchnorm_eps, dHs[i],  dgammas[i], dbetas[i]);
                     }
                 }
                 debugPrintMatrix(dHs[i]);
@@ -384,7 +337,7 @@ int train(parameters* network_params) {
     printf("INFO: %f%% correct on training data\n",correctness);
 
     // Dump the whole network configuration for testing
-    
+    dumpNetworkConfig(network_depth, alpha, Ws, bs, use_batchnorm, mean_caches, var_caches, gammas, betas, batchnorm_eps, network_params->params_save_dir);
 
     // Shutdown
     destroy2DMatrix(X);
@@ -434,13 +387,17 @@ int train(parameters* network_params) {
     destroy2DMatrix(network_params->X);
     destroy2DMatrix(network_params->correct_labels);
     free(network_params->hidden_layer_sizes);
+    free(network_params->mode);
+    free(network_params->params_save_dir);
     network_params->hidden_layer_sizes = NULL;
+    network_params->params_save_dir = NULL;
+    network_params->mode = NULL;
     free(network_params);
     network_params = NULL;
     return 0;
 }
 
-int test(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, float alpha, int network_depth, bool use_batchnorm, TwoDMatrix** mean_caches, TwoDMatrix** var_caches, float eps, TwoDMatrix** gammas, TwoDMatrix** betas, TwoDMatrix* scores) {
+int selftest(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, float alpha, int network_depth, bool use_batchnorm, TwoDMatrix** mean_caches, TwoDMatrix** var_caches, float eps, TwoDMatrix** gammas, TwoDMatrix** betas, TwoDMatrix* scores) {
     TwoDMatrix** Hs = malloc(sizeof(TwoDMatrix*)*network_depth);
     for(int i=0;i<network_depth;i++) Hs[i] = matrixMalloc(sizeof(TwoDMatrix));
     TwoDMatrix* layer_X = NULL;
@@ -472,7 +429,7 @@ float verifyWithTrainingData(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoDMat
         int data_start = i*minibatch_size;
         int data_end = (i+1)*minibatch_size-1;
         chop2DMatrix(training_data,data_start,data_end,X);
-        test(X,Ws,bs, alpha, network_depth, use_batchnorm, mean_caches, var_caches, eps, gammas, betas, scores);
+        selftest(X,Ws,bs, alpha, network_depth, use_batchnorm, mean_caches, var_caches, eps, gammas, betas, scores);
         for(int j=data_start;j<=data_end;j++) {
             int correct_label = correct_labels->d[j][0];
             int predicted = 0;
@@ -490,4 +447,167 @@ float verifyWithTrainingData(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoDMat
     destroy2DMatrix(X);
     destroy2DMatrix(scores);
     return 100.0f*correct_count/(iterations*minibatch_size);
+}
+
+int test(parameters* network_params) {
+    TwoDMatrix** Ws = NULL;
+    TwoDMatrix** bs = NULL;
+    TwoDMatrix* test_data = network_params->X;
+    float alpha;
+    int network_depth;
+    bool use_batchnorm;
+    float batchnorm_eps;
+    TwoDMatrix** gammas = NULL;
+    TwoDMatrix** betas = NULL;
+    TwoDMatrix** mean_caches = NULL;
+    TwoDMatrix** var_caches = NULL;
+    loadNetworkConfig(network_params->params_save_dir, &network_depth, &alpha, Ws, bs, &use_batchnorm, mean_caches, var_caches, gammas, betas, &batchnorm_eps);
+    TwoDMatrix* scores = matrixMalloc(sizeof(TwoDMatrix));
+    selftest(test_data,Ws,bs, alpha, network_depth, use_batchnorm, mean_caches, var_caches, batchnorm_eps, gammas, betas, scores);
+    return 0;
+}
+
+parameters* readNetworkConfigFile(char* filename) {
+    FILE* fp = fopen(filename,"r");
+    if (fp == NULL) {
+        printf("ERROR: Cannot open %s to read\n",filename);
+        exit(1);
+    }
+    parameters* network_params = malloc(sizeof(parameters));
+    // Assign default values 
+    network_params->reg_strength = 1e-2;
+    network_params->learning_rate = 0.01f;
+    network_params->alpha = 0.0f;
+    network_params->verbose = false;
+    network_params->use_momentum_update = false;
+    network_params->use_nag_update = false;
+    network_params->use_rmsprop = false;
+    network_params->mu = 0.5f;
+    network_params->decay_rate = 0.99f;
+    network_params->eps = 1e-6;
+    network_params->use_batchnorm = false;
+    network_params->batchnorm_momentum = 0.5f;
+    network_params->batchnorm_eps = 1e-6;
+
+    char** key_values = malloc(sizeof(char*)*2);
+    key_values[0] = (char*) malloc(sizeof(char)*8192);
+    key_values[1] = (char*) malloc(sizeof(char)*8192);
+    bool mode_defined = false;
+    bool params_dir_defined = false;
+    bool training_data_defined = false;
+    bool correct_labels_defined = false;
+    bool hidden_layer_sizes_defined = false;
+    bool labels_defined = false;
+    bool epochs_defined = false;
+    bool minibatch_defined = false;
+    while (! feof(fp)) {
+        key_values[0][0] = '\0';
+        key_values[1][0] = '\0';
+        getKeyValueFromFile(fp,key_values);
+        if (key_values[0][0] == '#') {
+            continue;
+        }
+        if (! strcmp(key_values[0],"data_set")) {
+            network_params->X = load2DMatrixFromFile(key_values[1]);
+            training_data_defined = true;
+        } else if (! strcmp(key_values[0],"correct_labels")) {
+            network_params->correct_labels = load2DMatrixFromFile(key_values[1]);
+            correct_labels_defined = true;
+        } else if (! strcmp(key_values[0],"hidden_layer_sizes")) {
+            int layers[8192];
+            int network_depth = 0;
+            for(char* token = strsep(&key_values[1], " "); token != NULL; token = strsep(&key_values[1], " ")) {
+                if (token[0] != '\0') {
+                    network_depth++;
+                    layers[network_depth] = strtol(token,NULL,10);
+                }
+            }
+            network_params->hidden_layer_sizes = (int*) malloc(sizeof(int)*network_depth);
+            for(int i=0;i<network_depth;i++) {
+                network_params->hidden_layer_sizes[i] = layers[i];
+            }
+            network_params->network_depth = network_depth;
+            hidden_layer_sizes_defined = true;
+        } else if (! strcmp(key_values[0],"labels")) {
+            network_params->labels = strtol(key_values[1],NULL,10);
+            labels_defined = true;
+        } else if (! strcmp(key_values[0],"minibatch_size")) {
+            network_params->minibatch_size = strtol(key_values[1],NULL,10);
+            minibatch_defined = true;
+        } else if (! strcmp(key_values[0],"alpha")) {
+            network_params->alpha = strtof(key_values[1],NULL);
+        } else if (! strcmp(key_values[0],"learing_rate")) {
+            network_params->learning_rate = strtof(key_values[1],NULL);
+        } else if (! strcmp(key_values[0],"epochs")) {
+            network_params->epochs = strtol(key_values[1],NULL,10);
+            epochs_defined = true;
+        } else if (! strcmp(key_values[0],"verbose")) {
+            network_params->verbose = strtol(key_values[1],NULL,10);
+        } else if (! strcmp(key_values[0],"use_momentum_update")) {
+            network_params->use_momentum_update = strtol(key_values[1],NULL,10);
+        } else if (! strcmp(key_values[0],"use_nag_update")) {
+            network_params->use_nag_update = strtol(key_values[1],NULL,10);
+        } else if (! strcmp(key_values[0],"use_rmsprop")) {
+            network_params->use_rmsprop = strtol(key_values[1],NULL,10);
+        } else if (! strcmp(key_values[0],"mu")) {
+            network_params->mu = strtof(key_values[1],NULL);
+        } else if (! strcmp(key_values[0],"decay_rate")) {
+            network_params->decay_rate = strtof(key_values[1],NULL);
+        } else if (! strcmp(key_values[0],"eps")) {
+            network_params->eps = strtof(key_values[1],NULL);
+        } else if (! strcmp(key_values[0],"use_batchnorm")) {
+            network_params->use_batchnorm = strtol(key_values[1],NULL,10);
+        } else if (! strcmp(key_values[0],"batchnorm_momentum")) {
+            network_params->batchnorm_momentum = strtof(key_values[1],NULL);
+        } else if (! strcmp(key_values[0],"batchnorm_eps")) {
+            network_params->batchnorm_eps = strtof(key_values[1],NULL);
+        } else if (! strcmp(key_values[0],"mode")) {
+            network_params->mode = (char*) malloc(sizeof(char)*strlen(key_values[1]));
+            strcpy(network_params->mode,key_values[1]);
+            mode_defined = true;
+        } else if (! strcmp(key_values[0],"params_dir")) {
+            network_params->params_save_dir = (char*) malloc(sizeof(char)*strlen(key_values[1]));
+            strcpy(network_params->params_save_dir,key_values[1]);
+            params_dir_defined = true;
+        } else {
+            printf("ERROR: Unrecognized keyword %s, ignored\n",key_values[0]);
+        }
+    }
+    free(key_values[0]);
+    free(key_values[1]);
+    free(key_values);
+    if (! training_data_defined) {
+        printf("ERROR: Training data not defined\n");
+        exit(1);
+    }
+    if (! correct_labels_defined) {
+        printf("ERROR: Correct labels not defined\n");
+        exit(1);
+    }
+    if (! hidden_layer_sizes_defined) {
+        printf("ERROR: Sizes of hidden layers not defined\n");
+        exit(1);
+    }
+    if (! minibatch_defined) {
+        printf("ERROR: Minibatch size not defined\n");
+        exit(1);
+    }
+    if (! labels_defined) {
+        printf("ERROR: Number of lables not defined\n");
+        exit(1);
+    }
+    if (! epochs_defined) {
+        printf("ERROR: Epochs not defined\n");
+        exit(1);
+    }
+    if (! mode_defined) {
+        printf("ERROR: Mode not defined\n");
+        exit(1);
+    }
+    if (! params_dir_defined) {
+        printf("ERROR: Dir to load or save params not defined\n");
+        exit(1);
+    }
+    network_params->hidden_layer_sizes[network_params->network_depth-1] = network_params->labels;
+    return network_params;
 }

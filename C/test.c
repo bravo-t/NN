@@ -3,12 +3,11 @@
 #include <math.h>
 #include <malloc.h>
 #include <stdbool.h>
-#include "util/matrix_type.h"
-#include "util/misc_utils.h"
-#include "util/matrix_operations.h"
-#include "util/layers.h"
-#include "util/fully_connected_net.h"
-
+#include "src/matrix_type.h"
+#include "src/matrix_operations.h"
+#include "src/layers.h"
+#include "src/fully_connected_net.h"
+#include "src/misc_utils.h"
 
 int main() {
     float alpha = 0;

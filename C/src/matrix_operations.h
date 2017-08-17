@@ -12,6 +12,7 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+TwoDMatrix* matrixMalloc(int size);
 float frand(void);
 float random_normal(float mean, float std);
 int init2DMatrix(TwoDMatrix* M, int height, int width);
@@ -43,10 +44,6 @@ int broadcastSub(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT);
 int broadcastMul(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT);
 int broadcastDiv(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT);
 int chop2DMatrix(TwoDMatrix* M, int height_start, int height_end, TwoDMatrix* OUT);
-float matrixError(TwoDMatrix* a, TwoDMatrix* b); 
-void printMatrix(TwoDMatrix *M);
-void __debugPrintMatrix(TwoDMatrix *M, char* name);
-void checkMatrixDiff(TwoDMatrix* a, TwoDMatrix* b, float thres);
 int matrixYMeanVar(TwoDMatrix* M, TwoDMatrix* mean, TwoDMatrix* var);
 int matrixXMeanVar(TwoDMatrix* M, TwoDMatrix* mean, TwoDMatrix* var);
 
