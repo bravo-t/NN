@@ -240,9 +240,10 @@ int train(parameters* network_params) {
     printf("INFO: A total number of %.2f KB memory is used by learnable parameters in the network\n",(size_of_Ws+size_of_bs+size_of_Hs)/1024.0f);
 
     // Feed data to the network to train it
+    printf("INFO: Training network\n");
     int iterations = training_data->height / minibatch_size;
     TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
-    for(int epoch=0;epoch<epochs;epoch++) {
+    for(int epoch=1;epoch<=epochs;epoch++) {
         // find number of minibatch_size example to go into the network as 1 iteration
         for(int iteration=0;iteration<iterations;iteration++) {
             int data_start = iteration*minibatch_size;
