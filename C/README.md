@@ -26,7 +26,8 @@
     * Example for the input data can be find at [test_data/correct_labels.txt](test_data/correct_labels.txt).
     * The format is described as following:
       * The first line contains 3 parts: a name (pick one whatever you like, cannot has spaces in it), height of the dataset, width of the dataset.
-      * The rest of the lines are just datas.
+      * The rest of the lines are just data.
+      * Correct labels are matrixes with a width of 1, and a same height as the dataset, represents the correct index of the scores, which contains `labels` elements.
       * Below is an example:
 ```
       W 3 6
@@ -34,7 +35,6 @@
       w21 w22 w23 w24 w25 w26
       w31 w32 w33 w34 w35 w36
 ```
-      * Correct labels are matrixes with a width of 1, and a same height as the dataset, represents the correct index of the scores, which contains `labels` elements.
 * Example
   * Below is an example I created based on the [small case of CS213n](http://cs231n.github.io/neural-networks-case-study/).
   * Network configuration file is [fc.config](fc.config).
