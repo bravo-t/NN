@@ -1,6 +1,8 @@
 ## A neurual network framework written in C
 * What is this?
   * This is a neural network "engine" I wrote to figure out how a neural network works.
+  * The activation function used in this network is leaky ReLU, and the classifier is softmax.
+  * It uses SGD as the default update strategy, and it also has momentum update, NAG update and RMSProp built in.
   * In "train" mode, this program takes in a configuration file, trians itself, and dumps out the learned weights.
   * In "test" mode, this program reads in the weights dumped out earlier, and calculate scores on the input date set.
 * How to compile
@@ -15,7 +17,11 @@
       * For example `hidden_layer_sizes = 100,3` means this network will have 2 hidden layers, and first hidden layer will have a width of 100, and the second hidden layer is the score layer, its width is defined by the number of labels this network will calculate.
       * Number of hidden layers is determined by how many sizes you give it.
       * You don't have control on the last layer of the network.
-    * `alpha`
+    * `alpha` is the hyperparameter used in leaky ReLU. If you set it to 0, the activation function becomes ReLU.
+    * `labels` is how many labels this network is going to calculate for each training example.
+    * `params_dir` specifies the directory that the network dumps and loads learned weights.
+    * The rest of the parameters are quite self-explanatory.
+  * You will also need 
 * Example
   * Below is an example I created based on the [small case of CS213n](http://cs231n.github.io/neural-networks-case-study/).
   * Network configuration file is [fc.config](fc.config).
@@ -23,7 +29,7 @@
   * The correct labels to train the network can be found at [test_data/correct_labels.txt](test_data/correct_labels.txt).
   * Below is the messages while running it:
 ```
-    $./fully_connected_network fc.config
+    $ ./fully_connected_network fc.config
     INFO: This network consists of 2 hidden layers, and their sizes are configured to be 100 3 
     INFO: Initializing all required learnable parameters for the network
     INFO: 2 W matrixes, 500 learnable weights initialized, 4.00 KB meomry used
