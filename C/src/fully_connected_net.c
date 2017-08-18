@@ -504,7 +504,7 @@ parameters* readNetworkConfigFile(char* filename) {
         key_values[0][0] = '\0';
         key_values[1][0] = '\0';
         getKeyValueFromFile(fp,key_values);
-        if (key_values[0][0] == '#') {
+        if (key_values[0][0] == '#' || key_values[0][0] == '\0') {
             continue;
         }
         if (! strcmp(key_values[0],"data_set")) {
@@ -516,7 +516,9 @@ parameters* readNetworkConfigFile(char* filename) {
         } else if (! strcmp(key_values[0],"hidden_layer_sizes")) {
             int layers[8192];
             int network_depth = 0;
-            for(char* token = strsep(&key_values[1], " "); token != NULL; token = strsep(&key_values[1], " ")) {
+            char* sizes = malloc(sizeof(char)*8192);
+            strcpy(sizes,key_values[1]);
+            for(char* token = strsep(&sizes, " "); token != NULL; token = strsep(&sizes, " ")) {
                 if (token[0] != '\0') {
                     network_depth++;
                     layers[network_depth] = strtol(token,NULL,10);
@@ -528,6 +530,7 @@ parameters* readNetworkConfigFile(char* filename) {
             }
             network_params->network_depth = network_depth;
             hidden_layer_sizes_defined = true;
+            free(sizes);
         } else if (! strcmp(key_values[0],"labels")) {
             network_params->labels = strtol(key_values[1],NULL,10);
             labels_defined = true;

@@ -124,22 +124,28 @@ void getKeyValueFromFile(FILE* fp, char** retval) {
     char* line = malloc(sizeof(char)*200);
     char delim[] = " =";
     fgets(line, 200, fp);
+    if (strlen(line) <= 2) {
+        // This is a empty line
+        retval[0][0] = '\0';
+        retval[1][0] = '\0';
+        return;
+    }
     for(int i=0;i<200;i++) {
-        if (line[i] == '\n') {
+        if (line[i] == '\n' || line[i] == '\r') {
             line[i] = '\0';
             break;
         }
     }
     char* token=strsep(&line,delim);
     //printf("DEBUG: token=%s,line=%s\n",token,line);
-    while (token[0] == '\0' || token[0] == ' ' || token[0] == '=') {
+    while ((token[0] == '\0' || token[0] == ' ' || token[0] == '=') && line != NULL) {
         token=strsep(&line,delim);
         //printf("DEBUG: token=%s,line=%s\n",token,line);
     }
     strcpy(retval[0],token);
     token=strsep(&line,delim);
     //printf("DEBUG: token=%s,line=%s\n",token,line);
-    while (token[0] == '\0' || token[0] == ' ' || token[0] == '=') {
+    while ((token[0] == '\0' || token[0] == ' ' || token[0] == '=') && line != NULL) {
         token=strsep(&line,delim);
         //printf("DEBUG: token=%s,line=%s\n",token,line);
     }
