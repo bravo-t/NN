@@ -46,6 +46,11 @@ int train(parameters* network_params) {
     bool use_batchnorm =  network_params->use_batchnorm;
     float batchnorm_momentum =  network_params->batchnorm_momentum;
     float batchnorm_eps =  network_params->batchnorm_eps;
+    printf("INFO: This network consists of %d hidden layers, and their sizes are configured to be ", network_depth);
+    for(int i=0;i<network_depth;i++) {
+        printf("%d ",hidden_layer_sizes[i]);
+    }
+    printf("\n");
     // Initialize all learnable parameters
     printf("INFO: Initializing all required learnable parameters for the network\n");
     int number_of_weights = 0;
@@ -144,6 +149,11 @@ int train(parameters* network_params) {
         dWs[i] = matrixMalloc(sizeof(TwoDMatrix));
         dbs[i] = matrixMalloc(sizeof(TwoDMatrix));
         dHs[i] = matrixMalloc(sizeof(TwoDMatrix));
+        if (verbose) {
+            printf("INFO: Initializing W%d to be a %dx%d matrix\n",i,former_width,hidden_layer_sizes[i]);
+            printf("INFO: Initializing b%d to be a %dx%d matrix\n",i,1,hidden_layer_sizes[i]);
+            printf("INFO: Initializing H%d to be a %dx%d matrix\n",i,minibatch_size,hidden_layer_sizes[i]);
+        }
         init2DMatrixNormRand(Ws[i],former_width,hidden_layer_sizes[i],0.0,1.0);
         init2DMatrixZero(bs[i],1,hidden_layer_sizes[i]);
         init2DMatrix(Hs[i],minibatch_size,hidden_layer_sizes[i]);
@@ -461,9 +471,11 @@ int test(parameters* network_params) {
     TwoDMatrix** betas = NULL;
     TwoDMatrix** mean_caches = NULL;
     TwoDMatrix** var_caches = NULL;
-    loadNetworkConfig(network_params->params_save_dir, &network_depth, &alpha, Ws, bs, &use_batchnorm, mean_caches, var_caches, gammas, betas, &batchnorm_eps);
+    loadNetworkConfig(network_params->params_save_dir, &network_depth, &alpha, &Ws, &bs, &use_batchnorm, &mean_caches, &var_caches, &gammas, &betas, &batchnorm_eps);
     TwoDMatrix* scores = matrixMalloc(sizeof(TwoDMatrix));
     selftest(test_data,Ws,bs, alpha, network_depth, use_batchnorm, mean_caches, var_caches, batchnorm_eps, gammas, betas, scores);
+    printf("Scores are calculated as:\n");
+    printMatrix(scores);
     return 0;
 }
 
@@ -494,7 +506,7 @@ parameters* readNetworkConfigFile(char* filename) {
     key_values[1] = (char*) malloc(sizeof(char)*8192);
     bool mode_defined = false;
     bool params_dir_defined = false;
-    bool training_data_defined = false;
+    bool data_set_defined = false;
     bool correct_labels_defined = false;
     bool hidden_layer_sizes_defined = false;
     bool labels_defined = false;
@@ -509,7 +521,7 @@ parameters* readNetworkConfigFile(char* filename) {
         }
         if (! strcmp(key_values[0],"data_set")) {
             network_params->X = load2DMatrixFromFile(key_values[1]);
-            training_data_defined = true;
+            data_set_defined = true;
         } else if (! strcmp(key_values[0],"correct_labels")) {
             network_params->correct_labels = load2DMatrixFromFile(key_values[1]);
             correct_labels_defined = true;
@@ -518,10 +530,11 @@ parameters* readNetworkConfigFile(char* filename) {
             int network_depth = 0;
             char* sizes = malloc(sizeof(char)*8192);
             strcpy(sizes,key_values[1]);
-            for(char* token = strsep(&sizes, " "); token != NULL; token = strsep(&sizes, " ")) {
+            char* sizes_ptr = sizes;
+            for(char* token = strsep(&sizes_ptr, ","); token != NULL; token = strsep(&sizes_ptr, ",")) {
                 if (token[0] != '\0') {
-                    network_depth++;
                     layers[network_depth] = strtol(token,NULL,10);
+                    network_depth++;
                 }
             }
             network_params->hidden_layer_sizes = (int*) malloc(sizeof(int)*network_depth);
@@ -579,15 +592,23 @@ parameters* readNetworkConfigFile(char* filename) {
     free(key_values[0]);
     free(key_values[1]);
     free(key_values);
-    if (! training_data_defined) {
-        printf("ERROR: Training data not defined\n");
+    if (! mode_defined) {
+        printf("ERROR: Mode not defined\n");
         exit(1);
     }
-    if (! correct_labels_defined) {
+    if (! params_dir_defined) {
+        printf("ERROR: Dir to load or save params not defined\n");
+        exit(1);
+    }
+    if (! data_set_defined) {
+        printf("ERROR: Data set not defined\n");
+        exit(1);
+    }
+    if (! correct_labels_defined && strcmp(network_params->mode,"test")) {
         printf("ERROR: Correct labels not defined\n");
         exit(1);
     }
-    if (! hidden_layer_sizes_defined) {
+    if (! hidden_layer_sizes_defined && strcmp(network_params->mode,"test")) {
         printf("ERROR: Sizes of hidden layers not defined\n");
         exit(1);
     }
@@ -595,20 +616,12 @@ parameters* readNetworkConfigFile(char* filename) {
         printf("ERROR: Minibatch size not defined\n");
         exit(1);
     }
-    if (! labels_defined) {
+    if (! labels_defined && strcmp(network_params->mode,"test")) {
         printf("ERROR: Number of lables not defined\n");
         exit(1);
     }
-    if (! epochs_defined) {
+    if (! epochs_defined && strcmp(network_params->mode,"test")) {
         printf("ERROR: Epochs not defined\n");
-        exit(1);
-    }
-    if (! mode_defined) {
-        printf("ERROR: Mode not defined\n");
-        exit(1);
-    }
-    if (! params_dir_defined) {
-        printf("ERROR: Dir to load or save params not defined\n");
         exit(1);
     }
     network_params->hidden_layer_sizes[network_params->network_depth-1] = network_params->labels;

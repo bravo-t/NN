@@ -122,12 +122,14 @@ void write2DMatrix(FILE* fp, TwoDMatrix* M) {
 
 void getKeyValueFromFile(FILE* fp, char** retval) {
     char* line = malloc(sizeof(char)*200);
+    char* line_start = line;
     char delim[] = " =";
     fgets(line, 200, fp);
     if (strlen(line) <= 2) {
         // This is a empty line
         retval[0][0] = '\0';
         retval[1][0] = '\0';
+        free(line_start);
         return;
     }
     for(int i=0;i<200;i++) {
@@ -154,6 +156,7 @@ void getKeyValueFromFile(FILE* fp, char** retval) {
     } else {
         strcpy(retval[1],token);
     }
+    free(line_start);
 }
 
 
@@ -177,28 +180,28 @@ int dumpNetworkConfig(int network_depth, float alpha, TwoDMatrix** Ws, TwoDMatri
         fprintf(out, "batchnorm_eps=%f\n",eps);
     }
     for(int i=0;i<network_depth;i++) {
-        fprintf(out,"%s[%d] %d %d","Ws",i,Ws[i]->height,Ws[i]->width);
+        fprintf(out,"%s[%d] %d %d\n","Ws",i,Ws[i]->height,Ws[i]->width);
         write2DMatrix(out, Ws[i]);
     }
     for(int i=0;i<network_depth;i++) {
-        fprintf(out,"%s[%d] %d %d","bs",i,bs[i]->height,bs[i]->width);
+        fprintf(out,"%s[%d] %d %d\n","bs",i,bs[i]->height,bs[i]->width);
         write2DMatrix(out, bs[i]);
     }
     if (use_batchnorm) {
         for(int i=0;i<network_depth;i++) {
-            fprintf(out,"%s[%d] %d %d","mean_caches",i,mean_caches[i]->height,mean_caches[i]->width);
+            fprintf(out,"%s[%d] %d %d\n","mean_caches",i,mean_caches[i]->height,mean_caches[i]->width);
             write2DMatrix(out, mean_caches[i]);
         }
         for(int i=0;i<network_depth;i++) {
-            fprintf(out,"%s[%d] %d %d","var_caches",i,var_caches[i]->height,var_caches[i]->width);
+            fprintf(out,"%s[%d] %d %d\n","var_caches",i,var_caches[i]->height,var_caches[i]->width);
             write2DMatrix(out, var_caches[i]);
         }
         for(int i=0;i<network_depth;i++) {
-            fprintf(out,"%s[%d] %d %d","gammas",i,gammas[i]->height,gammas[i]->width);
+            fprintf(out,"%s[%d] %d %d\n","gammas",i,gammas[i]->height,gammas[i]->width);
             write2DMatrix(out, gammas[i]);
         }
         for(int i=0;i<network_depth;i++) {
-            fprintf(out,"%s[%d] %d %d","betas",i,betas[i]->height,betas[i]->width);
+            fprintf(out,"%s[%d] %d %d\n","betas",i,betas[i]->height,betas[i]->width);
             write2DMatrix(out, betas[i]);
         }
     }
@@ -207,12 +210,12 @@ int dumpNetworkConfig(int network_depth, float alpha, TwoDMatrix** Ws, TwoDMatri
     return 0;
 }
 
-int loadNetworkConfig(char* dir, int* network_depth, float* alpha, TwoDMatrix** Ws, TwoDMatrix** bs, bool* use_batchnorm, TwoDMatrix** mean_caches, TwoDMatrix** var_caches, TwoDMatrix** gammas, TwoDMatrix** betas, float* batchnorm_eps) {
+int loadNetworkConfig(char* dir, int* network_depth, float* alpha, TwoDMatrix*** Ws, TwoDMatrix*** bs, bool* use_batchnorm, TwoDMatrix*** mean_caches, TwoDMatrix*** var_caches, TwoDMatrix*** gammas, TwoDMatrix*** betas, float* batchnorm_eps) {
     int file_name_length = strlen(dir) + strlen("/network.params") + 10;
     char* filename = malloc(sizeof(char)*file_name_length);
     strcpy(filename,dir);
     strcat(filename,"/network.params");
-    printf("INFO: Loading network parameters dumped from %s\n",filename);
+    printf("INFO: Loading network parameters from %s\n",filename);
     FILE* fp = fopen(filename,"r");
     if (fp == NULL) {
         printf("ERROR: Cannot open %s to read\n",filename);
@@ -221,8 +224,7 @@ int loadNetworkConfig(char* dir, int* network_depth, float* alpha, TwoDMatrix** 
     char** key_values = malloc(sizeof(char*)*2);
     key_values[0] = (char*) malloc(sizeof(char)*100);
     key_values[1] = (char*) malloc(sizeof(char)*100);
-    int i;
-    for(i=0;i<3;i++) {
+    for(int i=0;i<3;i++) {
         getKeyValueFromFile(fp,key_values);
         if (! strcmp(key_values[0],"network_depth")) {
             *network_depth = strtol(key_values[1],NULL,10);
@@ -234,7 +236,7 @@ int loadNetworkConfig(char* dir, int* network_depth, float* alpha, TwoDMatrix** 
             printf("ERROR: Unrecognized keyword: %s, ignored\n",key_values[0]);
         }
     }
-    if (use_batchnorm) {
+    if (*use_batchnorm) {
         getKeyValueFromFile(fp,key_values);
         if (! strcmp(key_values[0],"batchnorm_eps")) {
             *batchnorm_eps = strtof(key_values[1],NULL);
@@ -243,30 +245,30 @@ int loadNetworkConfig(char* dir, int* network_depth, float* alpha, TwoDMatrix** 
         }
     }
     
-    Ws = malloc(sizeof(TwoDMatrix*)*(*network_depth));
-    bs = malloc(sizeof(TwoDMatrix*)*(*network_depth));
+    *Ws = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*(*network_depth));
+    *bs = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*(*network_depth));
     for(int i=0;i<*network_depth;i++) {
-        Ws[i] = load2DMatrix(fp);
+        (*Ws)[i] = load2DMatrix(fp);
     }
     for(int i=0;i<*network_depth;i++) {
-        bs[i] = load2DMatrix(fp);
+        (*bs)[i] = load2DMatrix(fp);
     }
     if (use_batchnorm) {
-        gammas = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*(*network_depth));
-        betas = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*(*network_depth));
-        mean_caches = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*(*network_depth));
-        var_caches = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*(*network_depth));
+        *gammas = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*(*network_depth));
+        *betas = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*(*network_depth));
+        *mean_caches = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*(*network_depth));
+        *var_caches = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*(*network_depth));
         for(int i=0;i<*network_depth;i++) {
-            gammas[i] = load2DMatrix(fp);
+            (*gammas)[i] = load2DMatrix(fp);
         }
         for(int i=0;i<*network_depth;i++) {
-            betas[i] = load2DMatrix(fp);
+            (*betas)[i] = load2DMatrix(fp);
         }
         for(int i=0;i<*network_depth;i++) {
-            mean_caches[i] = load2DMatrix(fp);
+            (*mean_caches)[i] = load2DMatrix(fp);
         }
         for(int i=0;i<*network_depth;i++) {
-            var_caches[i] = load2DMatrix(fp);
+            (*var_caches)[i] = load2DMatrix(fp);
         }
     }
     fclose(fp);

@@ -29,4 +29,4 @@ unit_test: unit_test.c misc_utils.o matrix_operations.o layers.o fully_connected
 
 .PHONY: clean
 clean:
-	rm -f *.o *~ src/*~ test
+	rm -f *.o *~ src/*~ 
