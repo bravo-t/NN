@@ -8,4 +8,12 @@ typedef struct {
     bool initialized;
 } TwoDMatrix;
 
+typedef struct {
+	int height;
+    int width;
+    int depth;
+    float*** d;
+    bool initialized;
+};
+
 #endif
