@@ -14,6 +14,6 @@ typedef struct {
     int depth;
     float*** d;
     bool initialized;
-};
+} ThreeDMatrix;
 
 #endif
