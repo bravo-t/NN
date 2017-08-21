@@ -35,5 +35,11 @@ ThreeDMatrix* zeroPadding(ThreeDMatrix* X, int padding_height, int padding_width
 }
 
 int convSingleFilter(ThreeDMatrix* X,ThreeDMatrix* F,ThreeDMatrix* b, int stride_y, int stride_x,float** out) {
-    
+    int x_iter = ((X->width) - (F->width)) / stride_x;
+    int y_iter = ((X->height) - (F->height)) / stride_y;
+    for (int i=0; i<y_iter; i++) {
+        for(int j=0;j<x_iter;j++) {
+            
+        }
+    }
 }

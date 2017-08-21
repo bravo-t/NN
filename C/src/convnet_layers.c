@@ -12,7 +12,7 @@ ThreeDMatrix* convLayerForward(ThreeDMatrix* X, ThreeDMatrix** F, int number_of_
     int V_width = calcOutputSize(X->width,0,f_width,stride_x);
     init3DMatrix(V, number_of_filters, V_height, V_width);
     for(int i=0;i<number_of_filters;i++) {
-        convSingleFilter(X,F[i],b[i],stride,V->d[i]);
+        convSingleFilter(X,F[i],b[i],stride_y,stride_x,V->d[i]);
     }
     return V;
 }
