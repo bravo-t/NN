@@ -46,5 +46,8 @@ int broadcastDiv(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT);
 int chop2DMatrix(TwoDMatrix* M, int height_start, int height_end, TwoDMatrix* OUT);
 int matrixYMeanVar(TwoDMatrix* M, TwoDMatrix* mean, TwoDMatrix* var);
 int matrixXMeanVar(TwoDMatrix* M, TwoDMatrix* mean, TwoDMatrix* var);
+int init3DMatrix(ThreeDMatrix* M, int depth, int height, int width);
+int init3DMatrixNormRand(ThreeDMatrix* M, int depth, int height, int width, float mean, float std);
+int destroy3DMatrix (ThreeDMatrix* M);
 
 #endif

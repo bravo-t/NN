@@ -77,6 +77,41 @@ int init2DMatrixOne(TwoDMatrix* M, int height, int width) {
     return 0;
 }
 
+int init3DMatrix(ThreeDMatrix* M, int depth, int height, int width) {
+    if (M->initialized) return 0;
+    M->height = height;
+    M->width = width;
+    M->depth = depth;
+    float*** data = (float***) calloc(depth, sizeof(float**));
+    for(int i = 0; i<depth;i++) {
+        data[i] = (float**) calloc(height,sizeof(float*));
+        for(int j=0;j<height;j++) data[i][j] = (float*) calloc(width,sizeof(float));
+    }
+    M->d = data;
+    M->initialized = true;
+    return 0;
+}
+
+int init3DMatrixNormRand(ThreeDMatrix* M, int depth, int height, int width, float mean, float std) {
+    if (M->initialized) return 0;
+    M->height = height;
+    M->width = width;
+    M->depth = depth;
+    float*** data = (float***) calloc(depth, sizeof(float**));
+    for(int i = 0; i<depth;i++) {
+        data[i] = (float**) calloc(height,sizeof(float*));
+        for(int j=0;j<height;j++) {
+            data[i][j] = (float*) calloc(width,sizeof(float));
+            for(int k=0;k<width;k++) {
+                data[i][j][k] = random_normal(mean, std);
+            }
+        }
+    }
+    M->d = data;
+    M->initialized = true;
+    return 0;
+}
+
 int copyTwoDMatrix(TwoDMatrix* M, TwoDMatrix* OUT) {
     int retval = init2DMatrix(OUT, M->height, M->width);
     for(int i=0;i<M->height;i++) {
@@ -89,6 +124,22 @@ int copyTwoDMatrix(TwoDMatrix* M, TwoDMatrix* OUT) {
 
 int destroy2DMatrix(TwoDMatrix* M) {
     for(int i=0;i<M->height;i++) {
+        free(M->d[i]);
+        M->d[i] = NULL;
+    }
+    free(M->d);
+    M->d = NULL;
+    free(M);
+    M = NULL;
+    return 0;
+}
+
+int destroy3DMatrix (ThreeDMatrix* M) {
+    for(int i = 0; i<depth;i++) {
+        for(int j=0;j<height;j++) {
+            free(M->d[i][j]);
+            M->d[i][j] = NULL;
+        }
         free(M->d[i]);
         M->d[i] = NULL;
     }
