@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <math.h>
 #include "matrix_type.h"
 #include "matrix_operations.h"
 #include "convnet_operations.h"
@@ -45,10 +46,35 @@ int convSingleFilter(ThreeDMatrix* X,ThreeDMatrix* F,ThreeDMatrix* b, int stride
                     for(int n=0;n<F->width;n++) {
                         int x_m = i*stride_y+m;
                         int x_n = j*stride_x+n;
-                        
+                        sum += F->d[l][m][n] * X->d[l][x_m][x_n];
                     }
                 }
             }
+            sum += b->d[0][0][0];
+            out[i][j] = sum;
         }
     }
+    return 0;
+}
+
+int maxPoolingSingleSlice(ThreeDMatrix* X, int pooling_height, int pooling_width, int stride_y, int stride_x, float** out) {
+    int x_iter = ((X->width) - pooling_width) / stride_x;
+    int y_iter = ((X->height) - pooling_height) / stride_y;
+    for (int i=0; i<y_iter; i++) {
+        for(int j=0;j<x_iter;j++) {
+            float max = 0;
+            for(int l=0;l<F->depth;l++) {
+                for(int m=0;m<F->height;m++) {
+                    for(int n=0;n<F->width;n++) {
+                        int x_m = i*stride_y+m;
+                        int x_n = j*stride_x+n;
+                        sum += F->d[l][m][n] * X->d[l][x_m][x_n];
+                    }
+                }
+            }
+            sum += b->d[0][0][0];
+            out[i][j] = sum;
+        }
+    }
+    return 0;
 }

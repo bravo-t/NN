@@ -16,3 +16,13 @@ ThreeDMatrix* convLayerForward(ThreeDMatrix* X, ThreeDMatrix** F, int number_of_
     }
     return V;
 }
+
+ThreeDMatrix* maxPoolingForward(ThreeDMatrix* X, int stride_y, int stride_x, int pooling_width, int pooling_height) {
+    ThreeDMatrix* V = matrixMalloc(sizeof(ThreeDMatrix));
+    int V_height = calcOutputSize(X->height,0,pooling_height,stride_y); 
+    int V_width = calcOutputSize(X->width,0,pooling_width,stride_x);
+    init3DMatrix(V, X->depth, V_height, V_width);
+    for(int i=0;i<V->depth;i++) {
+        maxPoolingSingleSlice(X,pooling_height,pooling_width,stride_y,stride_x);
+    }
+}
