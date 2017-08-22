@@ -39,7 +39,16 @@ int convSingleFilter(ThreeDMatrix* X,ThreeDMatrix* F,ThreeDMatrix* b, int stride
     int y_iter = ((X->height) - (F->height)) / stride_y;
     for (int i=0; i<y_iter; i++) {
         for(int j=0;j<x_iter;j++) {
-            
+            float sum = 0;
+            for(int l=0;l<F->depth;l++) {
+                for(int m=0;m<F->height;m++) {
+                    for(int n=0;n<F->width;n++) {
+                        int x_m = i*stride_y+m;
+                        int x_n = j*stride_x+n;
+                        
+                    }
+                }
+            }
         }
     }
 }
