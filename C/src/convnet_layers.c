@@ -23,6 +23,6 @@ ThreeDMatrix* maxPoolingForward(ThreeDMatrix* X, int stride_y, int stride_x, int
     int V_width = calcOutputSize(X->width,0,pooling_width,stride_x);
     init3DMatrix(V, X->depth, V_height, V_width);
     for(int i=0;i<V->depth;i++) {
-        maxPoolingSingleSlice(X,pooling_height,pooling_width,stride_y,stride_x);
+        maxPoolingSingleSlice(X,pooling_height,pooling_width,stride_y,stride_x,i,V->d[i]);
     }
 }
