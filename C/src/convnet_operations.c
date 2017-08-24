@@ -31,7 +31,19 @@ ThreeDMatrix* zeroPadding(ThreeDMatrix* X, int padding_height, int padding_width
             }
         }
     }
-    destroy3DMatrix(X);
+    return out;
+}
+
+ThreeDMatrix* unpad(ThreeDMatrix* padded, int padding_height, int padding_width) {
+    ThreeDMatrix* out = matrixMalloc(sizeof(ThreeDMatrix));
+    init3DMatrix(out, padded->depth, padded->height - padding_height*2, padded->width - padding_width*2);
+    for(int i=0;i<out->depth;i++) {
+        for(int j=0;j<out->height;j++) {
+            for(int k=0;k<out->width;k++) {
+                out->d[i][j][k] = padded->d[i][j+padding_height][k+padding_width];
+            }
+        }
+    }
     return out;
 }
 
@@ -75,3 +87,4 @@ int maxPoolingSingleSlice(ThreeDMatrix* X, int pooling_height, int pooling_width
     }
     return 0;
 }
+
