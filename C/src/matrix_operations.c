@@ -506,4 +506,61 @@ int matrixXMeanVar(TwoDMatrix* M, TwoDMatrix* mean, TwoDMatrix* var) {
     return 0;
 }
 
+int threeDMatrixElementMul(ThreeDMatrix* X, float n, ThreeDMatrix* OUT) {
+    init3DMatrix(OUT, X->depth, X->height, X->width);
+    for (int i=0; i<OUT->depth; i++) {
+        for(int j=0;j<OUT->height;j++) {
+            for(int k=0;k<OUT->width;k++) {
+                OUT->d[i][j][k] = n * X->d[i][j][k];
+            }
+        }
+    }
+    return 0;
+}
+
+int threeDMatrixElementwiseAdd(ThreeDMatrix* A, ThreeDMatrix* B, ThreeDMatrix* OUT) {
+    if (A->depth != B->depth || A->height != B->height || A->width != B->width) {
+        printf("ERROR: Size mismatch while elementwise adding 3D matrixes\n");
+        exit(1);
+    }
+    init3DMatrix(OUT, A->depth, A->height, A->width);
+    for (int i=0; i<OUT->depth; i++) {
+        for(int j=0;j<OUT->height;j++) {
+            for(int k=0;k<OUT->width;k++) {
+                OUT->d[i][j][k] = A->d[i][j][k] + B->d[i][j][k];
+            }
+        }
+    }
+    return 0;
+}
+
+ThreeDMatrix* chop3DMatrix(ThreeDMatrix* X, int start_y, int start_x, int end_y, int end_x) {
+    int height = end_y - start_y + 1;
+    int width = end_x - start_x + 1;
+    ThreeDMatrix* out = matrixMalloc(sizeof(ThreeDMatrix));
+    init3DMatrix(out, X->depth, height, width);
+    for(int i=0;i<X->depth;i++) {
+        for(int j=start_y;j<=end_y;j++) {
+            for(int k=start_x;k<=end_x;k++) {
+                out->d[i][j-start_y][k-start_x] = X->d[i][j][k];
+            }
+        }
+    }
+    return out;
+}
+
+int assign3DMatrix(ThreeDMatrix* in, int start_y, int start_x, int end_y, int end_x, ThreeDMatrix* X) {
+    if (X->height < end_y || X->width < end_x) {
+        printf("ERROR: Out of index in assign3DMatrix\n");
+        exit(1);
+    }
+    for(int i=0;i<X->depth;i++) {
+        for(int j=start_y;j<=end_y;j++) {
+            for(int k=start_x;k<=end_x;k++) {
+                X->d[i][j][k] = in->d[i][j-start_y][k-start_x];
+            }
+        }
+    }
+    return 0;
+}
 
