@@ -101,8 +101,14 @@ int convSingleFilterBackward(ThreeDMatrix* X,ThreeDMatrix* F,ThreeDMatrix* b, Th
             int window_start_x = j * stride_x;
             int window_end_x = (j + 1) * stride_x - 1;
             for(int y=window_start_y;y<=window_end_y;y++) {
-                for(int x=window_start_x;x<=window_end_x;x++) {}
+                for(int x=window_start_x;x<=window_end_x;x++) {
+                    for(int depth=0;depth<X->depth;depth++) {
+                        dF->[depth][y-window_start_y][x-window_start_x] += X->d[depth][y][x] * dV->d[z][i][j];
+                        dX->[depth][y][x] += F->d[depth][y-window_start_y][x-window_start_x] * dV->d[z][i][j];
+                    }
+                }
             }
         }
     }
+    return 0;
 }
