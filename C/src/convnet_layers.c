@@ -39,6 +39,7 @@ int convLayerBackward(ThreeDMatrix* X,
     ThreeDMatrix* dX, 
     ThreeDMatrix** dF, 
     ThreeDMatrix* db) {
+    ThreeDMatrix* X_padded = zeroPadding(X, padding_y, padding_x);
     ThreeDMatrix* dX_padded = matrixMalloc(ThreeDMatrix);
     init3DMatrix(dX_padded, X->depth, X->height + 2*padding_y, X->width + 2*padding_x);
     init3DMatrix(dX, X->depth, X->height, X->width);
@@ -46,5 +47,5 @@ int convLayerBackward(ThreeDMatrix* X,
         init3DMatrix(dF[i],F[i]->depth,F[i]->height, F[i]->width);
     }
     init3DMatrix(db,1,1,1);
-    
+
 }
