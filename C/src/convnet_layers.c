@@ -47,5 +47,7 @@ int convLayerBackward(ThreeDMatrix* X,
         init3DMatrix(dF[i],F[i]->depth,F[i]->height, F[i]->width);
     }
     init3DMatrix(db,1,1,1);
-
+    for(int z=0;z<dV->depth;z++) {
+        convSingleFilterBackward(X_padded,F[z], dV,stride_y, stride_x, z, dX_padded, dF[z], db);
+    }
 }
