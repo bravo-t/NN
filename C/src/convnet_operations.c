@@ -16,7 +16,7 @@ int calcOutputSize(int length, int padding, int filter_length, int stride) {
     }
 }
 
-ThreeDMatrix* zeroPadding(ThreeDMatrix* X, int padding_height, int padding_width, bool destroy_original) {
+ThreeDMatrix* zeroPadding(ThreeDMatrix* X, int padding_height, int padding_width) {
     ThreeDMatrix* out = matrixMalloc(sizeof(ThreeDMatrix));
     init3DMatrix(out, X->depth, X->height + padding_height*2, X->width + padding_width*2);
     for(int i=0;i<out->depth;i++) {
@@ -31,7 +31,7 @@ ThreeDMatrix* zeroPadding(ThreeDMatrix* X, int padding_height, int padding_width
             }
         }
     }
-    if (destroy_original) destroy3DMatrix(X);
+    //if (destroy_original) destroy3DMatrix(X);
     return out;
 }
 
@@ -90,7 +90,15 @@ int maxPoolingSingleSlice(ThreeDMatrix* X, int pooling_height, int pooling_width
 }
 
 
-int convSingleFilterBackward(ThreeDMatrix* X,ThreeDMatrix* F,ThreeDMatrix* b, ThreeDMatrix* dV, int stride_y, int stride_x, int z, ThreeDMatrix* dX, ThreeDMatrix* dF, ThreeDMatrix* db) {
+int convSingleFilterBackward(ThreeDMatrix* X,
+    ThreeDMatrix* F, 
+    ThreeDMatrix* dV, 
+    int stride_y, 
+    int stride_x, 
+    int z, 
+    ThreeDMatrix* dX, 
+    ThreeDMatrix* dF, 
+    ThreeDMatrix* db) {
     int iter_y = ((X->height) - (F->height)) / stride_y;
     int iter_x = ((X->width) - (F->width)) / stride_x;
     for(int i=0;i<iter_y;i++) {

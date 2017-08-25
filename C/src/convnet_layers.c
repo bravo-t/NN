@@ -11,7 +11,7 @@ ThreeDMatrix* convLayerForward(ThreeDMatrix* X, ThreeDMatrix** F, int number_of_
     int V_height = calcOutputSize(X->height,padding_y,f_height,stride_y);
     int V_width = calcOutputSize(X->width,padding_x,f_width,stride_x);
     init3DMatrix(V, number_of_filters, V_height, V_width);
-    ThreeDMatrix* X_padded = zeroPadding(X, padding_y, padding_x, false);
+    ThreeDMatrix* X_padded = zeroPadding(X, padding_y, padding_x);
     for(int i=0;i<number_of_filters;i++) {
         convSingleFilter(X_padded,F[i],b[i],stride_y,stride_x,V->d[i]);
     }
@@ -27,4 +27,24 @@ ThreeDMatrix* maxPoolingForward(ThreeDMatrix* X, int stride_y, int stride_x, int
     for(int i=0;i<V->depth;i++) {
         maxPoolingSingleSlice(X,pooling_height,pooling_width,stride_y,stride_x,i,V->d[i]);
     }
+}
+
+int convLayerBackward(ThreeDMatrix* X, 
+    ThreeDMatrix** F, 
+    ThreeDMatrix* dV, 
+    int padding_y, 
+    int padding_x, 
+    int stride_y, 
+    int stride_x, 
+    ThreeDMatrix* dX, 
+    ThreeDMatrix** dF, 
+    ThreeDMatrix* db) {
+    ThreeDMatrix* dX_padded = matrixMalloc(ThreeDMatrix);
+    init3DMatrix(dX_padded, X->depth, X->height + 2*padding_y, X->width + 2*padding_x);
+    init3DMatrix(dX, X->depth, X->height, X->width);
+    for(int i=0;i<dV->depth;i++) {
+        init3DMatrix(dF[i],F[i]->depth,F[i]->height, F[i]->width);
+    }
+    init3DMatrix(db,1,1,1);
+    
 }
