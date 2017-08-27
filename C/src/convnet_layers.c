@@ -50,4 +50,8 @@ int convLayerBackward(ThreeDMatrix* X,
     for(int z=0;z<dV->depth;z++) {
         convSingleFilterBackward(X_padded,F[z], dV,stride_y, stride_x, z, dX_padded, dF[z], db);
     }
+    unpad(dX_padded, padding_y, padding_x, dX);
+    destroy3DMatrix(X_padded);
+    destroy3DMatrix(dX_padded);
+    return 0;
 }

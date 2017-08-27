@@ -35,8 +35,8 @@ ThreeDMatrix* zeroPadding(ThreeDMatrix* X, int padding_height, int padding_width
     return out;
 }
 
-ThreeDMatrix* unpad(ThreeDMatrix* padded, int padding_height, int padding_width) {
-    ThreeDMatrix* out = matrixMalloc(sizeof(ThreeDMatrix));
+int unpad(ThreeDMatrix* padded, int padding_height, int padding_width, ThreeDMatrix* out) {
+    //ThreeDMatrix* out = matrixMalloc(sizeof(ThreeDMatrix));
     init3DMatrix(out, padded->depth, padded->height - padding_height*2, padded->width - padding_width*2);
     for(int i=0;i<out->depth;i++) {
         for(int j=0;j<out->height;j++) {
@@ -45,7 +45,7 @@ ThreeDMatrix* unpad(ThreeDMatrix* padded, int padding_height, int padding_width)
             }
         }
     }
-    return out;
+    return 0;
 }
 
 int convSingleFilter(ThreeDMatrix* X,ThreeDMatrix* F,ThreeDMatrix* b, int stride_y, int stride_x,float** out) {
