@@ -121,6 +121,38 @@ int convSingleFilterBackward(ThreeDMatrix* X,
     return 0;
 }
 
+int convReLUForward(ThreeDMatrix* X, float alpha, ThreeDMatrix* V) {
+    init3DMatrix(V, X->depth, X->height, X->width);
+    for(int i=0;i<V->depth;i++) {
+        for(int j=0;j<V->height;j++) {
+            for(int k=0;k<V->width;k++) {
+                if (X->d[i][j][k] >= 0) {
+                    V->d[i][j][k] = X->d[i][j][k];
+                } else {
+                    V->d[i][j][k] = alpha*X->d[i][j][k];
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+int convReLUBackword(ThreeDMatrix* dX, ThreeDMatrix* X, float alpha, ThreeDMatrix* dV) {
+    init3DMatrix(dV, X->depth, X->height, X->width);
+    for(int i=0;i<dV->depth;i++) {
+        for(int j=0;j<dV->height;j++) {
+            for(int k=0;k<dV->width;k++) {
+                if (X->d[i][j][k] >= 0) {
+                    dV->d[i][j][k] = dX->d[i][j][k];
+                } else {
+                    dV->d[i][j][k] = alpha*dX->d[i][j][k];
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 int threeDMatrix2Col(ThreeDMatrix* X, TwoDMatrix* OUT) {
     init2DMatrix(OUT, X->depth*X->height*X->width, 1);
     int count = 0;

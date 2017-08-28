@@ -6,7 +6,7 @@
 #include "convnet_operations.h"
 #include "convnet_layers.h"
 
-ThreeDMatrix* convLayerForward(ThreeDMatrix* X, ThreeDMatrix** F, int number_of_filters, ThreeDMatrix** b, int f_height, int f_width, int stride_y, int stride_x, int padding_y, int padding_x) {
+ThreeDMatrix* convLayerForward(ThreeDMatrix* X, ThreeDMatrix** F, int number_of_filters, ThreeDMatrix** b, int f_height, int f_width, int stride_y, int stride_x, int padding_y, int padding_x, float alpha) {
     ThreeDMatrix* V = matrixMalloc(sizeof(ThreeDMatrix));
     int V_height = calcOutputSize(X->height,padding_y,f_height,stride_y);
     int V_width = calcOutputSize(X->width,padding_x,f_width,stride_x);
@@ -15,6 +15,7 @@ ThreeDMatrix* convLayerForward(ThreeDMatrix* X, ThreeDMatrix** F, int number_of_
     for(int i=0;i<number_of_filters;i++) {
         convSingleFilter(X_padded,F[i],b[i],stride_y,stride_x,V->d[i]);
     }
+    convReLUForward(V, alpha, V);
     destroy3DMatrix(X_padded);
     return V;
 }
@@ -36,6 +37,7 @@ int convLayerBackward(ThreeDMatrix* X,
     int padding_x, 
     int stride_y, 
     int stride_x, 
+    float alpha,
     ThreeDMatrix* dX, 
     ThreeDMatrix** dF, 
     ThreeDMatrix* db) {
