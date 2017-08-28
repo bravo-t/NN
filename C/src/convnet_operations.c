@@ -120,3 +120,17 @@ int convSingleFilterBackward(ThreeDMatrix* X,
     }
     return 0;
 }
+
+int threeDMatrix2Col(ThreeDMatrix* X, TwoDMatrix* OUT) {
+    init2DMatrix(OUT, X->depth*X->height*X->width, 1);
+    int count = 0;
+    for(int i=0;i<X->depth;i++) {
+        for(int j=0;j<X->height;j++) {
+            for(int k=0;k<X->width;k++) {
+                OUT->d[count][0] = X->d[i][j][k];
+                count++;
+            }
+        }
+    }
+    return 0;
+}
