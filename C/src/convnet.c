@@ -8,6 +8,6 @@
 #include "convnet.h"
 
 int trainConvnet(ConvnetParameters* network_params) {
-	ThreeDMatrix** training_data = network_params->X;
-	
+    ThreeDMatrix** training_data = network_params->X;
+    
 }
