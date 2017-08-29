@@ -89,6 +89,25 @@ int maxPoolingSingleSlice(ThreeDMatrix* X, int pooling_height, int pooling_width
     return 0;
 }
 
+int maxPoolingSingleSliceBackword(ThreeDMatrix* X, ThreeDMatrix* dV, int pooling_height, int pooling_width, int stride_y, int stride_x,int z, float** out) {
+    int x_iter = ((X->width) - pooling_width) / stride_x;
+    int y_iter = ((X->height) - pooling_height) / stride_y;
+    for (int i=0; i<y_iter; i++) {
+        for(int j=0;j<x_iter;j++) {
+            int window_start_y = i * stride_y;
+            int window_end_y = (i + 1) * stride_y - 1;
+            int window_start_x = j * stride_x;
+            int window_end_x = (j + 1) * stride_x - 1;
+            for(int y=window_start_y;y<=window_end_y;y++) {
+                for(int x=window_start_x;x<=window_end_x;x++) {
+                    
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 
 int convSingleFilterBackward(ThreeDMatrix* X,
     ThreeDMatrix* F, 
