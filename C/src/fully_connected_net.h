@@ -1,37 +1,9 @@
 #ifndef __FULLY_CONNECTED_HEADER__
 #define __FULLY_CONNECTED_HEADER__
 
-
-typedef struct {
-	TwoDMatrix* X; // Input data, height = minibatch_size, width = size_of_one_example
-	// Below parameters are used in training
-	TwoDMatrix* correct_labels; // Correct labels, height = minibatch_size, width = 1 
-	int minibatch_size; // Size of the minibatch of training examples
-	int labels; // How many scores will the nerual network calculate?
-	float reg_strength; // Regulization strength
-	float alpha; // the alpha in leaky ReLU, it should be set to 0 if ReLU is expected
-	float learning_rate; // Step size of one value update
-    int epochs;
-	int network_depth; // Network depth
-	int* hidden_layer_sizes; // Sizes of these hidden layers
-    bool verbose;
-    bool use_momentum_update;
-    bool use_nag_update;
-    bool use_rmsprop;
-    float mu;
-    float decay_rate;
-    float eps;
-    bool use_batchnorm;
-    float batchnorm_momentum;
-    float batchnorm_eps;
-    char* params_save_dir;
-    char* mode;
-} parameters;
-
-parameters* readNetworkConfigFile(char* filename);
-int train(parameters* network_params);
+int train(FCParameters* network_params);
 int selftest(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, float alpha, int network_depth, bool use_batchnorm, TwoDMatrix** mean_caches, TwoDMatrix** var_caches, float eps, TwoDMatrix** gammas, TwoDMatrix** betas, TwoDMatrix* scores);
 float verifyWithTrainingData(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoDMatrix** bs, int network_depth, int minibatch_size, float alpha, int labels, bool use_batchnorm, TwoDMatrix** mean_caches, TwoDMatrix** var_caches, float eps, TwoDMatrix** gammas, TwoDMatrix** betas, TwoDMatrix* correct_labels);
-int test(parameters* network_params);
+int test(FCParameters* network_params);
 
 #endif

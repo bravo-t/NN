@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <string.h>
+#include "matrix_type.h"
 #include "matrix_operations.h"
 #include "layers.h"
 #include "misc_utils.h"
@@ -22,7 +23,7 @@
     former_width = hidden_layer_sizes[i];
  }
  */
-int train(parameters* network_params) {
+int train(FCParameters* network_params) {
     TwoDMatrix* training_data = network_params->X;
     TwoDMatrix* correct_labels = network_params->correct_labels;
     int minibatch_size = network_params->minibatch_size;
@@ -460,7 +461,7 @@ float verifyWithTrainingData(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoDMat
     return 100.0f*correct_count/(iterations*minibatch_size);
 }
 
-int test(parameters* network_params) {
+int test(FCParameters* network_params) {
     TwoDMatrix** Ws = NULL;
     TwoDMatrix** bs = NULL;
     TwoDMatrix* test_data = network_params->X;
@@ -480,151 +481,3 @@ int test(parameters* network_params) {
     return 0;
 }
 
-parameters* readNetworkConfigFile(char* filename) {
-    FILE* fp = fopen(filename,"r");
-    if (fp == NULL) {
-        printf("ERROR: Cannot open %s to read\n",filename);
-        exit(1);
-    }
-    parameters* network_params = malloc(sizeof(parameters));
-    // Assign default values 
-    network_params->reg_strength = 1e-2;
-    network_params->learning_rate = 0.01f;
-    network_params->alpha = 0.0f;
-    network_params->verbose = false;
-    network_params->use_momentum_update = false;
-    network_params->use_nag_update = false;
-    network_params->use_rmsprop = false;
-    network_params->mu = 0.5f;
-    network_params->decay_rate = 0.99f;
-    network_params->eps = 1e-6;
-    network_params->use_batchnorm = false;
-    network_params->batchnorm_momentum = 0.5f;
-    network_params->batchnorm_eps = 1e-6;
-
-    char** key_values = malloc(sizeof(char*)*2);
-    key_values[0] = (char*) malloc(sizeof(char)*8192);
-    key_values[1] = (char*) malloc(sizeof(char)*8192);
-    bool mode_defined = false;
-    bool params_dir_defined = false;
-    bool data_set_defined = false;
-    bool correct_labels_defined = false;
-    bool hidden_layer_sizes_defined = false;
-    bool labels_defined = false;
-    bool epochs_defined = false;
-    bool minibatch_defined = false;
-    while (! feof(fp)) {
-        key_values[0][0] = '\0';
-        key_values[1][0] = '\0';
-        getKeyValueFromFile(fp,key_values);
-        if (key_values[0][0] == '#' || key_values[0][0] == '\0') {
-            continue;
-        }
-        if (! strcmp(key_values[0],"data_set")) {
-            network_params->X = load2DMatrixFromFile(key_values[1]);
-            data_set_defined = true;
-        } else if (! strcmp(key_values[0],"correct_labels")) {
-            network_params->correct_labels = load2DMatrixFromFile(key_values[1]);
-            correct_labels_defined = true;
-        } else if (! strcmp(key_values[0],"hidden_layer_sizes")) {
-            int layers[8192];
-            int network_depth = 0;
-            char* sizes = malloc(sizeof(char)*8192);
-            strcpy(sizes,key_values[1]);
-            char* sizes_ptr = sizes;
-            for(char* token = strsep(&sizes_ptr, ","); token != NULL; token = strsep(&sizes_ptr, ",")) {
-                if (token[0] != '\0') {
-                    layers[network_depth] = strtol(token,NULL,10);
-                    network_depth++;
-                }
-            }
-            network_params->hidden_layer_sizes = (int*) malloc(sizeof(int)*network_depth);
-            for(int i=0;i<network_depth;i++) {
-                network_params->hidden_layer_sizes[i] = layers[i];
-            }
-            network_params->network_depth = network_depth;
-            hidden_layer_sizes_defined = true;
-            free(sizes);
-        } else if (! strcmp(key_values[0],"labels")) {
-            network_params->labels = strtol(key_values[1],NULL,10);
-            labels_defined = true;
-        } else if (! strcmp(key_values[0],"minibatch_size")) {
-            network_params->minibatch_size = strtol(key_values[1],NULL,10);
-            minibatch_defined = true;
-        } else if (! strcmp(key_values[0],"alpha")) {
-            network_params->alpha = strtof(key_values[1],NULL);
-        } else if (! strcmp(key_values[0],"learing_rate")) {
-            network_params->learning_rate = strtof(key_values[1],NULL);
-        } else if (! strcmp(key_values[0],"epochs")) {
-            network_params->epochs = strtol(key_values[1],NULL,10);
-            epochs_defined = true;
-        } else if (! strcmp(key_values[0],"verbose")) {
-            network_params->verbose = strtol(key_values[1],NULL,10);
-        } else if (! strcmp(key_values[0],"use_momentum_update")) {
-            network_params->use_momentum_update = strtol(key_values[1],NULL,10);
-        } else if (! strcmp(key_values[0],"use_nag_update")) {
-            network_params->use_nag_update = strtol(key_values[1],NULL,10);
-        } else if (! strcmp(key_values[0],"use_rmsprop")) {
-            network_params->use_rmsprop = strtol(key_values[1],NULL,10);
-        } else if (! strcmp(key_values[0],"mu")) {
-            network_params->mu = strtof(key_values[1],NULL);
-        } else if (! strcmp(key_values[0],"decay_rate")) {
-            network_params->decay_rate = strtof(key_values[1],NULL);
-        } else if (! strcmp(key_values[0],"eps")) {
-            network_params->eps = strtof(key_values[1],NULL);
-        } else if (! strcmp(key_values[0],"use_batchnorm")) {
-            network_params->use_batchnorm = strtol(key_values[1],NULL,10);
-        } else if (! strcmp(key_values[0],"batchnorm_momentum")) {
-            network_params->batchnorm_momentum = strtof(key_values[1],NULL);
-        } else if (! strcmp(key_values[0],"batchnorm_eps")) {
-            network_params->batchnorm_eps = strtof(key_values[1],NULL);
-        } else if (! strcmp(key_values[0],"mode")) {
-            network_params->mode = (char*) malloc(sizeof(char)*strlen(key_values[1]));
-            strcpy(network_params->mode,key_values[1]);
-            mode_defined = true;
-        } else if (! strcmp(key_values[0],"params_dir")) {
-            network_params->params_save_dir = (char*) malloc(sizeof(char)*strlen(key_values[1]));
-            strcpy(network_params->params_save_dir,key_values[1]);
-            params_dir_defined = true;
-        } else {
-            printf("ERROR: Unrecognized keyword %s, ignored\n",key_values[0]);
-        }
-    }
-    free(key_values[0]);
-    free(key_values[1]);
-    free(key_values);
-    if (! mode_defined) {
-        printf("ERROR: Mode not defined\n");
-        exit(1);
-    }
-    if (! params_dir_defined) {
-        printf("ERROR: Dir to load or save params not defined\n");
-        exit(1);
-    }
-    if (! data_set_defined) {
-        printf("ERROR: Data set not defined\n");
-        exit(1);
-    }
-    if (! correct_labels_defined && strcmp(network_params->mode,"test")) {
-        printf("ERROR: Correct labels not defined\n");
-        exit(1);
-    }
-    if (! hidden_layer_sizes_defined && strcmp(network_params->mode,"test")) {
-        printf("ERROR: Sizes of hidden layers not defined\n");
-        exit(1);
-    }
-    if (! minibatch_defined) {
-        printf("ERROR: Minibatch size not defined\n");
-        exit(1);
-    }
-    if (! labels_defined && strcmp(network_params->mode,"test")) {
-        printf("ERROR: Number of lables not defined\n");
-        exit(1);
-    }
-    if (! epochs_defined && strcmp(network_params->mode,"test")) {
-        printf("ERROR: Epochs not defined\n");
-        exit(1);
-    }
-    network_params->hidden_layer_sizes[network_params->network_depth-1] = network_params->labels;
-    return network_params;
-}

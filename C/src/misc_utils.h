@@ -11,5 +11,6 @@ void __debugPrintMatrix(TwoDMatrix *M, char* name);
 void checkMatrixDiff(TwoDMatrix* a, TwoDMatrix* b, float thres);
 TwoDMatrix* load2DMatrix(FILE* fp);
 TwoDMatrix* load2DMatrixFromFile(char* filename);
+FCParameters* readNetworkConfigFile(char* filename);
 
 #endif

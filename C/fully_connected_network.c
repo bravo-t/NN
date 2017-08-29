@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
         printf("Please specify config file\n");
         exit(0);
     }
-    parameters* network_params = readNetworkConfigFile(argv[1]);
+    FCParameters* network_params = readNetworkConfigFile(argv[1]);
     if (strcmp(network_params->mode,"train")) {
         test(network_params);
     } else {

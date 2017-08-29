@@ -31,6 +31,7 @@ ThreeDMatrix* maxPoolingForward(ThreeDMatrix* X, int stride_y, int stride_x, int
 }
 
 int convLayerBackward(ThreeDMatrix* X, 
+    ThreeDMatrix* V,
     ThreeDMatrix** F, 
     ThreeDMatrix* dV, 
     int padding_y, 
@@ -49,6 +50,7 @@ int convLayerBackward(ThreeDMatrix* X,
         init3DMatrix(dF[i],F[i]->depth,F[i]->height, F[i]->width);
     }
     init3DMatrix(db,1,1,1);
+    convReLUBackword(dV,V,alpha,dV);
     for(int z=0;z<dV->depth;z++) {
         convSingleFilterBackward(X_padded,F[z], dV,stride_y, stride_x, z, dX_padded, dF[z], db);
     }

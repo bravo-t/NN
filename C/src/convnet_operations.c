@@ -98,11 +98,19 @@ int maxPoolingSingleSliceBackword(ThreeDMatrix* X, ThreeDMatrix* dV, int pooling
             int window_end_y = (i + 1) * stride_y - 1;
             int window_start_x = j * stride_x;
             int window_end_x = (j + 1) * stride_x - 1;
+            int max = X->d[z][window_start_y][window_start_x];
+            int max_y = window_start_y;
+            int max_x = window_start_x;
             for(int y=window_start_y;y<=window_end_y;y++) {
                 for(int x=window_start_x;x<=window_end_x;x++) {
-                    
+                    if (X->d[z][y][x] > max) {
+                        max = X->d[z][y][x];
+                        max_y = y;
+                        max_x = x;
+                    }
                 }
             }
+            out[y][x] += dV->d[z][y-window_start_y][x-window_start_x];
         }
     }
     return 0;
@@ -156,15 +164,15 @@ int convReLUForward(ThreeDMatrix* X, float alpha, ThreeDMatrix* V) {
     return 0;
 }
 
-int convReLUBackword(ThreeDMatrix* dX, ThreeDMatrix* X, float alpha, ThreeDMatrix* dV) {
-    init3DMatrix(dV, X->depth, X->height, X->width);
-    for(int i=0;i<dV->depth;i++) {
-        for(int j=0;j<dV->height;j++) {
-            for(int k=0;k<dV->width;k++) {
+int convReLUBackword(ThreeDMatrix* dV, ThreeDMatrix* X, float alpha, ThreeDMatrix* dX) {
+    init3DMatrix(dX, X->depth, X->height, X->width);
+    for(int i=0;i<dX->depth;i++) {
+        for(int j=0;j<dX->height;j++) {
+            for(int k=0;k<dX->width;k++) {
                 if (X->d[i][j][k] >= 0) {
-                    dV->d[i][j][k] = dX->d[i][j][k];
+                    dX->d[i][j][k] = dV->d[i][j][k];
                 } else {
-                    dV->d[i][j][k] = alpha*dX->d[i][j][k];
+                    dX->d[i][j][k] = alpha*dV->d[i][j][k];
                 }
             }
         }
@@ -172,13 +180,13 @@ int convReLUBackword(ThreeDMatrix* dX, ThreeDMatrix* X, float alpha, ThreeDMatri
     return 0;
 }
 
-int threeDMatrix2Col(ThreeDMatrix* X, TwoDMatrix* OUT) {
+int reshapeThreeDMatrix2Col(ThreeDMatrix* X, int index, TwoDMatrix* OUT) {
     init2DMatrix(OUT, X->depth*X->height*X->width, 1);
     int count = 0;
     for(int i=0;i<X->depth;i++) {
         for(int j=0;j<X->height;j++) {
             for(int k=0;k<X->width;k++) {
-                OUT->d[count][0] = X->d[i][j][k];
+                OUT->d[index][count] = X->d[i][j][k];
                 count++;
             }
         }
