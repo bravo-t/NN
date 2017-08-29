@@ -9,6 +9,5 @@
 
 int trainConvnet(ConvnetParameters* network_params) {
 	ThreeDMatrix** training_data = network_params->X;
-	ThreeDMatrix** correct_labels = network_params->correct_labels;
-
+	
 }

@@ -6,8 +6,8 @@
 #include "convnet_operations.h"
 #include "convnet_layers.h"
 
-ThreeDMatrix* convLayerForward(ThreeDMatrix* X, ThreeDMatrix** F, int number_of_filters, ThreeDMatrix** b, int f_height, int f_width, int stride_y, int stride_x, int padding_y, int padding_x, float alpha) {
-    ThreeDMatrix* V = matrixMalloc(sizeof(ThreeDMatrix));
+int convLayerForward(ThreeDMatrix* X, ThreeDMatrix** F, int number_of_filters, ThreeDMatrix** b, int f_height, int f_width, int stride_y, int stride_x, int padding_y, int padding_x, float alpha, ThreeDMatrix* V) {
+    //ThreeDMatrix* V = matrixMalloc(sizeof(ThreeDMatrix));
     int V_height = calcOutputSize(X->height,padding_y,f_height,stride_y);
     int V_width = calcOutputSize(X->width,padding_x,f_width,stride_x);
     init3DMatrix(V, number_of_filters, V_height, V_width);
@@ -17,17 +17,7 @@ ThreeDMatrix* convLayerForward(ThreeDMatrix* X, ThreeDMatrix** F, int number_of_
     }
     convReLUForward(V, alpha, V);
     destroy3DMatrix(X_padded);
-    return V;
-}
-
-ThreeDMatrix* maxPoolingForward(ThreeDMatrix* X, int stride_y, int stride_x, int pooling_width, int pooling_height) {
-    ThreeDMatrix* V = matrixMalloc(sizeof(ThreeDMatrix));
-    int V_height = calcOutputSize(X->height,0,pooling_height,stride_y); 
-    int V_width = calcOutputSize(X->width,0,pooling_width,stride_x);
-    init3DMatrix(V, X->depth, V_height, V_width);
-    for(int i=0;i<V->depth;i++) {
-        maxPoolingSingleSlice(X,pooling_height,pooling_width,stride_y,stride_x,i,V->d[i]);
-    }
+    return 0;
 }
 
 int convLayerBackward(ThreeDMatrix* X, 
@@ -57,5 +47,24 @@ int convLayerBackward(ThreeDMatrix* X,
     unpad(dX_padded, padding_y, padding_x, dX);
     destroy3DMatrix(X_padded);
     destroy3DMatrix(dX_padded);
+    return 0;
+}
+
+int maxPoolingForward(ThreeDMatrix* X, int stride_y, int stride_x, int pooling_width, int pooling_height, ThreeDMatrix* V) {
+    //ThreeDMatrix* V = matrixMalloc(sizeof(ThreeDMatrix));
+    int V_height = calcOutputSize(X->height,0,pooling_height,stride_y); 
+    int V_width = calcOutputSize(X->width,0,pooling_width,stride_x);
+    init3DMatrix(V, X->depth, V_height, V_width);
+    for(int i=0;i<V->depth;i++) {
+        maxPoolingSingleSlice(X,pooling_height,pooling_width,stride_y,stride_x,i,V->d[i]);
+    }
+    return 0;
+}
+
+int maxPoolingBackword(ThreeDMatrix* dV, ThreeDMatrix* X, int stride_y, int stride_x, int pooling_width, int pooling_height, ThreeDMatrix* dX) {
+    init3DMatrix(dX, X->depth, X->height, X->width);
+    for(int z=0;z<X->depth;z++) {
+        maxPoolingSingleSliceBackword(X, dV, pooling_height, pooling_width, stride_y, stride_x, z, dX->d[z]);
+    }
     return 0;
 }

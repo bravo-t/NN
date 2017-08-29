@@ -17,15 +17,6 @@ typedef struct {
 } ThreeDMatrix;
 
 typedef struct {
-	ThreeDMatrix** X;
-	ThreeDMatrix** correct_labels;
-	int labels;
-	float alpha;
-	int epochs;
-	
-} ConvnetParameters;
-
-typedef struct {
 	TwoDMatrix* X; // Input data, height = minibatch_size, width = size_of_one_example
 	// Below parameters are used in training
 	TwoDMatrix* correct_labels; // Correct labels, height = minibatch_size, width = 1 
@@ -50,5 +41,39 @@ typedef struct {
     char* params_save_dir;
     char* mode;
 } FCParameters;
+
+typedef struct {
+	ThreeDMatrix** X;
+/*	They belong to fully connected networks
+//	ThreeDMatrix** correct_labels; 
+//	int labels;
+*/
+	float alpha;
+	int epochs;
+	/* Below parameters are used to config the convolutional network with pattern 
+	INPUT -> [[CONV -> RELU]*N -> POOL?]*M -> [FC -> RELU]*K -> FC
+	K is not used here, since the config of full connected network will be stored in fcnet_param
+	*/
+	int N;
+	int M; 
+	// There will be N*M elements in below arrays related with filters
+	int* filter_stride_x;
+	int* filter_stride_y;
+	int* filter_stride;
+	int* filter_width;
+	int* filter_height;
+	// There will be M elements in below arrays related with pooling layer
+	bool* enable_maxpooling;
+	int* pooling_stride_x;
+	int* pooling_stride_y;
+	int* pooling_stride;
+	int* pooling_width;
+	int* pooling_height;
+	bool enable_padding;
+	int padding_width;
+	int padding_height;
+	FCParameters* fcnet_param;
+} ConvnetParameters;
+
 
 #endif
