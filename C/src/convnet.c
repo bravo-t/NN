@@ -18,6 +18,7 @@ int trainConvnet(ConvnetParameters* network_params) {
     int* filter_stride_y = network_params->filter_stride_y;
     int* filter_width = network_params->filter_width;
     int* filter_height = network_params->filter_height;
+    int* filter_number = network_params->filter_number;
     bool* enable_maxpooling = network_params->enable_maxpooling;
     int* pooling_stride_x = network_params->pooling_stride_x;
     int* pooling_stride_y = network_params->pooling_stride_y;
@@ -36,12 +37,17 @@ int trainConvnet(ConvnetParameters* network_params) {
     }
     ThreeDMatrix*** P = malloc(sizeof(ThreeDMatrix**)*M);
     for(int i=0;i<M;i++) {
-        P[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
+        if (enable_maxpooling[i]) {
+            P[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
+        } else {
+            P[i] = NULL;
+        }
     }
-    ThreeDMatrix*** F = malloc(sizeof(ThreeDMatrix**)*N*M);
+    ThreeDMatrix**** F = malloc(sizeof(ThreeDMatrix***)*M);
     for(int i=0;i<M;i++) {
+        F[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
         for(int j=0;j<N;j++) {
-            
+            F[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*M+j]);
         }
     }
 }
