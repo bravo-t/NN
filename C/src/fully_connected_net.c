@@ -5,7 +5,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <string.h>
-#include "matrix_type.h"
+#include "network_type.h"
 #include "matrix_operations.h"
 #include "layers.h"
 #include "misc_utils.h"

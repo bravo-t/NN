@@ -1,6 +1,6 @@
 #ifndef __OPERATION_HEADER__
 #define __OPERATION_HEADER__
-#include "matrix_type.h"
+#include "network_type.h"
 
 #ifdef DEBUG
 #define debugPrintMatrix(M) __debugPrintMatrix(M,#M)
@@ -12,7 +12,7 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-TwoDMatrix* matrixMalloc(int size);
+void* matrixMalloc(int size);
 float frand(void);
 float random_normal(float mean, float std);
 int init2DMatrix(TwoDMatrix* M, int height, int width);

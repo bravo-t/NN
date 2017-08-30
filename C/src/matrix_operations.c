@@ -4,7 +4,7 @@
 #include <malloc.h>
 #include <stdbool.h>
 #include <string.h>
-#include "matrix_type.h"
+#include "network_type.h"
 #include "matrix_operations.h"
 
 float frand() {
@@ -15,7 +15,7 @@ float random_normal(float mean, float std) {
     return mean + std*(sqrt(-2*log(frand()))*cos(2*M_PI*frand()));
 }
 
-TwoDMatrix* matrixMalloc(int size) {
+void* matrixMalloc(int size) {
     TwoDMatrix* M = malloc(size);
     memset(M,0,size);
     M->initialized = false;
@@ -135,8 +135,8 @@ int destroy2DMatrix(TwoDMatrix* M) {
 }
 
 int destroy3DMatrix (ThreeDMatrix* M) {
-    for(int i = 0; i<depth;i++) {
-        for(int j=0;j<height;j++) {
+    for(int i = 0; i<M->depth;i++) {
+        for(int j=0;j<M->height;j++) {
             free(M->d[i][j]);
             M->d[i][j] = NULL;
         }

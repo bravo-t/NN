@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include "matrix_type.h"
+#include "network_type.h"
 #include "matrix_operations.h"
 #include "fully_connected_net.h"
 #include "misc_utils.h"
