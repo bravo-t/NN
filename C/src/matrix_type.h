@@ -65,7 +65,6 @@ typedef struct {
     bool* enable_maxpooling;
     int* pooling_stride_x;
     int* pooling_stride_y;
-    int* pooling_stride;
     int* pooling_width;
     int* pooling_height;
     bool enable_padding;
