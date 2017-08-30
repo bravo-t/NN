@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <malloc.h>
 #include "network_type.h"
 #include "matrix_operations.h"
 #include "convnet_operations.h"
@@ -21,6 +22,16 @@ int trainConvnet(ConvnetParameters* network_params) {
     int* pooling_stride_y = network_params->pooling_stride_y;
     int* pooling_width = network_params->pooling_width;
     int* pooling_height = network_params->pooling_height;
+
+    printf("CONVNET INFO: Initializing learnable weights ang intermediate layers\n");
+    /*
+    C will hold intermediate values of CONV -> RELU layer
+    P will hold intermediate values of POOL
+    F will be a 2D array that contains filters
+    */
+    ThreeDMatrix*** C = malloc(sizeof(ThreeDMatrix**)*N*M);
+    ThreeDMatrix*** P = malloc(sizeof(ThreeDMatrix**)*M);
+    ThreeDMatrix*** F = malloc(sizeof(ThreeDMatrix**)*N*M);
     for(int i=0;i<M;i++) {
         for(int j=0;j<N;j++) {
             

@@ -44,6 +44,7 @@ typedef struct {
 
 typedef struct {
     ThreeDMatrix** X;
+    int number_of_samples;
 /*  They belong to fully connected networks
 //  ThreeDMatrix** correct_labels; 
 //  int labels;
@@ -61,6 +62,7 @@ typedef struct {
     int* filter_stride_y;
     int* filter_width;
     int* filter_height;
+    int* filter_number;
     // There will be M elements in below arrays related with pooling layer
     bool* enable_maxpooling;
     int* pooling_stride_x;
