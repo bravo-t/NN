@@ -10,6 +10,7 @@
 
 int trainConvnet(ConvnetParameters* network_params) {
     ThreeDMatrix** training_data = network_params->X;
+    int number_of_samples = network_params->number_of_samples;
     /* INPUT -> [[CONV -> RELU]*N -> POOL?]*M -> [FC -> RELU]*K -> FC */
     int N = network_params->N;
     int M = network_params->M;
@@ -30,7 +31,13 @@ int trainConvnet(ConvnetParameters* network_params) {
     F will be a 2D array that contains filters
     */
     ThreeDMatrix*** C = malloc(sizeof(ThreeDMatrix**)*N*M);
+    for(int i=0;i<M*N;i++) {
+        C[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
+    }
     ThreeDMatrix*** P = malloc(sizeof(ThreeDMatrix**)*M);
+    for(int i=0;i<M;i++) {
+        P[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
+    }
     ThreeDMatrix*** F = malloc(sizeof(ThreeDMatrix**)*N*M);
     for(int i=0;i<M;i++) {
         for(int j=0;j<N;j++) {
