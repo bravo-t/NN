@@ -11,7 +11,8 @@ int convLayerForward(ThreeDMatrix* X, ThreeDMatrix** F, int number_of_filters, T
     int V_height = calcOutputSize(X->height,padding_y,f_height,stride_y);
     int V_width = calcOutputSize(X->width,padding_x,f_width,stride_x);
     init3DMatrix(V, number_of_filters, V_height, V_width);
-    ThreeDMatrix* X_padded = zeroPadding(X, padding_y, padding_x);
+    ThreeDMatrix* X_padded = matrixMalloc(sizeof(ThreeDMatrix));
+    zeroPadding(X, padding_y, padding_x,X_padded);
     for(int i=0;i<number_of_filters;i++) {
         convSingleFilter(X_padded,F[i],b[i],stride_y,stride_x,V->d[i]);
     }
@@ -32,7 +33,8 @@ int convLayerBackward(ThreeDMatrix* X,
     ThreeDMatrix* dX, 
     ThreeDMatrix** dF, 
     ThreeDMatrix* db) {
-    ThreeDMatrix* X_padded = zeroPadding(X, padding_y, padding_x);
+    ThreeDMatrix* X_padded = matrixMalloc(sizeof(ThreeDMatrix));
+    zeroPadding(X, padding_y, padding_x,X_padded);
     ThreeDMatrix* dX_padded = matrixMalloc(ThreeDMatrix);
     init3DMatrix(dX_padded, X->depth, X->height + 2*padding_y, X->width + 2*padding_x);
     init3DMatrix(dX, X->depth, X->height, X->width);

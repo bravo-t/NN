@@ -16,7 +16,7 @@ int calcOutputSize(int length, int padding, int filter_length, int stride) {
     }
 }
 
-ThreeDMatrix* zeroPadding(ThreeDMatrix* X, int padding_height, int padding_width) {
+int zeroPadding(ThreeDMatrix* X, int padding_height, int padding_width, ThreeDMatrix* out) {
     ThreeDMatrix* out = matrixMalloc(sizeof(ThreeDMatrix));
     init3DMatrix(out, X->depth, X->height + padding_height*2, X->width + padding_width*2);
     for(int i=0;i<out->depth;i++) {
