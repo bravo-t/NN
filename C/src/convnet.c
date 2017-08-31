@@ -30,7 +30,10 @@ int trainConvnet(ConvnetParameters* network_params) {
 
     if (enable_padding) {
         for(int i=0;i<number_of_samples;i++) {
-            zeroPadding(training_data[i],padding_height,padding_width,training_data[i]);
+            ThreeDMatrix* tmp = matrixMalloc(sizeof(ThreeDMatrix));
+            zeroPadding(training_data[i],padding_height,padding_width,tmp);
+            destroy3DMatrix(training_data[i]);
+            training_data[i] = tmp;
         }
     }
 
@@ -41,7 +44,7 @@ int trainConvnet(ConvnetParameters* network_params) {
     F will be a 2D array that contains filters
     b will be a 2D array that holds biases
     */
-    ThreeDMatrix**** C = malloc(sizeof(ThreeDMatrix**)*M);
+    ThreeDMatrix**** C = malloc(sizeof(ThreeDMatrix***)*M);
     //for(int i=0;i<M*N;i++) {
     //   C[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
     //}
@@ -64,12 +67,13 @@ int trainConvnet(ConvnetParameters* network_params) {
         } else {
             P[i] = NULL;
         }
-        C[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*N);
+        C[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
         F[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
         b[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
         for(int j=0;j<N;j++) {
             F[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*M+j]);
             b[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*M+j]);
+            C[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
             for(int k=0;k<filter_number[i*M+j];k++) {
                 init3DMatrixNormRand(F[i][j][k],layer_data_depth,filter_height[i*M+j],filter_width[i*M+j],0.0,1.0);
                 init3DMatrix(b[i][j][k],1,1,1);
@@ -78,7 +82,9 @@ int trainConvnet(ConvnetParameters* network_params) {
             layer_data_height = calcOutputSize(layer_data_height,0,filter_height[i*M+j],filter_stride_y[i*M+j]);
             layer_data_width = calcOutputSize(layer_data_width,0,filter_width[i*M+j],filter_stride_x[i*M+j]);
             // FIXME Shouldn't you consider number_of_samples?
-            init3DMatrix(C[i][j],layer_data_depth,layer_data_height,layer_data_width);
+            for(int l=0;l<number_of_samples;l++) {
+                init3DMatrix(C[i][j][l], layer_data_depth, layer_data_height, layer_data_width);
+            }
         }
         if (enable_maxpooling[i]) {
             layer_data_height = calcOutputSize(layer_data_height,0,pooling_height[i],pooling_stride_y[i]);
