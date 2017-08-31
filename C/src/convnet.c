@@ -41,24 +41,30 @@ int trainConvnet(ConvnetParameters* network_params) {
     F will be a 2D array that contains filters
     b will be a 2D array that holds biases
     */
-    ThreeDMatrix*** C = malloc(sizeof(ThreeDMatrix**)*N*M);
-    for(int i=0;i<M*N;i++) {
-        C[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
-    }
+    ThreeDMatrix**** C = malloc(sizeof(ThreeDMatrix**)*M);
+    //for(int i=0;i<M*N;i++) {
+    //   C[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
+    //}
     ThreeDMatrix*** P = malloc(sizeof(ThreeDMatrix**)*M);
-    for(int i=0;i<M;i++) {
-        if (enable_maxpooling[i]) {
-            P[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
-        } else {
-            P[i] = NULL;
-        }
-    }
+    //for(int i=0;i<M;i++) {
+    //    if (enable_maxpooling[i]) {
+    //        P[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
+    //    } else {
+    //        P[i] = NULL;
+    //    }
+    //}
     ThreeDMatrix**** F = malloc(sizeof(ThreeDMatrix***)*M);
     ThreeDMatrix**** b = malloc(sizeof(ThreeDMatrix***)*M);
     int layer_data_depth = training_data[0]->depth;
     int layer_data_height = training_data[0]->height;
     int layer_data_width = training_data[0]->width;
     for(int i=0;i<M;i++) {
+        if (enable_maxpooling[i]) {
+            P[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
+        } else {
+            P[i] = NULL;
+        }
+        C[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*N);
         F[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
         b[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
         for(int j=0;j<N;j++) {
