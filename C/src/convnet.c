@@ -54,12 +54,8 @@ int trainConvnet(ConvnetParameters* network_params) {
     int layer_data_depth = training_data[0]->depth;
     int layer_data_height = training_data[0]->height;
     int layer_data_width = training_data[0]->width;
+    printf("CONVNET INFO: INPUT: [%dx%dx%d]\t\tweights: 0\n",layer_data_width,layer_data_height,layer_data_depth);
     for(int i=0;i<M;i++) {
-        if (enable_maxpooling[i]) {
-            P[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
-        } else {
-            P[i] = NULL;
-        }
         C[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
         F[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
         b[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
@@ -79,6 +75,7 @@ int trainConvnet(ConvnetParameters* network_params) {
                 init3DMatrix(dF[i][j][k],layer_data_depth,filter_height[i*M+j],filter_width[i*M+j]);
                 init3DMatrix(db[i][j][k],1,1,1);
             }
+            int filter_depth = layer_data_depth;
             layer_data_depth = filter_number[i*M+j];
             layer_data_height = calcOutputSize(layer_data_height,0,filter_height[i*M+j],filter_stride_y[i*M+j]);
             layer_data_width = calcOutputSize(layer_data_width,0,filter_width[i*M+j],filter_stride_x[i*M+j]);
@@ -86,13 +83,20 @@ int trainConvnet(ConvnetParameters* network_params) {
                 init3DMatrix(C[i][j][l], layer_data_depth, layer_data_height, layer_data_width);
                 init3DMatrix(dC[i][j][l], layer_data_depth, layer_data_height, layer_data_width);
             }
+            printf("CONVNET INFO: CONV[%dx%d-%d]: [%dx%dx%d]\t\tweights: (%d*%d*%d)*%d=%d\n",
+                filter_width[i*M+j],filter_height[i*M+j],filter_depth, layer_data_width,layer_data_height,layer_data_depth,
+                filter_width[i*M+j],filter_height[i*M+j],filter_depth,layer_data_depth,filter_width[i*M+j]*filter_height[i*M+j]*filter_depth*layer_data_depth);
         }
         if (enable_maxpooling[i]) {
+            P[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
             layer_data_height = calcOutputSize(layer_data_height,0,pooling_height[i],pooling_stride_y[i]);
             layer_data_width = calcOutputSize(layer_data_width,0,pooling_width[i],pooling_stride_x[i]);
             for(int m=0;m<number_of_samples;m++) {
                 init3DMatrix(P[i][m],layer_data_depth,layer_data_height,layer_data_width);
             }
+            printf("CONVNET INFO: POOL[%dx%d]: [%dx%dx%d]\t\tweights: 0\n",pooling_width[i],pooling_height[i],layer_data_width,layer_data_height,layer_data_depth);
+        } else {
+            P[i] = NULL;
         }
     }
 }
