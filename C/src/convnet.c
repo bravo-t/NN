@@ -37,7 +37,7 @@ int trainConvnet(ConvnetParameters* network_params) {
         }
     }
 
-    printf("CONVNET INFO: Initializing learnable weights ang intermediate layers\n");
+    printf("CONVNET INFO: Initializing learnable weights and intermediate layers\n");
     /*
     C will hold intermediate values of CONV -> RELU layer
     P will hold intermediate values of POOL
@@ -45,19 +45,12 @@ int trainConvnet(ConvnetParameters* network_params) {
     b will be a 2D array that holds biases
     */
     ThreeDMatrix**** C = malloc(sizeof(ThreeDMatrix***)*M);
-    //for(int i=0;i<M*N;i++) {
-    //   C[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
-    //}
+    ThreeDMatrix**** dC = malloc(sizeof(ThreeDMatrix***)*M);
     ThreeDMatrix*** P = malloc(sizeof(ThreeDMatrix**)*M);
-    //for(int i=0;i<M;i++) {
-    //    if (enable_maxpooling[i]) {
-    //        P[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
-    //    } else {
-    //        P[i] = NULL;
-    //    }
-    //}
     ThreeDMatrix**** F = malloc(sizeof(ThreeDMatrix***)*M);
+    ThreeDMatrix**** dF = malloc(sizeof(ThreeDMatrix***)*M);
     ThreeDMatrix**** b = malloc(sizeof(ThreeDMatrix***)*M);
+    ThreeDMatrix**** db = malloc(sizeof(ThreeDMatrix***)*M);
     int layer_data_depth = training_data[0]->depth;
     int layer_data_height = training_data[0]->height;
     int layer_data_width = training_data[0]->width;
@@ -70,26 +63,36 @@ int trainConvnet(ConvnetParameters* network_params) {
         C[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
         F[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
         b[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
+        dC[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
+        dF[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
+        db[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
         for(int j=0;j<N;j++) {
             F[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*M+j]);
             b[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*M+j]);
             C[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
+            dF[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*M+j]);
+            db[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*M+j]);
+            dC[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
             for(int k=0;k<filter_number[i*M+j];k++) {
                 init3DMatrixNormRand(F[i][j][k],layer_data_depth,filter_height[i*M+j],filter_width[i*M+j],0.0,1.0);
                 init3DMatrix(b[i][j][k],1,1,1);
+                init3DMatrix(dF[i][j][k],layer_data_depth,filter_height[i*M+j],filter_width[i*M+j]);
+                init3DMatrix(db[i][j][k],1,1,1);
             }
             layer_data_depth = filter_number[i*M+j];
             layer_data_height = calcOutputSize(layer_data_height,0,filter_height[i*M+j],filter_stride_y[i*M+j]);
             layer_data_width = calcOutputSize(layer_data_width,0,filter_width[i*M+j],filter_stride_x[i*M+j]);
-            // FIXME Shouldn't you consider number_of_samples?
             for(int l=0;l<number_of_samples;l++) {
                 init3DMatrix(C[i][j][l], layer_data_depth, layer_data_height, layer_data_width);
+                init3DMatrix(dC[i][j][l], layer_data_depth, layer_data_height, layer_data_width);
             }
         }
         if (enable_maxpooling[i]) {
             layer_data_height = calcOutputSize(layer_data_height,0,pooling_height[i],pooling_stride_y[i]);
             layer_data_width = calcOutputSize(layer_data_width,0,pooling_width[i],pooling_stride_x[i]);
-
+            for(int m=0;m<number_of_samples;m++) {
+                init3DMatrix(P[i][m],layer_data_depth,layer_data_height,layer_data_width);
+            }
         }
     }
 }
