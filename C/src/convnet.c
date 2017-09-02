@@ -38,6 +38,8 @@ int trainConvnet(ConvnetParameters* network_params) {
     }
 
     printf("CONVNET INFO: Initializing learnable weights and intermediate layers\n");
+    unsigned int total_parameters = 0;
+    unsigned int total_memory = 0;
     /*
     C will hold intermediate values of CONV -> RELU layer
     P will hold intermediate values of POOL
@@ -55,6 +57,7 @@ int trainConvnet(ConvnetParameters* network_params) {
     int layer_data_height = training_data[0]->height;
     int layer_data_width = training_data[0]->width;
     printf("CONVNET INFO: INPUT: [%dx%dx%d]\t\tweights: 0\n",layer_data_width,layer_data_height,layer_data_depth);
+    total_memory += layer_data_depth*layer_data_height*layer_data_width;
     for(int i=0;i<M;i++) {
         C[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
         F[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
@@ -86,6 +89,8 @@ int trainConvnet(ConvnetParameters* network_params) {
             printf("CONVNET INFO: CONV[%dx%d-%d]: [%dx%dx%d]\t\tweights: (%d*%d*%d)*%d=%d\n",
                 filter_width[i*M+j],filter_height[i*M+j],filter_depth, layer_data_width,layer_data_height,layer_data_depth,
                 filter_width[i*M+j],filter_height[i*M+j],filter_depth,layer_data_depth,filter_width[i*M+j]*filter_height[i*M+j]*filter_depth*layer_data_depth);
+            total_memory += layer_data_depth*layer_data_height*layer_data_width;
+            total_parameters += filter_width[i*M+j]*filter_height[i*M+j]*filter_depth*layer_data_depth;
         }
         if (enable_maxpooling[i]) {
             P[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
@@ -95,8 +100,11 @@ int trainConvnet(ConvnetParameters* network_params) {
                 init3DMatrix(P[i][m],layer_data_depth,layer_data_height,layer_data_width);
             }
             printf("CONVNET INFO: POOL[%dx%d]: [%dx%dx%d]\t\tweights: 0\n",pooling_width[i],pooling_height[i],layer_data_width,layer_data_height,layer_data_depth);
+            total_memory += layer_data_depth*layer_data_height*layer_data_width;
         } else {
             P[i] = NULL;
         }
     }
+    printf("CONVNET INFO: Total parameters: %d\n",total_parameters);
+    printf("CONVNET INFO: Memory usage: %d per image, total memory: %d\n",total_memory, total_memory*number_of_samples);
 }
