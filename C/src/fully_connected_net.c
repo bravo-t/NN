@@ -374,6 +374,17 @@ int train(FCParameters* network_params) {
             destroy2DMatrix(Wcaches[i]);
             destroy2DMatrix(bcaches[i]);
         }
+        if (use_batchnorm) {
+            destroy2DMatrix(gammas[i]);
+            destroy2DMatrix(betas[i]);
+            destroy2DMatrix(dgammas[i]);
+            destroy2DMatrix(dbetas[i]);
+            destroy2DMatrix(mean_caches[i]);
+            destroy2DMatrix(var_caches[i]);
+            destroy2DMatrix(means[i]);
+            destroy2DMatrix(vars[i]);
+            destroy2DMatrix(Hs_normalized[i]);
+        }
     }
     free(Ws);
     free(dWs);
@@ -394,6 +405,17 @@ int train(FCParameters* network_params) {
     if (use_rmsprop) {
         free(Wcaches);
         free(bcaches);
+    }
+    if (use_batchnorm) {
+        destroy2DMatrix(gammas);
+        destroy2DMatrix(betas);
+        destroy2DMatrix(dgammas);
+        destroy2DMatrix(dbetas);
+        destroy2DMatrix(mean_caches);
+        destroy2DMatrix(var_caches);
+        destroy2DMatrix(means);
+        destroy2DMatrix(vars);
+        destroy2DMatrix(Hs_normalized);
     }
     // Remeber to free struct parameter
     destroy2DMatrix(network_params->X);
@@ -481,3 +503,196 @@ int test(FCParameters* network_params) {
     return 0;
 }
 
+int FCTrainCore(FCParameters* network_params, 
+    TwoDMatrix** Ws, TwoDMatrix** bs, 
+    TwoDMatrix* vWs, TwoDMatrix* vbs, TwoDMatrix* vW_prevs, TwoDMatrix* vb_prevs,
+    TwoDMatrix* Wcaches, TwoDMatrix* bcaches,
+    TwoDMatrix** mean_caches, TwoDMatrix** var_caches, TwoDMatrix** gammas, TwoDMatrix** betas,
+    TwoDMatrix* dX) {
+    TwoDMatrix* training_data = network_params->X;
+    TwoDMatrix* correct_labels = network_params->correct_labels;
+    int minibatch_size = network_params->minibatch_size;
+    int labels = network_params->labels;
+    float reg_strength = network_params->reg_strength;
+    float alpha = network_params->alpha;
+    float learning_rate = network_params->learning_rate;
+    int network_depth = network_params->network_depth;
+    int* hidden_layer_sizes = network_params->hidden_layer_sizes;
+    int epochs = network_params->epochs;
+
+    bool verbose = network_params->verbose;
+    // Below are control variables for optimizers
+    bool use_momentum_update =  network_params->use_momentum_update;
+    bool use_nag_update =  network_params->use_nag_update;
+    bool use_rmsprop =  network_params->use_rmsprop;
+    float mu =  network_params->mu; // or 0.5,0.95, 0.99
+    float decay_rate =  network_params->decay_rate; // or with more 9s in it
+    float eps =  network_params->eps;
+
+    bool use_batchnorm =  network_params->use_batchnorm;
+    float batchnorm_momentum =  network_params->batchnorm_momentum;
+    float batchnorm_eps =  network_params->batchnorm_eps;
+    // Initialize all learnable parameters
+    // Hidden layers
+    TwoDMatrix** Hs = malloc(sizeof(TwoDMatrix*)*network_depth);
+    // Gradient descend values of Weights
+    TwoDMatrix** dWs = malloc(sizeof(TwoDMatrix*)*network_depth);
+    // Gradient descend values of Biases
+    TwoDMatrix** dbs = malloc(sizeof(TwoDMatrix*)*network_depth);
+    // Gradient descend values of Hidden layers
+    TwoDMatrix** dHs = malloc(sizeof(TwoDMatrix*)*network_depth);
+    // Below variables are used in optimization algorithms
+    // Batch normalization layers;
+    TwoDMatrix** dgammas = NULL;
+    TwoDMatrix** dbetas = NULL;
+    TwoDMatrix** means = NULL;
+    TwoDMatrix** vars = NULL;
+    TwoDMatrix** Hs_normalized = NULL;
+
+    if (use_batchnorm) {
+        dgammas = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        dbetas = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        means = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        vars = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        Hs_normalized = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+    }
+
+    int former_width = training_data->width;
+    for(int i=0;i<network_depth;i++) {
+        // Initialize layer data holders
+        Hs[i] = matrixMalloc(sizeof(TwoDMatrix));
+        dWs[i] = matrixMalloc(sizeof(TwoDMatrix));
+        dbs[i] = matrixMalloc(sizeof(TwoDMatrix));
+        dHs[i] = matrixMalloc(sizeof(TwoDMatrix));
+        init2DMatrix(Hs[i],minibatch_size,hidden_layer_sizes[i]);
+
+        // Initialize variables for optimization
+        if (use_batchnorm) {
+            dgammas[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrix(dgammas[i],1,hidden_layer_sizes[i]);
+            dbetas[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrix(dbetas[i],1,hidden_layer_sizes[i]);
+            means[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrix(means[i],1,hidden_layer_sizes[i]);
+            vars[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrix(vars[i],1,hidden_layer_sizes[i]);
+            Hs_normalized[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrixZero(Hs_normalized[i],minibatch_size,hidden_layer_sizes[i]);
+        }
+        former_width = hidden_layer_sizes[i];
+    }
+    
+    // Feed data to the network to train it
+    printf("INFO: Training network\n");
+    int iterations = training_data->height / minibatch_size;
+    TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
+    for(int epoch=1;epoch<=epochs;epoch++) {
+        // find number of minibatch_size example to go into the network as 1 iteration
+        for(int iteration=0;iteration<iterations;iteration++) {
+            int data_start = iteration*minibatch_size;
+            int data_end = (iteration+1)*minibatch_size-1;
+            chop2DMatrix(training_data,data_start,data_end,X);
+            // Forward propagation
+            TwoDMatrix* layer_X = NULL;
+            layer_X = X;
+            for(int i=0;i<network_depth;i++) {
+                affineLayerForward(layer_X,Ws[i],bs[i],Hs[i]);
+                // The last layer in the network will calculate the scores
+                // So there will not be a activation function put to it
+                if (i != network_depth - 1) {
+                    if (use_batchnorm) {
+                        batchnorm_training_forward(Hs[i], batchnorm_momentum, batchnorm_eps, gammas[i], betas[i], Hs[i], mean_caches[i], var_caches[i], means[i], vars[i], Hs_normalized[i]);
+                    }
+                    leakyReLUForward(Hs[i],alpha,Hs[i]);
+                }
+                debugPrintMatrix(layer_X);
+                debugPrintMatrix(Ws[i]);
+                debugPrintMatrix(bs[i]);
+                debugPrintMatrix(Hs[i]);
+                layer_X = Hs[i];
+            }
+            
+            
+            float data_loss = softmaxLoss(Hs[network_depth-1], correct_labels, dHs[network_depth-1]);
+            debugPrintMatrix(dHs[network_depth-1]);
+            float reg_loss = L2RegLoss(Ws, network_depth, reg_strength);
+            float loss = data_loss + reg_loss;
+            if ((epoch % 1000 == 0 && iteration == 0) || verbose) {
+                printf("INFO: Epoch %d, data loss: %f, regulization loss: %f, total loss: %f\n",
+                    epoch, data_loss, reg_loss, loss);
+            }
+            // Backward propagation
+            // This dX is only a placeholder to babysit the backword function, of course we are not going to modify X
+            for (int i=network_depth-1; i>=0; i--) {
+                debugPrintMatrix(dHs[i]);
+                debugPrintMatrix(Hs[i]);
+                if (i != network_depth-1) {
+                    leakyReLUBackward(dHs[i],Hs[i],alpha,dHs[i]);
+                    if (use_batchnorm) {
+                        batchnorm_backward(dHs[i], Hs[i], Hs_normalized[i], gammas[i], betas[i], means[i], vars[i], batchnorm_eps, dHs[i],  dgammas[i], dbetas[i]);
+                    }
+                }
+                debugPrintMatrix(dHs[i]);
+                if (i != 0) {
+                    affineLayerBackword(dHs[i],Hs[i-1],Ws[i],bs[i],dHs[i-1],dWs[i],dbs[i]);
+                } else {
+                    affineLayerBackword(dHs[i],X,Ws[i],bs[i],dX,dWs[i],dbs[i]);
+                }
+                debugPrintMatrix(dWs[i]);
+                debugPrintMatrix(Ws[i]);
+                // Weight changes contributed by L2 regulization
+                L2RegLossBackward(dWs[i],Ws[i],reg_strength,dWs[i]);
+                debugPrintMatrix(dWs[i]);
+            }
+            // Update weights
+            for (int i=0;i<network_depth;i++) {
+                if (use_momentum_update) {
+                    momentumUpdate(Ws[i], dWs[i], vWs[i], mu, learning_rate, Ws[i]);
+                    momentumUpdate(bs[i], dbs[i], vbs[i], mu, learning_rate, bs[i]);
+                    //if (use_batchnorm) {
+                    //    momentumUpdate(gammas[i],dgammas[i],)
+                    //}
+                } else if (use_nag_update) {
+                    NAGUpdate(Ws[i], dWs[i], vWs[i], vW_prevs[i], mu, learning_rate, Ws[i]);
+                    NAGUpdate(bs[i], dbs[i], vbs[i], vb_prevs[i], mu, learning_rate, bs[i]);
+                } else if (use_rmsprop) {
+                    RMSProp(Ws[i], dWs[i], Wcaches[i], learning_rate, decay_rate, eps, Ws[i]);
+                    RMSProp(bs[i], dbs[i], bcaches[i], learning_rate, decay_rate, eps, bs[i]);
+                } else {
+                    vanillaUpdate(Ws[i],dWs[i],learning_rate,Ws[i]);
+                    vanillaUpdate(bs[i],dbs[i],learning_rate,bs[i]);
+                }
+                // Let's just use normal SGD update for batchnorm parameters to make it simpler
+                if (use_batchnorm) {
+                    vanillaUpdate(gammas[i],dgammas[i],learning_rate,gammas[i]);
+                    vanillaUpdate(betas[i],dbetas[i],learning_rate,betas[i]);
+                }
+            }
+        }
+    }
+    for(int i=0;i<network_depth;i++) {
+        destroy2DMatrix(dWs[i]);
+        destroy2DMatrix(dbs[i]);
+        destroy2DMatrix(Hs[i]);
+        destroy2DMatrix(dHs[i]);
+        if (use_batchnorm) {
+            destroy2DMatrix(dgammas[i]);
+            destroy2DMatrix(dbetas[i]);
+            destroy2DMatrix(means[i]);
+            destroy2DMatrix(vars[i]);
+            destroy2DMatrix(Hs_normalized[i]);
+        }
+    }
+    free(dWs);
+    free(dbs);
+    free(Hs);
+    free(dHs);
+    if (use_batchnorm) {
+        destroy2DMatrix(dgammas);
+        destroy2DMatrix(dbetas);
+        destroy2DMatrix(means);
+        destroy2DMatrix(vars);
+        destroy2DMatrix(Hs_normalized);
+    }
+    return 0;
+}
