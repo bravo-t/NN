@@ -45,10 +45,10 @@ int trainConvnet(ConvnetParameters* network_params) {
     unsigned int total_parameters = 0;
     unsigned int total_memory = 0;
     /*
-    C will hold intermediate values of CONV -> RELU layer
-    P will hold intermediate values of POOL
-    F will be a 2D array that contains filters
-    b will be a 2D array that holds biases
+    C will hold intermediate values of CONV -> RELU layer, C[M][N][number_of_samples]
+    P will hold intermediate values of POOL, P[M][number_of_samples]
+    F will be a 2D array that contains filters, F[M][N][filter_number]
+    b will be a 2D array that holds biases, b
     */
     ThreeDMatrix**** C = malloc(sizeof(ThreeDMatrix***)*M);
     ThreeDMatrix**** dC = malloc(sizeof(ThreeDMatrix***)*M);
@@ -155,9 +155,12 @@ int trainConvnet(ConvnetParameters* network_params) {
     printf("CONVNET INFO: Memory usage: %d%cB per image, total memory: %d%cB\n",memory_usage_per_image, memory_unit_per_image, memory_usage_total, memory_unit_total);
     
     // Start training the network
+    ThreeDMatrix** layer_input = training_data;
     for(int e=1;e<=epochs;e++) {
         
-        for(int i=0;)
+        for(int i=0;i<M;i++) {
+            for(int n=0;n<number_of_samples)
+        }
     }
     
 }
