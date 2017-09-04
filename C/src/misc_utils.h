@@ -12,5 +12,7 @@ void checkMatrixDiff(TwoDMatrix* a, TwoDMatrix* b, float thres);
 TwoDMatrix* load2DMatrix(FILE* fp);
 TwoDMatrix* load2DMatrixFromFile(char* filename);
 FCParameters* readNetworkConfigFile(char* filename);
+char determineMemoryUnit(unsigned int n);
+float memoryUsageReadable(unsigned int n, char unit);
 
 #endif

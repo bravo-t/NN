@@ -427,3 +427,24 @@ FCParameters* readNetworkConfigFile(char* filename) {
     network_params->hidden_layer_sizes[network_params->network_depth-1] = network_params->labels;
     return network_params;
 }
+
+char determineMemoryUnit(unsigned int n) {
+    char units[] = {" ","K","M","G","T"};
+    float n_float = (float) n;
+    for(int i=0;i<5;i++) {
+        if (n_float < 1) return units[i-1];
+        n_float = n_float/1024;
+    }
+    return units[0];
+}
+
+float memoryUsageReadable(unsigned int n, char unit) {
+    switch (unit) {
+        case " ": return (float) n;
+        case "K": return (float) n/1024;
+        case "M": return (float) n/(1024*1024);
+        case "M": return (float) n/(1024*1024*1024);
+        case "M": return (float) n/(1024*1024*1024*1024);
+        default: return (float) n;
+    }
+}

@@ -27,6 +27,7 @@ int trainConvnet(ConvnetParameters* network_params) {
     int* pooling_stride_y = network_params->pooling_stride_y;
     int* pooling_width = network_params->pooling_width;
     int* pooling_height = network_params->pooling_height;
+    int epochs = network_params->epochs;
     bool enable_padding = network_params->enable_padding;
     int padding_width = network_params->padding_width;
     int padding_height = network_params->padding_height;
@@ -59,7 +60,7 @@ int trainConvnet(ConvnetParameters* network_params) {
     int layer_data_depth = training_data[0]->depth;
     int layer_data_height = training_data[0]->height;
     int layer_data_width = training_data[0]->width;
-    printf("CONVNET INFO: INPUT: [%dx%dx%d]\t\tweights: 0\n",layer_data_width,layer_data_height,layer_data_depth);
+    printf("CONVNET INFO: INPUT: [%dx%dx%d]\t\t\tweights: 0\n",layer_data_width,layer_data_height,layer_data_depth);
     total_memory += layer_data_depth*layer_data_height*layer_data_width;
     for(int i=0;i<M;i++) {
         C[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
@@ -118,7 +119,45 @@ int trainConvnet(ConvnetParameters* network_params) {
     for(int i=0;i<number_of_samples;i++) {
         reshapeThreeDMatrix2Col(P[M-1][i],i,X);
     }
-    
+    network_params->fcnet_param->X = X;
+    printf("FCNET INFO: INPUT[%dx%d]\t\t\tweights: 0\n",number_of_samples,layer_data_depth*layer_data_height*layer_data_width);
+    total_memory += layer_data_depth*layer_data_height*layer_data_width;
+    int former_width = layer_data_depth*layer_data_height*layer_data_width;
+    for(int i=0;i<network_depth;i++) {
+        // Initialize layer data holders
+        Ws[i] = matrixMalloc(sizeof(TwoDMatrix));
+        bs[i] = matrixMalloc(sizeof(TwoDMatrix));
+        init2DMatrixNormRand(Ws[i],former_width,hidden_layer_sizes[i],0.0,1.0);
+        init2DMatrixZero(bs[i],1,hidden_layer_sizes[i]);
+        printf("FCNET INFO: FC[%dx%dx%d]\t\t\tweights: %d*%d=%d\n",1,1,hidden_layer_sizes[i],former_width,hidden_layer_sizes[i],former_width*hidden_layer_sizes[i]);
+        // Initialize variables for optimization
+        if (use_batchnorm) {
+            gammas[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrix(gammas[i],1,hidden_layer_sizes[i]);
+            betas[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrix(betas[i],1,hidden_layer_sizes[i]);
+            means[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrix(means[i],1,hidden_layer_sizes[i]);
+            vars[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrix(vars[i],1,hidden_layer_sizes[i]);
+        }
+        former_width = hidden_layer_sizes[i];
+    }
+    // Babysit the fully connected network core
+    network_params->fcnet_param->minibatch_size = number_of_samples;
+    network_params->fcnet_param->epochs = 1;
+    // Print some statistical info
     printf("CONVNET INFO: Total parameters: %d\n",total_parameters);
-    printf("CONVNET INFO: Memory usage: %d per image, total memory: %d\n",total_memory, total_memory*number_of_samples);
+    char memory_unit_per_image = determineMemoryUnit(total_memory*sizeof(float));
+    float memory_usage_per_image = memoryUsageReadable(total_memory*sizeof(float),memory_unit_per_image);
+    char memory_unit_total = determineMemoryUnit(total_memory*sizeof(float)*number_of_samples);
+    float memory_usage_total = memoryUsageReadable(total_memory*sizeof(float)*number_of_samples,memory_unit_total);
+    printf("CONVNET INFO: Memory usage: %d%cB per image, total memory: %d%cB\n",memory_usage_per_image, memory_unit_per_image, memory_usage_total, memory_unit_total);
+    
+    // Start training the network
+    for(int e=1;e<=epochs;e++) {
+        
+        for(int i=0;)
+    }
+    
 }

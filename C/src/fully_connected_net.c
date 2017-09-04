@@ -503,7 +503,7 @@ int test(FCParameters* network_params) {
     return 0;
 }
 
-int FCTrainCore(FCParameters* network_params, 
+float* FCTrainCore(FCParameters* network_params, 
     TwoDMatrix** Ws, TwoDMatrix** bs, 
     TwoDMatrix* vWs, TwoDMatrix* vbs, TwoDMatrix* vW_prevs, TwoDMatrix* vb_prevs,
     TwoDMatrix* Wcaches, TwoDMatrix* bcaches,
@@ -519,7 +519,7 @@ int FCTrainCore(FCParameters* network_params,
     int network_depth = network_params->network_depth;
     int* hidden_layer_sizes = network_params->hidden_layer_sizes;
     int epochs = network_params->epochs;
-
+    float losses[2];
     bool verbose = network_params->verbose;
     // Below are control variables for optimizers
     bool use_momentum_update =  network_params->use_momentum_update;
@@ -583,7 +583,7 @@ int FCTrainCore(FCParameters* network_params,
     }
     
     // Feed data to the network to train it
-    printf("INFO: Training network\n");
+    //printf("%s: Training network\n",TAG);
     int iterations = training_data->height / minibatch_size;
     TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
     for(int epoch=1;epoch<=epochs;epoch++) {
@@ -613,14 +613,13 @@ int FCTrainCore(FCParameters* network_params,
             }
             
             
-            float data_loss = softmaxLoss(Hs[network_depth-1], correct_labels, dHs[network_depth-1]);
+            losses[0] = softmaxLoss(Hs[network_depth-1], correct_labels, dHs[network_depth-1]);
             debugPrintMatrix(dHs[network_depth-1]);
-            float reg_loss = L2RegLoss(Ws, network_depth, reg_strength);
-            float loss = data_loss + reg_loss;
-            if ((epoch % 1000 == 0 && iteration == 0) || verbose) {
-                printf("INFO: Epoch %d, data loss: %f, regulization loss: %f, total loss: %f\n",
-                    epoch, data_loss, reg_loss, loss);
-            }
+            losses[1] = L2RegLoss(Ws, network_depth, reg_strength);
+            //if ((epoch % 1000 == 0 && iteration == 0) || verbose) {
+            //    printf("%s: Epoch %d, data loss: %f, regulization loss: %f, total loss: %f\n",TAG,
+            //        epoch, data_loss, reg_loss, loss);
+            //}
             // Backward propagation
             // This dX is only a placeholder to babysit the backword function, of course we are not going to modify X
             for (int i=network_depth-1; i>=0; i--) {
@@ -694,5 +693,5 @@ int FCTrainCore(FCParameters* network_params,
         destroy2DMatrix(vars);
         destroy2DMatrix(Hs_normalized);
     }
-    return 0;
+    return losses;
 }
