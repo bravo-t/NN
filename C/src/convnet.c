@@ -4,6 +4,9 @@
 #include <malloc.h>
 #include "network_type.h"
 #include "matrix_operations.h"
+#include "layers.h"
+#include "misc_utils.h"
+#include "fully_connected_net.h"
 #include "convnet_operations.h"
 #include "convnet_layers.h"
 #include "convnet.h"
@@ -102,9 +105,20 @@ int trainConvnet(ConvnetParameters* network_params) {
             printf("CONVNET INFO: POOL[%dx%d]: [%dx%dx%d]\t\tweights: 0\n",pooling_width[i],pooling_height[i],layer_data_width,layer_data_height,layer_data_depth);
             total_memory += layer_data_depth*layer_data_height*layer_data_width;
         } else {
-            P[i] = NULL;
+            P[i] = C[i][N-1];
         }
     }
+    // Initialize the fully connected network in convnet
+    int* fcnet_hidden_layer_sizes = network_params->fcnet_param->hidden_layer_sizes;
+    int K = network_params->fcnet_param->network_depth;
+    int fcnet_labels = network_params->fcnet_param->labels;
+    fcnet_hidden_layer_sizes[K-1] = fcnet_labels;
+    TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
+    init2DMatrix(X,number_of_samples,layer_data_depth*layer_data_height*layer_data_width);
+    for(int i=0;i<number_of_samples;i++) {
+        reshapeThreeDMatrix2Col(P[M-1][i],i,X);
+    }
+    
     printf("CONVNET INFO: Total parameters: %d\n",total_parameters);
     printf("CONVNET INFO: Memory usage: %d per image, total memory: %d\n",total_memory, total_memory*number_of_samples);
 }
