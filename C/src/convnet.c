@@ -225,7 +225,37 @@ int trainConvnet(ConvnetParameters* network_params) {
         }
         restoreThreeDMatrixFromCol(dP2D, dP3D);
         // Backward propagation
-        
+        for(int i=M-1;i>=0;i--) {
+            if (enable_maxpooling[i]) {
+                for(int n=0;n<number_of_samples;n++) {
+                    maxPoolingBackword(ThreeDMatrix* dV, 
+                        ThreeDMatrix* X, 
+                        int stride_y, 
+                        int stride_x, 
+                        int pooling_width, 
+                        int pooling_height, 
+                        ThreeDMatrix* dX);
+                }
+            } else {
+
+            }
+            for(int j=N-1;j>=0;j--) {
+                for(int n=0;n<number_of_samples;n++) {
+                    convLayerBackward(ThreeDMatrix* X, 
+                        ThreeDMatrix* V,
+                        ThreeDMatrix** F, 
+                        ThreeDMatrix* dV, 
+                        int padding_y, 
+                        int padding_x, 
+                        int stride_y, 
+                        int stride_x, 
+                        float alpha,
+                        ThreeDMatrix* dX, 
+                        ThreeDMatrix** dF, 
+                        ThreeDMatrix* db);
+                }
+            }
+        }
 
     }
     

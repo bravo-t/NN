@@ -62,7 +62,13 @@ int maxPoolingForward(ThreeDMatrix* X, int stride_y, int stride_x, int pooling_w
     }
     return 0;
 }
-
+/*      -----------
+** X -> | POOLING | -> V
+**      -----------
+**       -----------
+** dX <- | POOLING | <- dV
+**       -----------
+*/
 int maxPoolingBackword(ThreeDMatrix* dV, ThreeDMatrix* X, int stride_y, int stride_x, int pooling_width, int pooling_height, ThreeDMatrix* dX) {
     init3DMatrix(dX, X->depth, X->height, X->width);
     for(int z=0;z<X->depth;z++) {
