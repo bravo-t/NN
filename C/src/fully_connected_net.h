@@ -10,6 +10,6 @@ float* FCTrainCore(FCParameters* network_params,
     TwoDMatrix* vWs, TwoDMatrix* vbs, TwoDMatrix* vW_prevs, TwoDMatrix* vb_prevs,
     TwoDMatrix* Wcaches, TwoDMatrix* bcaches,
     TwoDMatrix** mean_caches, TwoDMatrix** var_caches, TwoDMatrix** gammas, TwoDMatrix** betas,
-    TwoDMatrix* dX);
+    TwoDMatrix* dX, float* losses);
 
 #endif

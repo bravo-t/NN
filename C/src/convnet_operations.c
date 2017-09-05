@@ -193,3 +193,18 @@ int reshapeThreeDMatrix2Col(ThreeDMatrix* X, int index, TwoDMatrix* OUT) {
     }
     return 0;
 }
+
+int restoreThreeDMatrixFromCol(TwoDMatrix* IN, ThreeDMatrix** OUT) {
+    for(int i=0;i<IN->height;i++) {
+        int depth = OUT[i]->depth;
+        int height = OUT[i]->height;
+        int width = OUT[i]->width;
+        for(int j=0;j<IN->width;j++) {
+            int x = j % width;
+            int y = (j / width) % height;
+            int z = (j / width / height) % depth;
+            OUT[i]->d[z][y][x] = IN->d[i][j];
+        }
+    }
+    return 0;
+}

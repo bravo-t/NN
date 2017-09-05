@@ -32,6 +32,12 @@ int trainConvnet(ConvnetParameters* network_params) {
     int padding_width = network_params->padding_width;
     int padding_height = network_params->padding_height;
     float alpha = network_params->alpha;
+    bool verbose = network_params->verbose;
+    // Turn these features off to reduce the complexity for now
+    network_params->fcnet_param->use_momentum_update = false;
+    network_params->fcnet_param->use_batchnorm = false;
+    network_params->fcnet_param->use_nag_update = false;
+    network_params->fcnet_param->use_rmsprop = false;
 
     if (enable_padding) {
         for(int i=0;i<number_of_samples;i++) {
@@ -45,6 +51,7 @@ int trainConvnet(ConvnetParameters* network_params) {
     printf("CONVNET INFO: Initializing learnable weights and intermediate layers\n");
     unsigned int total_parameters = 0;
     unsigned int total_memory = 0;
+    float* losses = malloc(sizeof(float)*2);
     /*
     C will hold intermediate values of CONV -> RELU layer, C[M][N][number_of_samples]
     P will hold intermediate values of POOL, P[M][number_of_samples]
@@ -58,6 +65,9 @@ int trainConvnet(ConvnetParameters* network_params) {
     ThreeDMatrix**** dF = malloc(sizeof(ThreeDMatrix***)*M);
     ThreeDMatrix**** b = malloc(sizeof(ThreeDMatrix***)*M);
     ThreeDMatrix**** db = malloc(sizeof(ThreeDMatrix***)*M);
+    TwoDMatrix* dP2D = matrixMalloc(sizeof(TwoDMatrix));
+    ThreeDMatrix** dP3D = malloc(sizeof(ThreeDMatrix*)*number_of_samples);
+
     int layer_data_depth = training_data[0]->depth;
     int layer_data_height = training_data[0]->height;
     int layer_data_width = training_data[0]->width;
@@ -110,6 +120,9 @@ int trainConvnet(ConvnetParameters* network_params) {
             P[i] = C[i][N-1];
         }
     }
+    for(int i=0;i<number_of_samples;i++) {
+        init3DMatrix(dP3D,P[M-1][N-1]->depth, P[M-1][N-1]->height, P[M-1][N-1]->width);
+    }
     // Initialize the fully connected network in convnet
     int* fcnet_hidden_layer_sizes = network_params->fcnet_param->hidden_layer_sizes;
     int K = network_params->fcnet_param->network_depth;
@@ -160,6 +173,7 @@ int trainConvnet(ConvnetParameters* network_params) {
     ThreeDMatrix** layer_input = training_data;
     ThreeDMatrix** CONV_OUT = NULL;
     for(int e=1;e<=epochs;e++) {
+        // Forward propagation
         for(int i=0;i<M;i++) {
             for(int j=0;j<N;j++) {
                 for(int n=0;n<number_of_samples;n++) {
@@ -191,6 +205,7 @@ int trainConvnet(ConvnetParameters* network_params) {
                 P[i] = CONV_OUT;
             }
         }
+
         // Feed data to fully connected network
         TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
         init2DMatrix(X,number_of_samples,layer_data_depth*layer_data_height*layer_data_width);
@@ -198,6 +213,20 @@ int trainConvnet(ConvnetParameters* network_params) {
             reshapeThreeDMatrix2Col(P[M-1][i],i,X);
         }
         network_params->fcnet_param->X = X;
+
+        float* FCTrainCore(network_params->fcnet_param, 
+            Ws, bs, 
+            NULL, NULL, NULL, NULL,
+            NULL, NULL,
+            NULL, NULL, NULL, NULL,
+            dP2D, losses);
+        if (e % 1000 == 0 || verbose) {
+            pirntf("CONVNET INFO: Epoch: %d, data loss: %f, regulization loss: %f, total loss: %f\n");
+        }
+        restoreThreeDMatrixFromCol(dP2D, dP3D);
+        // Backward propagation
+        
+
     }
     
 }

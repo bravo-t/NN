@@ -503,12 +503,12 @@ int test(FCParameters* network_params) {
     return 0;
 }
 
-float* FCTrainCore(FCParameters* network_params, 
+int FCTrainCore(FCParameters* network_params, 
     TwoDMatrix** Ws, TwoDMatrix** bs, 
     TwoDMatrix* vWs, TwoDMatrix* vbs, TwoDMatrix* vW_prevs, TwoDMatrix* vb_prevs,
     TwoDMatrix* Wcaches, TwoDMatrix* bcaches,
     TwoDMatrix** mean_caches, TwoDMatrix** var_caches, TwoDMatrix** gammas, TwoDMatrix** betas,
-    TwoDMatrix* dX) {
+    TwoDMatrix* dX, float* losses) {
     TwoDMatrix* training_data = network_params->X;
     TwoDMatrix* correct_labels = network_params->correct_labels;
     int minibatch_size = network_params->minibatch_size;
@@ -519,7 +519,7 @@ float* FCTrainCore(FCParameters* network_params,
     int network_depth = network_params->network_depth;
     int* hidden_layer_sizes = network_params->hidden_layer_sizes;
     int epochs = network_params->epochs;
-    float losses[2];
+    ;
     bool verbose = network_params->verbose;
     // Below are control variables for optimizers
     bool use_momentum_update =  network_params->use_momentum_update;
@@ -693,5 +693,5 @@ float* FCTrainCore(FCParameters* network_params,
         destroy2DMatrix(vars);
         destroy2DMatrix(Hs_normalized);
     }
-    return losses;
+    return 0;
 }

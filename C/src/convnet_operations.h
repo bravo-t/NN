@@ -20,5 +20,6 @@ int convSingleFilterBackward(ThreeDMatrix* X,
 int convReLUForward(ThreeDMatrix* X, float alpha, ThreeDMatrix* V);
 int convReLUBackword(ThreeDMatrix* dV, ThreeDMatrix* X, float alpha, ThreeDMatrix* dX);
 int reshapeThreeDMatrix2Col(ThreeDMatrix* X, int index, TwoDMatrix* OUT);
+int restoreThreeDMatrixFromCol(TwoDMatrix* IN, ThreeDMatrix** OUT);
 
 #endif

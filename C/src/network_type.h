@@ -72,6 +72,7 @@ typedef struct {
     bool enable_padding;
     int padding_width;
     int padding_height;
+    bool verbose;
     FCParameters* fcnet_param;
 } ConvnetParameters;
 
