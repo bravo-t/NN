@@ -1,6 +1,6 @@
 ## A neurual network framework written in C
 * What is this?
-  * This is a neural network "engine" I wrote to figure out how a neural network works.
+  * This is a fully connected neural network "engine" I wrote to figure out how a neural network works.
   * The activation function used in this network is leaky ReLU, and the classifier is softmax.
   * It uses SGD as the default update strategy, and it also has momentum update, NAG update and RMSProp built in.
   * In "train" mode, this program takes in a configuration file, trians itself, and dumps out the learned weights.
@@ -60,3 +60,6 @@
     INFO: Network parameters dumped to ./network.params
 ```
   * And as specified, you will get all learned weights dumped out in [network.params](network.params), which can be loaded later for testing
+
+* Note  
+Currently this project is actively updating to implement a convolutional neural network, I tried my best to avoid touching codes related with fully connected network, but please don't be surprised if you met compilation errors or stupid errors like that.
