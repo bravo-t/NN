@@ -31,6 +31,7 @@ int trainConvnet(ConvnetParameters* network_params) {
     bool enable_padding = network_params->enable_padding;
     int padding_width = network_params->padding_width;
     int padding_height = network_params->padding_height;
+    float alpha = network_params->alpha;
 
     if (enable_padding) {
         for(int i=0;i<number_of_samples;i++) {
@@ -48,7 +49,7 @@ int trainConvnet(ConvnetParameters* network_params) {
     C will hold intermediate values of CONV -> RELU layer, C[M][N][number_of_samples]
     P will hold intermediate values of POOL, P[M][number_of_samples]
     F will be a 2D array that contains filters, F[M][N][filter_number]
-    b will be a 2D array that holds biases, b
+    b will be a 2D array that holds biases, b[M][N][filter_number]
     */
     ThreeDMatrix**** C = malloc(sizeof(ThreeDMatrix***)*M);
     ThreeDMatrix**** dC = malloc(sizeof(ThreeDMatrix***)*M);
@@ -114,12 +115,6 @@ int trainConvnet(ConvnetParameters* network_params) {
     int K = network_params->fcnet_param->network_depth;
     int fcnet_labels = network_params->fcnet_param->labels;
     fcnet_hidden_layer_sizes[K-1] = fcnet_labels;
-    TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(X,number_of_samples,layer_data_depth*layer_data_height*layer_data_width);
-    for(int i=0;i<number_of_samples;i++) {
-        reshapeThreeDMatrix2Col(P[M-1][i],i,X);
-    }
-    network_params->fcnet_param->X = X;
     printf("FCNET INFO: INPUT[%dx%d]\t\t\tweights: 0\n",number_of_samples,layer_data_depth*layer_data_height*layer_data_width);
     total_memory += layer_data_depth*layer_data_height*layer_data_width;
     int former_width = layer_data_depth*layer_data_height*layer_data_width;
@@ -155,12 +150,54 @@ int trainConvnet(ConvnetParameters* network_params) {
     printf("CONVNET INFO: Memory usage: %d%cB per image, total memory: %d%cB\n",memory_usage_per_image, memory_unit_per_image, memory_usage_total, memory_unit_total);
     
     // Start training the network
+    /*
+    C will hold intermediate values of CONV -> RELU layer, C[M][N][number_of_samples]
+    P will hold intermediate values of POOL, P[M][number_of_samples]
+    F will be a 2D array that contains filters, F[M][N][filter_number]
+    b will be a 2D array that holds biases, b[M][N][filter_number]
+    */
+    /* INPUT -> [[CONV -> RELU]*N -> POOL?]*M -> [FC -> RELU]*K -> FC */
     ThreeDMatrix** layer_input = training_data;
+    ThreeDMatrix** CONV_OUT = NULL;
     for(int e=1;e<=epochs;e++) {
-        
         for(int i=0;i<M;i++) {
-            for(int n=0;n<number_of_samples)
+            for(int j=0;j<N;j++) {
+                for(int n=0;n<number_of_samples;n++) {
+                    convLayerForward(layer_input[n], 
+                        F[i][j], 
+                        filter_number[i*M+j], 
+                        b[i][j], 
+                        filter_height[i*M+j], 
+                        filter_width[i*M+j], 
+                        filter_stride_y[i*M+j], 
+                        filter_stride_x[i*M+j], 
+                        0, 
+                        0, 
+                        alpha, 
+                        C[i][j][n]);
+                }
+                CONV_OUT = C[i][j];
+            }
+            if (enable_maxpooling[i]) {
+                for(int n=0;n<number_of_samples;n++) {
+                    maxPoolingForward(CONV_OUT[n], 
+                        pooling_stride_y[i], 
+                        pooling_stride_x[i], 
+                        pooling_width[i], 
+                        pooling_height[i], 
+                        P[i][n]);
+                }
+            } else {
+                P[i] = CONV_OUT;
+            }
         }
+        // Feed data to fully connected network
+        TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
+        init2DMatrix(X,number_of_samples,layer_data_depth*layer_data_height*layer_data_width);
+        for(int i=0;i<number_of_samples;i++) {
+            reshapeThreeDMatrix2Col(P[M-1][i],i,X);
+        }
+        network_params->fcnet_param->X = X;
     }
     
 }
