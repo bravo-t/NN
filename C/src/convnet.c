@@ -225,19 +225,39 @@ int trainConvnet(ConvnetParameters* network_params) {
         }
         restoreThreeDMatrixFromCol(dP2D, dP3D);
         // Backward propagation
+        /* Schematic
+        ** For the (i*j)th layer of a M*N layer network
+        **
+        **             P[i-1][j]  F[i][j],b[i][j]  C[i][j]                 P[i][j]
+        **             |                 |         |                         |
+        **             V                 V         V                         V
+        ** dF[i][j]    -----------------------------                -------------------
+        ** db[i][j] <- |         CONV[i][j]        | <- dC[i][j] <- |  POOLING[i][j]  | <- dP[i][j]
+        ** dP[i][j]    -----------------------------                -------------------
+        **
+        ** Actual dimentions of each variable:
+        ** dC[M][N][number_of_samples]
+        ** dP[M][number_of_samples]
+        ** dF[M][N][filter_number]
+        ** db[M][N][filter_number]
+        **
+        */
+        ThreeDMatrix** dV = dP3D;
         for(int i=M-1;i>=0;i--) {
             if (enable_maxpooling[i]) {
                 for(int n=0;n<number_of_samples;n++) {
-                    maxPoolingBackword(ThreeDMatrix* dV, 
-                        ThreeDMatrix* X, 
-                        int stride_y, 
-                        int stride_x, 
-                        int pooling_width, 
-                        int pooling_height, 
-                        ThreeDMatrix* dX);
+                    maxPoolingBackword(dV, 
+                        P[i][n], 
+                        pooling_stride_y[i], 
+                        pooling_stride_x[i], 
+                        pooling_width[i], 
+                        pooling_height[i],
+                        dC[i][N-1][n]);
                 }
             } else {
-
+                for(int n=0;n<number_of_samples;n++) {
+                    dC[i][N-1][n] = P[i][n];
+                }
             }
             for(int j=N-1;j>=0;j--) {
                 for(int n=0;n<number_of_samples;n++) {
