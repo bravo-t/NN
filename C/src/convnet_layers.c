@@ -6,6 +6,15 @@
 #include "convnet_operations.h"
 #include "convnet_layers.h"
 
+/*
+**           F,b
+**            |
+**            V
+**      ------------
+** X -> |   CONV   | -> V
+**      ------------
+*/
+
 int convLayerForward(ThreeDMatrix* X, ThreeDMatrix** F, int number_of_filters, ThreeDMatrix** b, int f_height, int f_width, int stride_y, int stride_x, int padding_y, int padding_x, float alpha, ThreeDMatrix* V) {
     //ThreeDMatrix* V = matrixMalloc(sizeof(ThreeDMatrix));
     int V_height = calcOutputSize(X->height,padding_y,f_height,stride_y);
@@ -21,6 +30,14 @@ int convLayerForward(ThreeDMatrix* X, ThreeDMatrix** F, int number_of_filters, T
     return 0;
 }
 
+/*
+**             X    F,b   V
+**             |     |    |
+**             V     V    V
+**             ------------
+** dF,db,dX <- |   CONV   | <- dV
+**             ------------
+*/
 int convLayerBackward(ThreeDMatrix* X, 
     ThreeDMatrix* V,
     ThreeDMatrix** F, 
@@ -51,7 +68,10 @@ int convLayerBackward(ThreeDMatrix* X,
     destroy3DMatrix(dX_padded);
     return 0;
 }
-
+/*      -----------
+** X -> | POOLING | -> V
+**      -----------
+*/
 int maxPoolingForward(ThreeDMatrix* X, int stride_y, int stride_x, int pooling_width, int pooling_height, ThreeDMatrix* V) {
     //ThreeDMatrix* V = matrixMalloc(sizeof(ThreeDMatrix));
     int V_height = calcOutputSize(X->height,0,pooling_height,stride_y); 
@@ -62,9 +82,11 @@ int maxPoolingForward(ThreeDMatrix* X, int stride_y, int stride_x, int pooling_w
     }
     return 0;
 }
-/*      -----------
-** X -> | POOLING | -> V
-**      -----------
+
+/*
+**            X
+**            |
+**            V
 **       -----------
 ** dX <- | POOLING | <- dV
 **       -----------
