@@ -68,6 +68,11 @@ int trainConvnet(ConvnetParameters* network_params) {
     TwoDMatrix* dP2D = matrixMalloc(sizeof(TwoDMatrix));
     ThreeDMatrix** dP3D = malloc(sizeof(ThreeDMatrix*)*number_of_samples);
 
+    ThreeDMatrix** dX = malloc(sizeof(ThreeDMatrix*)*number_of_samples);
+    for(int i=0;i<number_of_samples;i++) {
+        init3DMatrix(dX[i], training_data[i]->depth, training_data[i]->height, training_data[i]->width);
+    }
+
     int layer_data_depth = training_data[0]->depth;
     int layer_data_height = training_data[0]->height;
     int layer_data_width = training_data[0]->width;
@@ -258,27 +263,68 @@ int trainConvnet(ConvnetParameters* network_params) {
                 }
             } else {
                 for(int n=0;n<number_of_samples;n++) {
-                    dC[i][N-1][n] = P[i][n];
+                    dC[i][N-1][n] = dP[i][n];
                 }
             }
             for(int j=N-1;j>=0;j--) {
-                for(int n=0;n<number_of_samples;n++) {
-                    convLayerBackward(C[i], 
-                        ThreeDMatrix* V,
-                        ThreeDMatrix** F, 
-                        ThreeDMatrix* dV, 
-                        int padding_y, 
-                        int padding_x, 
-                        int stride_y, 
-                        int stride_x, 
-                        float alpha,
-                        ThreeDMatrix* dX, 
-                        ThreeDMatrix** dF, 
-                        ThreeDMatrix* db);
+                if (i == 0 && j == 0) {
+                    /* This is the begining of the whole network
+                    ** So the input data should be training_data
+                    */ 
+                    for(int n=0;n<number_of_samples;n++) {
+                        convLayerBackward(training_data[n], 
+                            C[i][j][n],
+                            F[i][j], 
+                            dC[i][j][n], 
+                            0, 
+                            0, 
+                            filter_stride_y[i*M+j], 
+                            filter_stride_x[i*M+j],
+                            alpha,
+                            dX[n], 
+                            dF[i][j], 
+                            db[i][j]);
+                    }
+                } else if (i != 0 && j == 0) {
+                    /* This is the begining of a CONV layer
+                    ** So the input data should be the output of the max pooling layer ahead of it, which is P[i-1][n]
+                    */
+                    for(int n=0;n<number_of_samples;n++) {
+                        convLayerBackward(P[i-1][n], 
+                            C[i][j][n],
+                            F[i][j], 
+                            dC[i][j][n], 
+                            0, 
+                            0, 
+                            filter_stride_y[i*M+j], 
+                            filter_stride_x[i*M+j],
+                            alpha,
+                            dP[i-1][n], 
+                            dF[i][j], 
+                            db[i][j]);
+                    }
+                    dV = dP[i-1];
+                } else {
+                    for(int n=0;n<number_of_samples;n++) {
+                        convLayerBackward(C[i][j-1][n], 
+                            C[i][j][n],
+                            F[i][j], 
+                            dC[i][j][n], 
+                            0, 
+                            0, 
+                            filter_stride_y[i*M+j], 
+                            filter_stride_x[i*M+j],
+                            alpha,
+                            dC[i][j-1][n], 
+                            dF[i][j], 
+                            db[i][j]);
+                    }
                 }
             }
         }
-
+        
+        // Update parameters
+        
     }
     
 }

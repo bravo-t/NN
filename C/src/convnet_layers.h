@@ -14,7 +14,7 @@ int convLayerBackward(ThreeDMatrix* X,
     float alpha,
     ThreeDMatrix* dX, 
     ThreeDMatrix** dF, 
-    ThreeDMatrix* db);
+    ThreeDMatrix** db);
 int maxPoolingBackword(ThreeDMatrix* dV, ThreeDMatrix* X, int stride_y, int stride_x, int pooling_width, int pooling_height, ThreeDMatrix* dX);
 
 
