@@ -62,6 +62,7 @@ int trainConvnet(ConvnetParameters* network_params) {
     ThreeDMatrix**** C = malloc(sizeof(ThreeDMatrix***)*M);
     ThreeDMatrix**** dC = malloc(sizeof(ThreeDMatrix***)*M);
     ThreeDMatrix*** P = malloc(sizeof(ThreeDMatrix**)*M);
+    ThreeDMatrix*** dP = malloc(sizeof(ThreeDMatrix**)*M);
     ThreeDMatrix**** F = malloc(sizeof(ThreeDMatrix***)*M);
     ThreeDMatrix**** dF = malloc(sizeof(ThreeDMatrix***)*M);
     ThreeDMatrix**** b = malloc(sizeof(ThreeDMatrix***)*M);
@@ -115,15 +116,18 @@ int trainConvnet(ConvnetParameters* network_params) {
         }
         if (enable_maxpooling[i]) {
             P[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
+            dP[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
             layer_data_height = calcOutputSize(layer_data_height,0,pooling_height[i],pooling_stride_y[i]);
             layer_data_width = calcOutputSize(layer_data_width,0,pooling_width[i],pooling_stride_x[i]);
             for(int m=0;m<number_of_samples;m++) {
                 init3DMatrix(P[i][m],layer_data_depth,layer_data_height,layer_data_width);
+                init3DMatrix(dP[i][m],layer_data_depth,layer_data_height,layer_data_width);
             }
             printf("CONVNET INFO: POOL[%dx%d]: [%dx%dx%d]\t\tweights: 0\n",pooling_width[i],pooling_height[i],layer_data_width,layer_data_height,layer_data_depth);
             total_memory += layer_data_depth*layer_data_height*layer_data_width;
         } else {
             P[i] = C[i][N-1];
+            dP[i] = NULL;
         }
     }
     for(int i=0;i<number_of_samples;i++) {
@@ -132,30 +136,32 @@ int trainConvnet(ConvnetParameters* network_params) {
     // Initialize the fully connected network in convnet
     int* fcnet_hidden_layer_sizes = network_params->fcnet_param->hidden_layer_sizes;
     int K = network_params->fcnet_param->network_depth;
+    TwoDMatrix** Ws = malloc(sizeof(TwoDMatrix*)*K);
+    TwoDMatrix** bs = malloc(sizeof(TwoDMatrix*)*K);
     int fcnet_labels = network_params->fcnet_param->labels;
     fcnet_hidden_layer_sizes[K-1] = fcnet_labels;
     printf("FCNET INFO: INPUT[%dx%d]\t\t\tweights: 0\n",number_of_samples,layer_data_depth*layer_data_height*layer_data_width);
     total_memory += layer_data_depth*layer_data_height*layer_data_width;
     int former_width = layer_data_depth*layer_data_height*layer_data_width;
-    for(int i=0;i<network_depth;i++) {
+    for(int i=0;i<K;i++) {
         // Initialize layer data holders
         Ws[i] = matrixMalloc(sizeof(TwoDMatrix));
         bs[i] = matrixMalloc(sizeof(TwoDMatrix));
-        init2DMatrixNormRand(Ws[i],former_width,hidden_layer_sizes[i],0.0,1.0);
-        init2DMatrixZero(bs[i],1,hidden_layer_sizes[i]);
-        printf("FCNET INFO: FC[%dx%dx%d]\t\t\tweights: %d*%d=%d\n",1,1,hidden_layer_sizes[i],former_width,hidden_layer_sizes[i],former_width*hidden_layer_sizes[i]);
+        init2DMatrixNormRand(Ws[i],former_width,fcnet_hidden_layer_sizes[i],0.0,1.0);
+        init2DMatrixZero(bs[i],1,fcnet_hidden_layer_sizes[i]);
+        printf("FCNET INFO: FC[%dx%dx%d]\t\t\tweights: %d*%d=%d\n",1,1,fcnet_hidden_layer_sizes[i],former_width,fcnet_hidden_layer_sizes[i],former_width*fcnet_hidden_layer_sizes[i]);
         // Initialize variables for optimization
-        if (use_batchnorm) {
+        if (false) {
             gammas[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrix(gammas[i],1,hidden_layer_sizes[i]);
+            init2DMatrix(gammas[i],1,fcnet_hidden_layer_sizes[i]);
             betas[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrix(betas[i],1,hidden_layer_sizes[i]);
+            init2DMatrix(betas[i],1,fcnet_hidden_layer_sizes[i]);
             means[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrix(means[i],1,hidden_layer_sizes[i]);
+            init2DMatrix(means[i],1,fcnet_hidden_layer_sizes[i]);
             vars[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrix(vars[i],1,hidden_layer_sizes[i]);
+            init2DMatrix(vars[i],1,fcnet_hidden_layer_sizes[i]);
         }
-        former_width = hidden_layer_sizes[i];
+        former_width = fcnet_hidden_layer_sizes[i];
     }
     // Babysit the fully connected network core
     network_params->fcnet_param->minibatch_size = number_of_samples;
@@ -326,7 +332,66 @@ int trainConvnet(ConvnetParameters* network_params) {
         }
         
         // Update parameters
-        
+        for(int i=0;i<M;i++) {
+            for(int j=0;j<N;j++) {
+                for(int k=0;k<filter_number[i*M+j];k++) {
+                    vanillaUpdateConvnet(F[i][j][k], dF[i][j][k], learning_rate, F[i][j][k]);
+                    vanillaUpdateConvnet(b[i][j][k], db[i][j][k], learning_rate, b[i][j][k]);
+                }
+            }
+        }
     }
     
+
+    // Release memories, shutdown the network
+    for(int i=0;i<M;i++) {
+        for(int j=0;j<N;j++) {
+            for(int k=0;k<filter_number[i*M+j];k++) {
+                destroy3DMatrix(F[i][j][k]);
+                destroy3DMatrix(dF[i][j][k]);
+                destroy3DMatrix(b[i][j][k]);
+                destroy3DMatrix(db[i][j][k]);
+            }
+            for(int l=0;l<number_of_samples;l++) {
+                destroy3DMatrix(C[i][j][l]);
+                destroy3DMatrix(dC[i][j][l]);
+            }
+            free(F[i][j]);
+            free(C[i][j]);
+            free(b[i][j]);
+            free(dF[i][j]);
+            free(dC[i][j]);
+            free(db[i][j]);
+        }
+        free(F[i]);
+        free(C[i]);
+        free(b[i]);
+        free(dF[i]);
+        free(dC[i]);
+        free(db[i]);
+        if (enable_maxpooling[i]) {
+            for(int m=0;m<number_of_samples;m++) {
+                destroy3DMatrix(P[i][m]);
+                destroy3DMatrix(dP[i][m]);
+            }
+            free(P[i]);
+            free(dP[i]);
+        } else {
+            P[i] = NULL;
+            dP[i] = NULL;
+        }
+    }
+    for(int i=0;i<K;i++) {
+        destroy2DMatrix(Ws[i]);
+        destroy2DMatrix(bs[i]);
+    }
+    free(Ws);
+    free(bs);
+    destroy2DMatrix(dP2D);
+    for(int i=0;i<number_of_samples;i++) {
+        destroy3DMatrix(dX[i]);
+        destroy3DMatrix(dP3D[i]);
+    }
+    free(dP3D);
+    free(dX);
 }
