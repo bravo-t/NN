@@ -172,6 +172,8 @@ int trainConvnet(ConvnetParameters* network_params) {
     /* INPUT -> [[CONV -> RELU]*N -> POOL?]*M -> [FC -> RELU]*K -> FC */
     ThreeDMatrix** layer_input = training_data;
     ThreeDMatrix** CONV_OUT = NULL;
+    ThreeDMatrix* dX = matrixMalloc(sizeof(ThreeDMatrix));
+    init3DMatrix(dX, training_data->depth, training_data->height, training_data->width);
     for(int e=1;e<=epochs;e++) {
         // Forward propagation
         for(int i=0;i<M;i++) {
@@ -261,7 +263,7 @@ int trainConvnet(ConvnetParameters* network_params) {
             }
             for(int j=N-1;j>=0;j--) {
                 for(int n=0;n<number_of_samples;n++) {
-                    convLayerBackward(ThreeDMatrix* X, 
+                    convLayerBackward(C[i], 
                         ThreeDMatrix* V,
                         ThreeDMatrix** F, 
                         ThreeDMatrix* dV, 
