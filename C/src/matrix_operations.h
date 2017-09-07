@@ -49,8 +49,8 @@ int matrixXMeanVar(TwoDMatrix* M, TwoDMatrix* mean, TwoDMatrix* var);
 int init3DMatrix(ThreeDMatrix* M, int depth, int height, int width);
 int init3DMatrixNormRand(ThreeDMatrix* M, int depth, int height, int width, float mean, float std);
 int destroy3DMatrix (ThreeDMatrix* M);
-int threeDMatrixElementMul(ThreeDMatrix* X, float n, ThreeDMatrix* OUT);
-int threeDMatrixElementwiseAdd(ThreeDMatrix* A, ThreeDMatrix* B, ThreeDMatrix* OUT);
+int elementMul3DMatrix(ThreeDMatrix* X, float n, ThreeDMatrix* OUT);
+int elementwiseAdd3DMatrix(ThreeDMatrix* A, ThreeDMatrix* B, ThreeDMatrix* OUT);
 ThreeDMatrix* chop3DMatrix(ThreeDMatrix* X, int start_y, int start_x, int end_y, int end_x);
 int assign3DMatrix(ThreeDMatrix* in, int start_y, int start_x, int end_y, int end_x, ThreeDMatrix* X);
 

@@ -32,6 +32,7 @@ int trainConvnet(ConvnetParameters* network_params) {
     int padding_width = network_params->padding_width;
     int padding_height = network_params->padding_height;
     float alpha = network_params->alpha;
+    float learning_rate = network_params->learning_rate;
     bool verbose = network_params->verbose;
     // Turn these features off to reduce the complexity for now
     network_params->fcnet_param->use_momentum_update = false;

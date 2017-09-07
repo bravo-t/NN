@@ -97,3 +97,13 @@ int maxPoolingBackword(ThreeDMatrix* dV, ThreeDMatrix* X, int stride_y, int stri
     }
     return 0;
 }
+
+int vanillaUpdateConvnet(ThreeDMatrix* X, ThreeDMatrix* dX, float learning_rate, ThreeDMatrix* OUT) {
+    init3DMatrix(OUT,X->depth,X->height,X->width);
+    ThreeDMatrix* dX_scaled = matrixMalloc(sizeof(ThreeDMatrix));
+    init3DMatrix(dX_scaled,X->depth,X->height,X->width);
+    elementMul3DMatrix(dX, learning_rate, dX_scaled);
+    elementwiseAdd3DMatrix(X, dX_scaled, OUT);
+    destroy3DMatrix(dX_scaled);
+    return 0;
+}

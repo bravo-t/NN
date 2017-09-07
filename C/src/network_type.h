@@ -50,6 +50,7 @@ typedef struct {
 //  int labels;
 */
     float alpha;
+    float learning_rate;
     int epochs;
     /* Below parameters are used to config the convolutional network with pattern 
     INPUT -> [[CONV -> RELU]*N -> POOL?]*M -> [FC -> RELU]*K -> FC

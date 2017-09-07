@@ -506,7 +506,7 @@ int matrixXMeanVar(TwoDMatrix* M, TwoDMatrix* mean, TwoDMatrix* var) {
     return 0;
 }
 
-int threeDMatrixElementMul(ThreeDMatrix* X, float n, ThreeDMatrix* OUT) {
+int elementMul3DMatrix(ThreeDMatrix* X, float n, ThreeDMatrix* OUT) {
     init3DMatrix(OUT, X->depth, X->height, X->width);
     for (int i=0; i<OUT->depth; i++) {
         for(int j=0;j<OUT->height;j++) {
@@ -518,7 +518,7 @@ int threeDMatrixElementMul(ThreeDMatrix* X, float n, ThreeDMatrix* OUT) {
     return 0;
 }
 
-int threeDMatrixElementwiseAdd(ThreeDMatrix* A, ThreeDMatrix* B, ThreeDMatrix* OUT) {
+int elementwiseAdd3DMatrix(ThreeDMatrix* A, ThreeDMatrix* B, ThreeDMatrix* OUT) {
     if (A->depth != B->depth || A->height != B->height || A->width != B->width) {
         printf("ERROR: Size mismatch while elementwise adding 3D matrixes\n");
         exit(1);
