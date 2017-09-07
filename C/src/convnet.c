@@ -231,6 +231,7 @@ int trainConvnet(ConvnetParameters* network_params) {
             pirntf("CONVNET INFO: Epoch: %d, data loss: %f, regulization loss: %f, total loss: %f\n");
         }
         restoreThreeDMatrixFromCol(dP2D, dP3D);
+        
         // Backward propagation
         /* Schematic
         ** For the (i*j)th layer of a M*N layer network
