@@ -429,7 +429,7 @@ FCParameters* readNetworkConfigFile(char* filename) {
 }
 
 char determineMemoryUnit(unsigned int n) {
-    char units[] = {" ","K","M","G","T"};
+    char units[5] = {" ","K","M","G","T"};
     float n_float = (float) n;
     for(int i=0;i<5;i++) {
         if (n_float < 1) return units[i-1];

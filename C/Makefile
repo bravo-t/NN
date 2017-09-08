@@ -7,12 +7,12 @@ CC=gcc
 LIBS=-lm
 CFLAGS=$(PRE_CFLAGS) -std=gnu99 -Wall
 
-default: fully_connected_network
+default: fully_connected_network convnet.o
 
 fully_connected_network: fully_connected_network.c misc_utils.o matrix_operations.o layers.o fully_connected_net.o
 	$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
 
-misc_utils.o: src/misc_utils.c src/misc_utils.h src/matrix_type.h
+misc_utils.o: src/misc_utils.c src/misc_utils.h src/network_type.h
 	$(CC) -c -o $@ $< $(LIBS) $(CFLAGS)
 
 matrix_operations.o: src/matrix_operations.c src/matrix_operations.h
@@ -26,6 +26,15 @@ fully_connected_net.o: src/fully_connected_net.c src/fully_connected_net.h layer
 
 unit_test: unit_test.c misc_utils.o matrix_operations.o layers.o fully_connected_net.o
 	$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
+
+convnet_operations.o: src/convnet_operations.c src/convnet_operations.h matrix_operations.o
+	$(CC) -c -o $@ $< $(LIBS) $(CFLAGS)
+
+convnet_layers.o: src/convnet_layers.c src/convnet_layers.h convnet_operations.o
+	$(CC) -c -o $@ $< $(LIBS) $(CFLAGS)
+
+convnet.o: src/convnet.c src/convnet.h convnet_layers.o
+	$(CC) -c -o $@ $< $(LIBS) $(CFLAGS)
 
 .PHONY: clean
 clean:
