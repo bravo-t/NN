@@ -109,7 +109,7 @@ int maxPoolingSingleSliceBackword(ThreeDMatrix* X, ThreeDMatrix* dV, int pooling
                     }
                 }
             }
-            out[y][x] += dV->d[z][y-window_start_y][x-window_start_x];
+            out[max_y][max_x] += dV->d[z][max_y-window_start_y][max_x-window_start_x];
         }
     }
     return 0;
@@ -137,8 +137,8 @@ int convSingleFilterBackward(ThreeDMatrix* X,
             for(int y=window_start_y;y<=window_end_y;y++) {
                 for(int x=window_start_x;x<=window_end_x;x++) {
                     for(int depth=0;depth<X->depth;depth++) {
-                        dF->[depth][y-window_start_y][x-window_start_x] += X->d[depth][y][x] * dV->d[z][i][j];
-                        dX->[depth][y][x] += F->d[depth][y-window_start_y][x-window_start_x] * dV->d[z][i][j];
+                        dF->d[depth][y-window_start_y][x-window_start_x] += X->d[depth][y][x] * dV->d[z][i][j];
+                        dX->d[depth][y][x] += F->d[depth][y-window_start_y][x-window_start_x] * dV->d[z][i][j];
                     }
                 }
             }

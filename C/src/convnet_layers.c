@@ -52,7 +52,7 @@ int convLayerBackward(ThreeDMatrix* X,
     ThreeDMatrix** db) {
     ThreeDMatrix* X_padded = matrixMalloc(sizeof(ThreeDMatrix));
     zeroPadding(X, padding_y, padding_x,X_padded);
-    ThreeDMatrix* dX_padded = matrixMalloc(ThreeDMatrix);
+    ThreeDMatrix* dX_padded = matrixMalloc(sizeof(ThreeDMatrix));
     init3DMatrix(dX_padded, X->depth, X->height + 2*padding_y, X->width + 2*padding_x);
     init3DMatrix(dX, X->depth, X->height, X->width);
     for(int i=0;i<dV->depth;i++) {
