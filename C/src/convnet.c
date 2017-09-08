@@ -237,7 +237,7 @@ int trainConvnet(ConvnetParameters* network_params) {
             NULL, NULL, NULL, NULL,
             dP2D, losses);
         if (e % 1000 == 0 || verbose) {
-            printf("CONVNET INFO: Epoch: %d, data loss: %f, regulization loss: %f, total loss: %f\n");
+            printf("CONVNET INFO: Epoch: %d, data loss: %f, regulization loss: %f, total loss: %f\n", e, losses[0], losses[1], losses[0]+losses[1]);
         }
         restoreThreeDMatrixFromCol(dP2D, dP3D);
         
@@ -263,7 +263,7 @@ int trainConvnet(ConvnetParameters* network_params) {
         for(int i=M-1;i>=0;i--) {
             if (enable_maxpooling[i]) {
                 for(int n=0;n<number_of_samples;n++) {
-                    maxPoolingBackword(dV, 
+                    maxPoolingBackword(dV[n], 
                         P[i][n], 
                         pooling_stride_y[i], 
                         pooling_stride_x[i], 
@@ -396,4 +396,6 @@ int trainConvnet(ConvnetParameters* network_params) {
     }
     free(dP3D);
     free(dX);
+    
+    return 0;
 }
