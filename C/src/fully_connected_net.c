@@ -406,17 +406,6 @@ int train(FCParameters* network_params) {
         free(Wcaches);
         free(bcaches);
     }
-    if (use_batchnorm) {
-        destroy2DMatrix(gammas);
-        destroy2DMatrix(betas);
-        destroy2DMatrix(dgammas);
-        destroy2DMatrix(dbetas);
-        destroy2DMatrix(mean_caches);
-        destroy2DMatrix(var_caches);
-        destroy2DMatrix(means);
-        destroy2DMatrix(vars);
-        destroy2DMatrix(Hs_normalized);
-    }
     // Remeber to free struct parameter
     destroy2DMatrix(network_params->X);
     destroy2DMatrix(network_params->correct_labels);
@@ -505,22 +494,21 @@ int test(FCParameters* network_params) {
 
 int FCTrainCore(FCParameters* network_params, 
     TwoDMatrix** Ws, TwoDMatrix** bs, 
-    TwoDMatrix* vWs, TwoDMatrix* vbs, TwoDMatrix* vW_prevs, TwoDMatrix* vb_prevs,
-    TwoDMatrix* Wcaches, TwoDMatrix* bcaches,
+    TwoDMatrix** vWs, TwoDMatrix** vbs, TwoDMatrix** vW_prevs, TwoDMatrix** vb_prevs,
+    TwoDMatrix** Wcaches, TwoDMatrix** bcaches,
     TwoDMatrix** mean_caches, TwoDMatrix** var_caches, TwoDMatrix** gammas, TwoDMatrix** betas,
     TwoDMatrix* dX, float* losses) {
     TwoDMatrix* training_data = network_params->X;
     TwoDMatrix* correct_labels = network_params->correct_labels;
     int minibatch_size = network_params->minibatch_size;
-    int labels = network_params->labels;
+    //int labels = network_params->labels;
     float reg_strength = network_params->reg_strength;
     float alpha = network_params->alpha;
     float learning_rate = network_params->learning_rate;
     int network_depth = network_params->network_depth;
     int* hidden_layer_sizes = network_params->hidden_layer_sizes;
     int epochs = network_params->epochs;
-    ;
-    bool verbose = network_params->verbose;
+    //bool verbose = network_params->verbose;
     // Below are control variables for optimizers
     bool use_momentum_update =  network_params->use_momentum_update;
     bool use_nag_update =  network_params->use_nag_update;
@@ -557,7 +545,7 @@ int FCTrainCore(FCParameters* network_params,
         Hs_normalized = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
     }
 
-    int former_width = training_data->width;
+    //int former_width = training_data->width;
     for(int i=0;i<network_depth;i++) {
         // Initialize layer data holders
         Hs[i] = matrixMalloc(sizeof(TwoDMatrix));
@@ -579,7 +567,7 @@ int FCTrainCore(FCParameters* network_params,
             Hs_normalized[i] = matrixMalloc(sizeof(TwoDMatrix));
             init2DMatrixZero(Hs_normalized[i],minibatch_size,hidden_layer_sizes[i]);
         }
-        former_width = hidden_layer_sizes[i];
+        //former_width = hidden_layer_sizes[i];
     }
     
     // Feed data to the network to train it
@@ -686,12 +674,5 @@ int FCTrainCore(FCParameters* network_params,
     free(dbs);
     free(Hs);
     free(dHs);
-    if (use_batchnorm) {
-        destroy2DMatrix(dgammas);
-        destroy2DMatrix(dbetas);
-        destroy2DMatrix(means);
-        destroy2DMatrix(vars);
-        destroy2DMatrix(Hs_normalized);
-    }
     return 0;
 }

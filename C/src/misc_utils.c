@@ -429,7 +429,7 @@ FCParameters* readNetworkConfigFile(char* filename) {
 }
 
 char determineMemoryUnit(unsigned int n) {
-    char units[5] = {" ","K","M","G","T"};
+    char units[5] = {' ','K','M','G','T'};
     float n_float = (float) n;
     for(int i=0;i<5;i++) {
         if (n_float < 1) return units[i-1];
@@ -438,13 +438,13 @@ char determineMemoryUnit(unsigned int n) {
     return units[0];
 }
 
-float memoryUsageReadable(unsigned int n, char unit) {
+float memoryUsageReadable(unsigned long long int n, char unit) {
     switch (unit) {
-        case " ": return (float) n;
-        case "K": return (float) n/1024;
-        case "M": return (float) n/(1024*1024);
-        case "M": return (float) n/(1024*1024*1024);
-        case "M": return (float) n/(1024*1024*1024*1024);
+        case ' ': return (float) n;
+        case 'K': return (float) (n>>10);
+        case 'M': return (float) (n>>20);
+        case 'G': return (float) (n>>30);
+        case 'T': return (float) (n>>40);
         default: return (float) n;
     }
 }

@@ -50,8 +50,8 @@ int trainConvnet(ConvnetParameters* network_params) {
     }
 
     printf("CONVNET INFO: Initializing learnable weights and intermediate layers\n");
-    unsigned int total_parameters = 0;
-    unsigned int total_memory = 0;
+    unsigned long long int total_parameters = 0;
+    unsigned long long int total_memory = 0;
     float* losses = malloc(sizeof(float)*2);
     /*
     C will hold intermediate values of CONV -> RELU layer, C[M][N][number_of_samples]
@@ -167,7 +167,7 @@ int trainConvnet(ConvnetParameters* network_params) {
     network_params->fcnet_param->minibatch_size = number_of_samples;
     network_params->fcnet_param->epochs = 1;
     // Print some statistical info
-    printf("CONVNET INFO: Total parameters: %d\n",total_parameters);
+    printf("CONVNET INFO: Total parameters: %lld\n",total_parameters);
     char memory_unit_per_image = determineMemoryUnit(total_memory*sizeof(float));
     float memory_usage_per_image = memoryUsageReadable(total_memory*sizeof(float),memory_unit_per_image);
     char memory_unit_total = determineMemoryUnit(total_memory*sizeof(float)*number_of_samples);
