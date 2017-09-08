@@ -75,14 +75,14 @@ int maxPoolingSingleSlice(ThreeDMatrix* X, int pooling_height, int pooling_width
     for (int i=0; i<y_iter; i++) {
         for(int j=0;j<x_iter;j++) {
             float max = X->d[z][i*stride_y][j*stride_x];
-            for(int m=0;m<F->height;m++) {
-                for(int n=0;n<F->width;n++) {
+            for(int m=0;m<stride_y;m++) {
+                for(int n=0;n<stride_x;n++) {
                     int x_m = i*stride_y+m;
                     int x_n = j*stride_x+n;
-                    max = fmaxf(max, X->d[z][x_m][x_n])
+                    max = fmaxf(max, X->d[z][x_m][x_n]);
                 }
             }
-            out[i][j] = sum;
+            out[i][j] = max;
         }
     }
     return 0;

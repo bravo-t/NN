@@ -4,7 +4,7 @@
 #include <malloc.h>
 #include <stdbool.h>
 #include <string.h>
-#include "src/matrix_type.h"
+#include "src/network_type.h"
 #include "src/matrix_operations.h"
 #include "src/layers.h"
 #include "src/fully_connected_net.h"
