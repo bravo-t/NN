@@ -3,14 +3,31 @@
 #include <stdbool.h>
 #include <malloc.h>
 #include <string.h>
-#include "network_type.h"
-#include "matrix_operations.h"
-#include "layers.h"
-#include "misc_utils.h"
-#include "fully_connected_net.h"
-#include "convnet_operations.h"
-#include "convnet_layers.h"
-#include "convnet.h"
+#include "src/network_type.h"
+#include "src/matrix_operations.h"
+#include "src/layers.h"
+#include "src/misc_utils.h"
+#include "src/fully_connected_net.h"
+#include "src/convnet_operations.h"
+#include "src/convnet_layers.h"
+#include "src/convnet.h"
+
+int readCIFARDataFile(char* filename, int start_index, ThreeDMatrix** X, TwoDMatrix* correct_labels);
+int readCIFARData(char* dir, int file_number, ThreeDMatrix** X, TwoDMatrix* correct_labels);
+
+int main() {
+	ThreeDMatrix** X = malloc(sizeof(ThreeDMatrix*)*50000);
+	for(int i=0;i<50000;i++) {
+		X[i] = matrixMalloc(sizeof(ThreeDMatrix));
+	}
+	TwoDMatrix* correct_labels = matrixMalloc(sizeof(TwoDMatrix));
+	init2DMatrix(correct_labels, 50000, 1);
+	readCIFARData("/cygdrive/d/cifar-10-binary/cifar-10-batches-bin",
+		5,
+		X,
+		correct_labels);
+	return 0;
+}
 
 int readCIFARDataFile(char* filename, int start_index, ThreeDMatrix** X, TwoDMatrix* correct_labels) {
 	for(int i=start_index;i<(start_index+10000);i++) {
@@ -55,9 +72,34 @@ int readCIFARData(char* dir, int file_number, ThreeDMatrix** X, TwoDMatrix* corr
 		int name_length = strlen(filenames[i]) + strlen(dir) + 5;
 		char* filepath = malloc(sizeof(char) * name_length);
 		strcpy(filepath, dir);
-		strcpy(filepath, "/");
-		strcpy(filepath, filenames[i]);
+		strcat(filepath, "/");
+		strcat(filepath, filenames[i]);
+		printf("INFO: Reading %s\n", filepath);
 		readCIFARDataFile(filepath, i*10000, X, correct_labels);
 	}
-	
+	char** category = malloc(sizeof(char*)*10);
+	category[0] = "airplane";
+	category[1] = "automobile";
+	category[2] = "bird";
+	category[3] = "cat";
+	category[4] = "deer";
+	category[5] = "dog";
+	category[6] = "frog";
+	category[7] = "horse";
+	category[8] = "ship";
+	category[9] = "truck";
+	int count[10] = {0};
+	for(int i=0;i<correct_labels->height;i++) {
+		printf("%f\n",correct_labels->d[i][0]);
+		int index = (int) correct_labels->d[i][0];
+		count[index]++;
+	}
+	for(int i=0;i<10;i++) {
+		if (count[i] > 0) {
+			printf("INFO: %d training samples read for category %s\n",count[i],category[i]);
+		}
+	}
+	free(category);
+	free(filenames);
+	return 0;
 }
