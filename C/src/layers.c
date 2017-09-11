@@ -190,6 +190,9 @@ float softmaxLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dsco
             // log(0) will produce a nan, which will break the network. Add a small number to fix it
             correct_probs->d[i][0] = -log(probs->d[i][correct_index]+1e-5);
         }
+        if (isnan(correct_probs->d[i][0])) {
+            printf("DEBUG: softmaxLoss produced a nan, -log(%f) = nan\n", probs->d[i][correct_index]);
+        }
     }
     //printf("correct_probs = \n");
     //printMatrix(correct_probs);

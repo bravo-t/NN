@@ -275,7 +275,12 @@ int elementwiseDiv2DMatrix(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT) {
     init2DMatrix(OUT,A->height,A->width);
     for(int i=0;i<A->height;i++) {
         for(int j=0;j<A->width;j++) {
-            OUT->d[i][j] = A->d[i][j] / B->d[i][j];
+            if (B->d[i][j] == 0.0f) {
+                //printf("ERROR: A divide-by-0 exception is raised. A small bias of 1e-5 is added\n");
+                OUT->d[i][j] = A->d[i][j] / (B->d[i][j]+1e-5);
+            } else {
+                OUT->d[i][j] = A->d[i][j] / B->d[i][j];
+            }
         }
     }
     return 0;
