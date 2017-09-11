@@ -103,7 +103,7 @@ int vanillaUpdateConvnet(ThreeDMatrix* X, ThreeDMatrix* dX, float learning_rate,
     ThreeDMatrix* dX_scaled = matrixMalloc(sizeof(ThreeDMatrix));
     init3DMatrix(dX_scaled,X->depth,X->height,X->width);
     elementMul3DMatrix(dX, learning_rate, dX_scaled);
-    elementwiseAdd3DMatrix(X, dX_scaled, OUT);
+    elementwiseSub3DMatrix(X, dX_scaled, OUT);
     destroy3DMatrix(dX_scaled);
     return 0;
 }

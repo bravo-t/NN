@@ -72,6 +72,7 @@ int trainConvnet(ConvnetParameters* network_params) {
 
     ThreeDMatrix** dX = malloc(sizeof(ThreeDMatrix*)*number_of_samples);
     for(int i=0;i<number_of_samples;i++) {
+        dX[i] = matrixMalloc(sizeof(ThreeDMatrix));
         init3DMatrix(dX[i], training_data[i]->depth, training_data[i]->height, training_data[i]->width);
     }
 
@@ -95,6 +96,10 @@ int trainConvnet(ConvnetParameters* network_params) {
             db[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*M+j]);
             dC[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
             for(int k=0;k<filter_number[i*M+j];k++) {
+                F[i][j][k] = matrixMalloc(sizeof(ThreeDMatrix));
+                b[i][j][k] = matrixMalloc(sizeof(ThreeDMatrix));
+                dF[i][j][k] = matrixMalloc(sizeof(ThreeDMatrix));
+                db[i][j][k] = matrixMalloc(sizeof(ThreeDMatrix));
                 init3DMatrixNormRand(F[i][j][k],layer_data_depth,filter_height[i*M+j],filter_width[i*M+j],0.0,1.0);
                 init3DMatrix(b[i][j][k],1,1,1);
                 init3DMatrix(dF[i][j][k],layer_data_depth,filter_height[i*M+j],filter_width[i*M+j]);
@@ -105,6 +110,8 @@ int trainConvnet(ConvnetParameters* network_params) {
             layer_data_height = calcOutputSize(layer_data_height,0,filter_height[i*M+j],filter_stride_y[i*M+j]);
             layer_data_width = calcOutputSize(layer_data_width,0,filter_width[i*M+j],filter_stride_x[i*M+j]);
             for(int l=0;l<number_of_samples;l++) {
+                C[i][j][l] = matrixMalloc(sizeof(ThreeDMatrix));
+                dC[i][j][l] = matrixMalloc(sizeof(ThreeDMatrix));
                 init3DMatrix(C[i][j][l], layer_data_depth, layer_data_height, layer_data_width);
                 init3DMatrix(dC[i][j][l], layer_data_depth, layer_data_height, layer_data_width);
             }
@@ -120,6 +127,8 @@ int trainConvnet(ConvnetParameters* network_params) {
             layer_data_height = calcOutputSize(layer_data_height,0,pooling_height[i],pooling_stride_y[i]);
             layer_data_width = calcOutputSize(layer_data_width,0,pooling_width[i],pooling_stride_x[i]);
             for(int m=0;m<number_of_samples;m++) {
+                P[i][m] = matrixMalloc(sizeof(ThreeDMatrix));
+                dP[i][m] = matrixMalloc(sizeof(ThreeDMatrix));
                 init3DMatrix(P[i][m],layer_data_depth,layer_data_height,layer_data_width);
                 init3DMatrix(dP[i][m],layer_data_depth,layer_data_height,layer_data_width);
             }
@@ -127,10 +136,11 @@ int trainConvnet(ConvnetParameters* network_params) {
             total_memory += layer_data_depth*layer_data_height*layer_data_width;
         } else {
             P[i] = C[i][N-1];
-            dP[i] = NULL;
+            dP[i] = dC[i][N-1];
         }
     }
     for(int i=0;i<number_of_samples;i++) {
+        dP3D[i] = matrixMalloc(sizeof(ThreeDMatrix));
         init3DMatrix(dP3D[i],P[M-1][N-1]->depth, P[M-1][N-1]->height, P[M-1][N-1]->width);
     }
     // Initialize the fully connected network in convnet
@@ -184,16 +194,19 @@ int trainConvnet(ConvnetParameters* network_params) {
     b will be a 2D array that holds biases, b[M][N][filter_number]
     */
     /* INPUT -> [[CONV -> RELU]*N -> POOL?]*M -> [FC -> RELU]*K -> FC */
-    ThreeDMatrix** layer_input = training_data;
-    ThreeDMatrix** CONV_OUT = NULL;
+    ThreeDMatrix** CONV_OUT = training_data;
     //ThreeDMatrix* dX = matrixMalloc(sizeof(ThreeDMatrix));
     //init3DMatrix(dX, training_data->depth, training_data->height, training_data->width);
+    printf("CONVNET INFO: Training network...\n");
     for(int e=1;e<=epochs;e++) {
         // Forward propagation
         for(int i=0;i<M;i++) {
             for(int j=0;j<N;j++) {
+                if (verbose) {
+                    printf("CONVNET INFO: Epoch: %d, CONV M = %d, N = %d\n", e, i, j);
+                }
                 for(int n=0;n<number_of_samples;n++) {
-                    convLayerForward(layer_input[n], 
+                    convLayerForward(CONV_OUT[n], 
                         F[i][j], 
                         filter_number[i*M+j], 
                         b[i][j], 
@@ -209,6 +222,9 @@ int trainConvnet(ConvnetParameters* network_params) {
                 CONV_OUT = C[i][j];
             }
             if (enable_maxpooling[i]) {
+                if (verbose) {
+                    printf("CONVNET INFO: Epoch: %d, POOLING M = %d\n", e, i);
+                }
                 for(int n=0;n<number_of_samples;n++) {
                     maxPoolingForward(CONV_OUT[n], 
                         pooling_stride_y[i], 
@@ -220,6 +236,7 @@ int trainConvnet(ConvnetParameters* network_params) {
             } else {
                 P[i] = CONV_OUT;
             }
+            CONV_OUT = P[i];
         }
 
         // Feed data to fully connected network
@@ -262,6 +279,9 @@ int trainConvnet(ConvnetParameters* network_params) {
         ThreeDMatrix** dV = dP3D;
         for(int i=M-1;i>=0;i--) {
             if (enable_maxpooling[i]) {
+                if (verbose) {
+                    printf("CONVNET INFO: Epoch: %d, POOLING Backprop M = %d\n", e, i);
+                }
                 for(int n=0;n<number_of_samples;n++) {
                     maxPoolingBackword(dV[n], 
                         P[i][n], 
@@ -277,6 +297,9 @@ int trainConvnet(ConvnetParameters* network_params) {
                 }
             }
             for(int j=N-1;j>=0;j--) {
+                if (verbose) {
+                    printf("CONVNET INFO: Epoch: %d, CONV Backprop M = %d, N = %d\n",e , i, j);
+                }
                 if (i == 0 && j == 0) {
                     /* This is the begining of the whole network
                     ** So the input data should be training_data

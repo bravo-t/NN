@@ -17,14 +17,20 @@ int readCIFARData(char* dir, int file_number, ThreeDMatrix** X, TwoDMatrix* corr
 int writePPM(ThreeDMatrix* X, char* file);
 
 int main() {
-    ThreeDMatrix** X = malloc(sizeof(ThreeDMatrix*)*50000);
-    for(int i=0;i<50000;i++) {
+    int number_of_batch_data = 1;
+    ThreeDMatrix** X = malloc(sizeof(ThreeDMatrix*)*number_of_batch_data*10000);
+    for(int i=0;i<number_of_batch_data*10000;i++) {
         X[i] = matrixMalloc(sizeof(ThreeDMatrix));
     }
     TwoDMatrix* correct_labels = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(correct_labels, 50000, 1);
-    readCIFARData("/cygdrive/d/cifar-10-binary/cifar-10-batches-bin",
-        5,
+    init2DMatrix(correct_labels, number_of_batch_data*10000, 1);
+#ifdef __CYGWIN__
+    char* cifar_dir = "/cygdrive/d/cifar-10-binary/cifar-10-batches-bin";
+#else
+    char* cifar_dir = "../assignment1/cs231n/datasets/cifar-10-batches-bin";
+#endif
+    readCIFARData(cifar_dir,
+        number_of_batch_data,
         X,
         correct_labels);
     /*
@@ -42,15 +48,17 @@ int main() {
     */
     
     ConvnetParameters* convnet_params = malloc(sizeof(ConvnetParameters));
+    memset(convnet_params, 0, sizeof(ConvnetParameters));
+    convnet_params->fcnet_param = (FCParameters*) malloc(sizeof(FCParameters));
     convnet_params->X = X;
-    convnet_params->number_of_samples = 50000;
+    convnet_params->number_of_samples = 100;
+    //convnet_params->number_of_samples = number_of_batch_data*10000;
     convnet_params->M = 1;
     convnet_params->N = 2;
     int stride[2] = {2, 2};
     int filter_size[2] = {2, 2};
     int filter_number[2] = {64, 128};
     bool enable_maxpooling[1] = {false};
-    int* pooling[1] = {0};
     convnet_params->filter_stride_x = stride;
     convnet_params->filter_stride_y = stride;
     convnet_params->filter_width = filter_size;
@@ -60,12 +68,15 @@ int main() {
     convnet_params->enable_padding = false;
     convnet_params->epochs = 2000;
     convnet_params->alpha = 0;
-    convnet_params->learning_rate = 0.1;
+    convnet_params->learning_rate = 0.01;
     convnet_params->verbose = true;
     convnet_params->fcnet_param->correct_labels = correct_labels;
-    int* hidden_layer_sizes[2] = {100, 10};
+    int hidden_layer_sizes[2] = {100, 10};
     convnet_params->fcnet_param->hidden_layer_sizes = hidden_layer_sizes;
     convnet_params->fcnet_param->labels = 10;
+    convnet_params->fcnet_param->network_depth = 2;
+    convnet_params->fcnet_param->reg_strength = 1e-2;
+    convnet_params->fcnet_param->learning_rate = 0.01;
     trainConvnet(convnet_params);
     return 0;
 }
@@ -92,7 +103,7 @@ int readCIFARDataFile(char* filename, int start_index, ThreeDMatrix** X, TwoDMat
             for(int n=0;n<32;n++) {
                 for(int o=0;o<32;o++) {
                     fread(&buffer, 1,1,fp);
-                    int data_index = m*n*o + 1;
+                    //int data_index = m*n*o + 1;
                     X[actual_index]->d[m][n][o] = buffer;
                 }
             }

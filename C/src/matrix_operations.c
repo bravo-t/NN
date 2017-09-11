@@ -534,6 +534,22 @@ int elementwiseAdd3DMatrix(ThreeDMatrix* A, ThreeDMatrix* B, ThreeDMatrix* OUT) 
     return 0;
 }
 
+int elementwiseSub3DMatrix(ThreeDMatrix* A, ThreeDMatrix* B, ThreeDMatrix* OUT) {
+    if (A->depth != B->depth || A->height != B->height || A->width != B->width) {
+        printf("ERROR: Size mismatch while elementwise adding 3D matrixes\n");
+        exit(1);
+    }
+    init3DMatrix(OUT, A->depth, A->height, A->width);
+    for (int i=0; i<OUT->depth; i++) {
+        for(int j=0;j<OUT->height;j++) {
+            for(int k=0;k<OUT->width;k++) {
+                OUT->d[i][j][k] = A->d[i][j][k] - B->d[i][j][k];
+            }
+        }
+    }
+    return 0;
+}
+
 ThreeDMatrix* chop3DMatrix(ThreeDMatrix* X, int start_y, int start_x, int end_y, int end_x) {
     int height = end_y - start_y + 1;
     int width = end_x - start_x + 1;
