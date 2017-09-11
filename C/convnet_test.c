@@ -40,10 +40,33 @@ int main() {
         writePPM(X[i],buffer);
     }
     */
+    
     ConvnetParameters* convnet_params = malloc(sizeof(ConvnetParameters));
     convnet_params->X = X;
     convnet_params->number_of_samples = 50000;
-    
+    convnet_params->M = 1;
+    convnet_params->N = 2;
+    int stride[2] = {2, 2};
+    int filter_size[2] = {2, 2};
+    int filter_number[2] = {64, 128};
+    bool enable_maxpooling[1] = {false};
+    int* pooling[1] = {0};
+    convnet_params->filter_stride_x = stride;
+    convnet_params->filter_stride_y = stride;
+    convnet_params->filter_width = filter_size;
+    convnet_params->filter_height = filter_size;
+    convnet_params->filter_number = filter_number;
+    convnet_params->enable_maxpooling = enable_maxpooling;
+    convnet_params->enable_padding = false;
+    convnet_params->epochs = 2000;
+    convnet_params->alpha = 0;
+    convnet_params->learning_rate = 0.1;
+    convnet_params->verbose = true;
+    convnet_params->fcnet_param->correct_labels = correct_labels;
+    int* hidden_layer_sizes[2] = {100, 10};
+    convnet_params->fcnet_param->hidden_layer_sizes = hidden_layer_sizes;
+    convnet_params->fcnet_param->labels = 10;
+    trainConvnet(convnet_params);
     return 0;
 }
 
