@@ -184,7 +184,12 @@ float softmaxLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dsco
                 dscore->d[i][j] -= 1;
             }
         }
-        correct_probs->d[i][0] = -log(probs->d[i][correct_index]);
+        if (probs->d[i][correct_index] != 0) {
+            correct_probs->d[i][0] = -log(probs->d[i][correct_index]);
+        } else {
+            // log(0) will produce a nan, which will break the network. Add a small number to fix it
+            correct_probs->d[i][0] = -log(probs->d[i][correct_index]+1e-5);
+        }
     }
     //printf("correct_probs = \n");
     //printMatrix(correct_probs);
