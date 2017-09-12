@@ -172,7 +172,7 @@ int trainConvnet(ConvnetParameters* network_params) {
         // Initialize layer data holders
         Ws[i] = matrixMalloc(sizeof(TwoDMatrix));
         bs[i] = matrixMalloc(sizeof(TwoDMatrix));
-        init2DMatrixNormRand(Ws[i],former_width,fcnet_hidden_layer_sizes[i],0.0,1.0);
+        init2DMatrixNormRand(Ws[i],former_width,fcnet_hidden_layer_sizes[i],0.0,1.0, former_width);
         init2DMatrixZero(bs[i],1,fcnet_hidden_layer_sizes[i]);
         printf("FCNET INFO: FC[%dx%dx%d]\t\t\tweights: %d*%d=%d\n",1,1,fcnet_hidden_layer_sizes[i],former_width,fcnet_hidden_layer_sizes[i],former_width*fcnet_hidden_layer_sizes[i]);
         // Initialize variables for optimization

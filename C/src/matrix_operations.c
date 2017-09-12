@@ -35,14 +35,14 @@ int init2DMatrix(TwoDMatrix* M, int height, int width) {
     return 0;
 }
 
-int init2DMatrixNormRand(TwoDMatrix* M, int height, int width, float mean, float std) {
+int init2DMatrixNormRand(TwoDMatrix* M, int height, int width, float mean, float std, int n) {
     M->height = height;
     M->width = width;
     float** data = (float**) calloc(height,sizeof(float*));
     for(int i = 0; i<height;i++) {
         data[i] = (float*) calloc(width,sizeof(float));
         for(int j=0;j<width;j++) {
-            data[i][j] = random_normal(mean,std);
+            data[i][j] = random_normal(mean,std)/sqrt(2.0/n);
         }
     }
     M->d = data;

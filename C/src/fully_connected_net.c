@@ -163,7 +163,7 @@ int train(FCParameters* network_params) {
             printf("INFO: Initializing b%d to be a %dx%d matrix\n",i,1,hidden_layer_sizes[i]);
             printf("INFO: Initializing H%d to be a %dx%d matrix\n",i,minibatch_size,hidden_layer_sizes[i]);
         }
-        init2DMatrixNormRand(Ws[i],former_width,hidden_layer_sizes[i],0.0,1.0);
+        init2DMatrixNormRand(Ws[i],former_width,hidden_layer_sizes[i],0.0,1.0,former_width);
         init2DMatrixZero(bs[i],1,hidden_layer_sizes[i]);
         init2DMatrix(Hs[i],minibatch_size,hidden_layer_sizes[i]);
         // Statistic data
