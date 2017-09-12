@@ -49,12 +49,27 @@ int leakyReLUForward(TwoDMatrix* M, float alpha, TwoDMatrix* OUT) {
 
 int vanillaUpdate(TwoDMatrix* M, TwoDMatrix* dM, float learning_rate, TwoDMatrix* OUT) {
     init2DMatrix(OUT, M->height, M->width);
+    for(int i=0;i<M->height;i++) {
+        for(int j=0;j<M->width;j++) {
+            OUT->d[i][j] = M->d[i][j] - dM->d[i][j]*learning_rate;
+            if (isnan(OUT->d[i][j])) {
+                printf("DEBUG: vanillaUpdate produced a nan: %f - %f * %f = %f\n",
+                    M->d[i][j],
+                    dM->d[i][j],
+                    learning_rate,
+                    OUT->d[i][j]);
+            }
+        }
+    }
+    /*
+    init2DMatrix(OUT, M->height, M->width);
     TwoDMatrix* dM_scaled = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(dM_scaled, M->height, M->width);
     elementMul(dM,learning_rate,dM_scaled);
     int retval = elementwiseSub2DMatrix(M, dM_scaled, OUT);
     destroy2DMatrix(dM_scaled);
-    return retval;
+    */
+    return 0;
 }
 
 int leakyReLUBackward(TwoDMatrix* dM, TwoDMatrix* M, float alpha, TwoDMatrix* OUT) {

@@ -590,3 +590,19 @@ int assign3DMatrix(ThreeDMatrix* in, int start_y, int start_x, int end_y, int en
     return 0;
 }
 
+float decayLearningRate(bool enable_step_decay, bool enable_exponential_decay, bool enable_invert_t_decay, int decay_unit, float decay_k, float decay_a0, int epoch, float base_learning_rate, float learning_rate) {
+    if (enable_step_decay) {
+        if (epoch % decay_unit == 0) {
+            return base_learning_rate*pow(decay_k,(epoch/decay_unit));
+        }
+    } else if (enable_exponential_decay) {
+        if (epoch % decay_unit == 0) {
+            return base_learning_rate*decay_a0*exp(-decay_k*(epoch/decay_unit));
+        }
+    } else if (enable_invert_t_decay) {
+        if (epoch % decay_unit == 0) {
+            return base_learning_rate*decay_a0/(1+decay_k*(epoch/decay_unit));
+        }
+    } 
+    return learning_rate;
+}

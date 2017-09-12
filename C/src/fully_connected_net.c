@@ -31,9 +31,17 @@ int train(FCParameters* network_params) {
     float reg_strength = network_params->reg_strength;
     float alpha = network_params->alpha;
     float learning_rate = network_params->learning_rate;
+    float base_learning_rate = learning_rate;
     int network_depth = network_params->network_depth;
     int* hidden_layer_sizes = network_params->hidden_layer_sizes;
     int epochs = network_params->epochs;
+
+    bool enable_learning_rate_step_decay = network_params->enable_learning_rate_step_decay;
+    bool enable_learning_rate_exponential_decay = network_params->enable_learning_rate_exponential_decay;
+    bool enable_learning_rate_invert_t_decay = network_params->enable_learning_rate_invert_t_decay;
+    int learning_rate_decay_unit = network_params->learning_rate_decay_unit;
+    float learning_rate_decay_a0 = network_params->learning_rate_decay_a0;
+    float learning_rate_decay_k = network_params->learning_rate_decay_k;
 
     bool verbose = network_params->verbose;
     // Below are control variables for optimizers
@@ -245,6 +253,15 @@ int train(FCParameters* network_params) {
     int iterations = training_data->height / minibatch_size;
     TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
     for(int epoch=1;epoch<=epochs;epoch++) {
+        learning_rate = decayLearningRate(enable_learning_rate_step_decay,
+            enable_learning_rate_exponential_decay,
+            enable_learning_rate_invert_t_decay,
+            learning_rate_decay_unit,
+            learning_rate_decay_k,
+            learning_rate_decay_a0,
+            epoch,
+            base_learning_rate,
+            learning_rate);
         // find number of minibatch_size example to go into the network as 1 iteration
         for(int iteration=0;iteration<iterations;iteration++) {
             int data_start = iteration*minibatch_size;
@@ -305,6 +322,10 @@ int train(FCParameters* network_params) {
             }
             destroy2DMatrix(dX);
             // Update weights
+            if (verbose) {
+                printf("INFO: Epoch %d, updating weights with learning rate %f\n",
+                    epoch, learning_rate);
+            }
             for (int i=0;i<network_depth;i++) {
                 if (use_momentum_update) {
                     momentumUpdate(Ws[i], dWs[i], vWs[i], mu, learning_rate, Ws[i]);
@@ -497,17 +518,25 @@ int FCTrainCore(FCParameters* network_params,
     TwoDMatrix** vWs, TwoDMatrix** vbs, TwoDMatrix** vW_prevs, TwoDMatrix** vb_prevs,
     TwoDMatrix** Wcaches, TwoDMatrix** bcaches,
     TwoDMatrix** mean_caches, TwoDMatrix** var_caches, TwoDMatrix** gammas, TwoDMatrix** betas,
-    TwoDMatrix* dX, float* losses) {
+    TwoDMatrix* dX, int e, float* learning_rate, float* losses) {
     TwoDMatrix* training_data = network_params->X;
     TwoDMatrix* correct_labels = network_params->correct_labels;
     int minibatch_size = network_params->minibatch_size;
     //int labels = network_params->labels;
     float reg_strength = network_params->reg_strength;
     float alpha = network_params->alpha;
-    float learning_rate = network_params->learning_rate;
+    float base_learning_rate = network_params->learning_rate;
     int network_depth = network_params->network_depth;
     int* hidden_layer_sizes = network_params->hidden_layer_sizes;
     int epochs = network_params->epochs;
+    
+    bool enable_learning_rate_step_decay = network_params->enable_learning_rate_step_decay;
+    bool enable_learning_rate_exponential_decay = network_params->enable_learning_rate_exponential_decay;
+    bool enable_learning_rate_invert_t_decay = network_params->enable_learning_rate_invert_t_decay;
+    int learning_rate_decay_unit = network_params->learning_rate_decay_unit;
+    float learning_rate_decay_a0 = network_params->learning_rate_decay_a0;
+    float learning_rate_decay_k = network_params->learning_rate_decay_k;
+
     //bool verbose = network_params->verbose;
     // Below are control variables for optimizers
     bool use_momentum_update =  network_params->use_momentum_update;
@@ -575,6 +604,15 @@ int FCTrainCore(FCParameters* network_params,
     int iterations = training_data->height / minibatch_size;
     TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
     for(int epoch=1;epoch<=epochs;epoch++) {
+        *learning_rate = decayLearningRate(enable_learning_rate_step_decay,
+            enable_learning_rate_exponential_decay,
+            enable_learning_rate_invert_t_decay,
+            learning_rate_decay_unit,
+            learning_rate_decay_k,
+            learning_rate_decay_a0,
+            e,
+            base_learning_rate,
+            *learning_rate);
         // find number of minibatch_size example to go into the network as 1 iteration
         for(int iteration=0;iteration<iterations;iteration++) {
             int data_start = iteration*minibatch_size;
@@ -634,25 +672,25 @@ int FCTrainCore(FCParameters* network_params,
             // Update weights
             for (int i=0;i<network_depth;i++) {
                 if (use_momentum_update) {
-                    momentumUpdate(Ws[i], dWs[i], vWs[i], mu, learning_rate, Ws[i]);
-                    momentumUpdate(bs[i], dbs[i], vbs[i], mu, learning_rate, bs[i]);
+                    momentumUpdate(Ws[i], dWs[i], vWs[i], mu, *learning_rate, Ws[i]);
+                    momentumUpdate(bs[i], dbs[i], vbs[i], mu, *learning_rate, bs[i]);
                     //if (use_batchnorm) {
                     //    momentumUpdate(gammas[i],dgammas[i],)
                     //}
                 } else if (use_nag_update) {
-                    NAGUpdate(Ws[i], dWs[i], vWs[i], vW_prevs[i], mu, learning_rate, Ws[i]);
-                    NAGUpdate(bs[i], dbs[i], vbs[i], vb_prevs[i], mu, learning_rate, bs[i]);
+                    NAGUpdate(Ws[i], dWs[i], vWs[i], vW_prevs[i], mu, *learning_rate, Ws[i]);
+                    NAGUpdate(bs[i], dbs[i], vbs[i], vb_prevs[i], mu, *learning_rate, bs[i]);
                 } else if (use_rmsprop) {
-                    RMSProp(Ws[i], dWs[i], Wcaches[i], learning_rate, decay_rate, eps, Ws[i]);
-                    RMSProp(bs[i], dbs[i], bcaches[i], learning_rate, decay_rate, eps, bs[i]);
+                    RMSProp(Ws[i], dWs[i], Wcaches[i], *learning_rate, decay_rate, eps, Ws[i]);
+                    RMSProp(bs[i], dbs[i], bcaches[i], *learning_rate, decay_rate, eps, bs[i]);
                 } else {
-                    vanillaUpdate(Ws[i],dWs[i],learning_rate,Ws[i]);
-                    vanillaUpdate(bs[i],dbs[i],learning_rate,bs[i]);
+                    vanillaUpdate(Ws[i],dWs[i],*learning_rate,Ws[i]);
+                    vanillaUpdate(bs[i],dbs[i],*learning_rate,bs[i]);
                 }
                 // Let's just use normal SGD update for batchnorm parameters to make it simpler
                 if (use_batchnorm) {
-                    vanillaUpdate(gammas[i],dgammas[i],learning_rate,gammas[i]);
-                    vanillaUpdate(betas[i],dbetas[i],learning_rate,betas[i]);
+                    vanillaUpdate(gammas[i],dgammas[i],*learning_rate,gammas[i]);
+                    vanillaUpdate(betas[i],dbetas[i],*learning_rate,betas[i]);
                 }
             }
         }

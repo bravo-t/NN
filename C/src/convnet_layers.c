@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <math.h>
 #include "network_type.h"
 #include "matrix_operations.h"
 #include "convnet_operations.h"
@@ -100,10 +101,26 @@ int maxPoolingBackword(ThreeDMatrix* dV, ThreeDMatrix* X, int stride_y, int stri
 
 int vanillaUpdateConvnet(ThreeDMatrix* X, ThreeDMatrix* dX, float learning_rate, ThreeDMatrix* OUT) {
     init3DMatrix(OUT,X->depth,X->height,X->width);
+    for(int i=0;i<X->depth;i++) {
+        for(int j=0;j<X->height;j++) {
+            for(int k=0;k<X->width;k++) {
+                OUT->d[i][j][k] = X->d[i][j][k] - dX->d[i][j][k]*learning_rate;
+                if (isnan(OUT->d[i][j][k])) {
+                    printf("DEBUG: vanillaUpdateConvnet produced a nan: %f - %f * %f = %f\n",
+                    X->d[i][j][k],
+                    dX->d[i][j][k],
+                    learning_rate,
+                    OUT->d[i][j][k]);
+                }
+            }
+        }
+    }
+    /*
     ThreeDMatrix* dX_scaled = matrixMalloc(sizeof(ThreeDMatrix));
     init3DMatrix(dX_scaled,X->depth,X->height,X->width);
     elementMul3DMatrix(dX, learning_rate, dX_scaled);
     elementwiseSub3DMatrix(X, dX_scaled, OUT);
     destroy3DMatrix(dX_scaled);
+    */
     return 0;
 }

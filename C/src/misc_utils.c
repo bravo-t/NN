@@ -300,6 +300,10 @@ FCParameters* readNetworkConfigFile(char* filename) {
     network_params->use_batchnorm = false;
     network_params->batchnorm_momentum = 0.5f;
     network_params->batchnorm_eps = 1e-6;
+    network_params->enable_learning_rate_step_decay = false;
+    network_params->enable_learning_rate_exponential_decay = false;
+    network_params->enable_learning_rate_invert_t_decay = false;
+
 
     char** key_values = malloc(sizeof(char*)*2);
     key_values[0] = (char*) malloc(sizeof(char)*8192);

@@ -51,7 +51,7 @@ int main() {
     memset(convnet_params, 0, sizeof(ConvnetParameters));
     convnet_params->fcnet_param = (FCParameters*) malloc(sizeof(FCParameters));
     convnet_params->X = X;
-    convnet_params->number_of_samples = 100;
+    convnet_params->number_of_samples = 10;
     //convnet_params->number_of_samples = number_of_batch_data*10000;
     convnet_params->M = 1;
     convnet_params->N = 2;
@@ -70,13 +70,17 @@ int main() {
     convnet_params->alpha = 0;
     convnet_params->learning_rate = 0.01;
     convnet_params->verbose = true;
+    convnet_params->enable_learning_rate_step_decay = true;
+    convnet_params->learning_rate_decay_unit = 20;
+    convnet_params->learning_rate_decay_a0 = 1.0;
+    convnet_params->learning_rate_decay_k = 0.5;
     convnet_params->fcnet_param->correct_labels = correct_labels;
     int hidden_layer_sizes[2] = {100, 10};
     convnet_params->fcnet_param->hidden_layer_sizes = hidden_layer_sizes;
     convnet_params->fcnet_param->labels = 10;
     convnet_params->fcnet_param->network_depth = 2;
-    convnet_params->fcnet_param->reg_strength = 1e-2;
-    convnet_params->fcnet_param->learning_rate = 0.01;
+    convnet_params->fcnet_param->reg_strength = 20;
+    convnet_params->fcnet_param->learning_rate = convnet_params->learning_rate;
     trainConvnet(convnet_params);
     return 0;
 }

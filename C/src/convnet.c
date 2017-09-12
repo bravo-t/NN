@@ -33,12 +33,27 @@ int trainConvnet(ConvnetParameters* network_params) {
     int padding_height = network_params->padding_height;
     float alpha = network_params->alpha;
     float learning_rate = network_params->learning_rate;
+    float base_learning_rate = learning_rate;
     bool verbose = network_params->verbose;
+    
+    bool enable_learning_rate_step_decay = network_params->enable_learning_rate_step_decay;
+    bool enable_learning_rate_exponential_decay = network_params->enable_learning_rate_exponential_decay;
+    bool enable_learning_rate_invert_t_decay = network_params->enable_learning_rate_invert_t_decay;
+    int learning_rate_decay_unit = network_params->learning_rate_decay_unit;
+    float learning_rate_decay_a0 = network_params->learning_rate_decay_a0;
+    float learning_rate_decay_k = network_params->learning_rate_decay_k;
     // Turn these features off to reduce the complexity for now
     network_params->fcnet_param->use_momentum_update = false;
     network_params->fcnet_param->use_batchnorm = false;
     network_params->fcnet_param->use_nag_update = false;
     network_params->fcnet_param->use_rmsprop = false;
+    float current_fcnet_learning_rate = network_params->fcnet_param->learning_rate;
+    network_params->fcnet_param->enable_learning_rate_step_decay = enable_learning_rate_step_decay;
+    network_params->fcnet_param->enable_learning_rate_exponential_decay = enable_learning_rate_exponential_decay;
+    network_params->fcnet_param->enable_learning_rate_invert_t_decay = enable_learning_rate_invert_t_decay;
+    network_params->fcnet_param->learning_rate_decay_unit = learning_rate_decay_unit;
+    network_params->fcnet_param->learning_rate_decay_a0 = learning_rate_decay_a0;
+    network_params->fcnet_param->learning_rate_decay_k = learning_rate_decay_k;
 
     if (enable_padding) {
         for(int i=0;i<number_of_samples;i++) {
@@ -199,6 +214,15 @@ int trainConvnet(ConvnetParameters* network_params) {
     //init3DMatrix(dX, training_data->depth, training_data->height, training_data->width);
     printf("CONVNET INFO: Training network...\n");
     for(int e=1;e<=epochs;e++) {
+        learning_rate = decayLearningRate(enable_learning_rate_step_decay,
+            enable_learning_rate_exponential_decay,
+            enable_learning_rate_invert_t_decay,
+            learning_rate_decay_unit,
+            learning_rate_decay_k,
+            learning_rate_decay_a0,
+            e,
+            base_learning_rate,
+            learning_rate);
         // Forward propagation
         for(int i=0;i<M;i++) {
             for(int j=0;j<N;j++) {
@@ -252,7 +276,7 @@ int trainConvnet(ConvnetParameters* network_params) {
             NULL, NULL, NULL, NULL,
             NULL, NULL,
             NULL, NULL, NULL, NULL,
-            dP2D, losses);
+            dP2D, e, &current_fcnet_learning_rate, losses);
         if (e % 1000 == 0 || verbose) {
             printf("CONVNET INFO: Epoch: %d, data loss: %f, regulization loss: %f, total loss: %f\n", e, losses[0], losses[1], losses[0]+losses[1]);
         }

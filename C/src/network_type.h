@@ -28,6 +28,12 @@ typedef struct {
     int epochs;
     int network_depth; // Network depth
     int* hidden_layer_sizes; // Sizes of these hidden layers
+    bool enable_learning_rate_step_decay;
+    bool enable_learning_rate_exponential_decay;
+    bool enable_learning_rate_invert_t_decay;
+    int learning_rate_decay_unit;
+    float learning_rate_decay_a0;
+    float learning_rate_decay_k;
     bool verbose;
     bool use_momentum_update;
     bool use_nag_update;
@@ -74,6 +80,13 @@ typedef struct {
     int padding_width;
     int padding_height;
     bool verbose;
+    bool enable_learning_rate_step_decay;
+    bool enable_learning_rate_exponential_decay;
+    bool enable_learning_rate_invert_t_decay;
+    int learning_rate_decay_unit;
+    float learning_rate_decay_a0;
+    float learning_rate_decay_k;
+    float learning_rate_decay_step;
     FCParameters* fcnet_param;
 } ConvnetParameters;
 
