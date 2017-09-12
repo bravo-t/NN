@@ -191,7 +191,13 @@ float softmaxLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dsco
             correct_probs->d[i][0] = -log(probs->d[i][correct_index]+1e-5);
         }
         if (isnan(correct_probs->d[i][0])) {
-            printf("DEBUG: softmaxLoss produced a nan, -log(%f) = nan\n", probs->d[i][correct_index]);
+            printf("DEBUG: softmaxLoss produced a nan, score=%f, max_score=%f, shifted=%f, exp_score=%f, exp_sum=%f, -log(%f) = nan\n", 
+                score->d[i][correct_index],
+                max_scores->d[i][correct_index],
+                shifted->d[i][correct_index],
+                exp_score->d[i][correct_index],
+                exp_sum->d[i][0],
+                probs->d[i][correct_index]);
         }
     }
     //printf("correct_probs = \n");

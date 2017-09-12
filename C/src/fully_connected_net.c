@@ -593,10 +593,10 @@ int FCTrainCore(FCParameters* network_params,
                     }
                     leakyReLUForward(Hs[i],alpha,Hs[i]);
                 }
-                debugPrintMatrix(layer_X);
+                //debugPrintMatrix(layer_X);
                 debugPrintMatrix(Ws[i]);
                 debugPrintMatrix(bs[i]);
-                debugPrintMatrix(Hs[i]);
+                //debugPrintMatrix(Hs[i]);
                 layer_X = Hs[i];
             }
             

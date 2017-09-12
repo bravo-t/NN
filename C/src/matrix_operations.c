@@ -317,7 +317,12 @@ int elementMul(TwoDMatrix* M, float a,TwoDMatrix* OUT) {
 }
 
 int elementDiv(TwoDMatrix* M,float a, TwoDMatrix* OUT) {
-    float n = 1/a;
+    float n;
+    if (a == 0.0f) {
+        n = 1/(a+1e-5);
+    } else {
+        n = 1/a;
+    }
     return elementMul(M, n, OUT);
 }
 
