@@ -20,5 +20,9 @@ TwoDMatrix* load2DMatrixFromFile(char* filename);
 FCParameters* readNetworkConfigFile(char* filename);
 char determineMemoryUnit(unsigned int n);
 float memoryUsageReadable(unsigned long long int n, char unit);
+ThreeDMatrix* load3DMatrixFromFile(char* filename);
+float matrixError3D(ThreeDMatrix* a, ThreeDMatrix* b);
+void print3DMatrix(ThreeDMatrix *M);
+void check3DMatrixDiff(ThreeDMatrix* a, ThreeDMatrix* b, float thres);
 
 #endif

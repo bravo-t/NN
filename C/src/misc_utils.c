@@ -32,6 +32,33 @@ TwoDMatrix* load2DMatrixFromFile(char* filename) {
     return M;
 }
 
+ThreeDMatrix* load3DMatrixFromFile(char* filename) {
+    FILE* fp = fopen(filename, "r");
+    if (fp == NULL) {
+        printf("ERROR: Cannot open %s to read\n",filename);
+        exit(1);
+    }
+    char buff[8192];
+    fscanf(fp,"%s",buff);
+    int depth,height,width;
+    fscanf(fp,"%d",&depth);
+    fscanf(fp,"%d",&height);
+    fscanf(fp,"%d",&width);
+    float value;
+    TwoDMatrix* M = matrixMalloc(sizeof(TwoDMatrix));
+    init3DMatrix(M,depth,height,width);
+    for(int i=0;i<depth;i++) {
+        for(int j=0;j<height;j++) {
+            for(int k=0;k<width;k++) {
+                fscanf(fp,"%f",&value);
+                M->d[i][j] = value;
+            }
+        }
+    }
+    fclose(fp);
+    return M;
+}
+
 float matrixError(TwoDMatrix* a, TwoDMatrix* b) {
     if (a->height != b->height) {
         printf("HOLY ERROR: Height does not match, your code is really messed up\n");
@@ -58,6 +85,34 @@ float matrixError(TwoDMatrix* a, TwoDMatrix* b) {
     return error;
 }
 
+float matrixError3D(ThreeDMatrix* a, ThreeDMatrix* b) {
+    if (a->height != b->height) {
+        printf("HOLY ERROR: Height does not match, your code is really messed up\n");
+        return 1.0/0.0;
+    }
+    if (a->width != b->width) {
+        printf("ANOTHER ERROR: Width doesn't match. FIX THEM\n");
+        return 1.0/0.0;
+    }
+    if (a->depth != b->depth) {
+        printf("ERROR AGAIN: Depth not equal, oh god\n");
+    }
+    float error = 0;
+    for(int i=0;i<a->depth;i++) {
+        for(int j=0;j<a->height;j++) {
+            for(int k=0;k<a->width;k++) {
+                float sub = a->d[i][j][k] - b->d[i][j][k];
+                if (sub > 0) {
+                    error += sub;
+                } else {
+                    error -= sub;
+                }
+            }
+        }
+    }
+    return error;
+}
+
 void printMatrix(TwoDMatrix *M) {
     printf("Height of matrix: %d, width: %d\n",M->height,M->width);
     for(int i=0;i<M->height;i++) {
@@ -65,6 +120,18 @@ void printMatrix(TwoDMatrix *M) {
             printf("%f\t",M->d[i][j]);
         }
         printf("\n");
+    }
+}
+
+void print3DMatrix(ThreeDMatrix *M) {
+    printf("Depth of matrix: %d, height: %d, width: %d\n",M->depth,M->height,M->width);
+    for(int i=0;i<M->depth;i++) {
+        for(int j=0;j<M->height;j++) {
+            for(int k=0;k<M->width;k++) {
+                printf("%f\t",M->d[i][j][k]);
+            }
+            printf("\n");
+        }
     }
 }
 
@@ -89,7 +156,20 @@ void checkMatrixDiff(TwoDMatrix* a, TwoDMatrix* b, float thres) {
         printf("impl = \n");
         printMatrix(b);
     } else {
-        printf("Difference of the two matrixes are %f\n",diff);
+        printf("Difference of the two matrices are %f\n",diff);
+    }
+}
+
+void check3DMatrixDiff(ThreeDMatrix* a, ThreeDMatrix* b, float thres) {
+    float diff = matrixError3D(a, b);
+    if (diff >= thres) {
+        printf("ERROR: Difference between ref and impl is too big: %f\n",diff);
+        printf("ref = \n");
+        print3DMatrix(a);
+        printf("impl = \n");
+        print3DMatrix(b);
+    } else {
+        printf("Difference of the two matrices are %f\n",diff);
     }
 }
 
