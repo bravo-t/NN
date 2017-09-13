@@ -2,12 +2,6 @@
 #define __OPERATION_HEADER__
 #include "network_type.h"
 
-#ifdef DEBUG
-#define debugPrintMatrix(M) __debugPrintMatrix(M,#M)
-#else
-#define debugPrintMatrix(M) ((void)0)
-#endif
-
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -55,5 +49,8 @@ int elementwiseSub3DMatrix(ThreeDMatrix* A, ThreeDMatrix* B, ThreeDMatrix* OUT);
 ThreeDMatrix* chop3DMatrix(ThreeDMatrix* X, int start_y, int start_x, int end_y, int end_x);
 int assign3DMatrix(ThreeDMatrix* in, int start_y, int start_x, int end_y, int end_x, ThreeDMatrix* X);
 float decayLearningRate(bool enable_step_decay, bool enable_exponential_decay, bool enable_invert_t_decay, int decay_unit, float decay_k, float decay_a0, int epoch, float base_learning_rate, float learning_rate);
+int normalize3DMatrixPerDepth(ThreeDMatrix* X, ThreeDMatrix* OUT);
+int debugCheckingForNaNs2DMatrix(TwoDMatrix* X, char* name, int index);
+int debugCheckingForNaNs3DMatrix(ThreeDMatrix* X, char* name, int index);
 
 #endif

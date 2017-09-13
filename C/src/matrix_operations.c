@@ -275,9 +275,9 @@ int elementwiseDiv2DMatrix(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT) {
     init2DMatrix(OUT,A->height,A->width);
     for(int i=0;i<A->height;i++) {
         for(int j=0;j<A->width;j++) {
-            if (B->d[i][j] == 0.0f) {
+            if (B->d[i][j] < 1e-6) {
                 //printf("ERROR: A divide-by-0 exception is raised. A small bias of 1e-5 is added\n");
-                OUT->d[i][j] = A->d[i][j] / (B->d[i][j]+1e-5);
+                OUT->d[i][j] = A->d[i][j] / (B->d[i][j]+1e-6);
             } else {
                 OUT->d[i][j] = A->d[i][j] / B->d[i][j];
             }
@@ -318,8 +318,8 @@ int elementMul(TwoDMatrix* M, float a,TwoDMatrix* OUT) {
 
 int elementDiv(TwoDMatrix* M,float a, TwoDMatrix* OUT) {
     float n;
-    if (a == 0.0f) {
-        n = 1/(a+1e-5);
+    if (a < 1e-6) {
+        n = 1/(a+1e-6);
     } else {
         n = 1/a;
     }
@@ -606,3 +606,66 @@ float decayLearningRate(bool enable_step_decay, bool enable_exponential_decay, b
     } 
     return learning_rate;
 }
+
+int normalize3DMatrixPerDepth(ThreeDMatrix* X, ThreeDMatrix* OUT) {
+    init3DMatrix(OUT, X->depth, X->height, X->width);
+    for(int i=0;i<X->depth;i++) {
+        float mean = 0;
+        for(int j=0;j<X->height;j++) {
+            for(int k=0;k<X->width;k++) {
+                mean += X->d[i][j][k];
+            }
+        }
+        mean = mean / (X->depth * X->width);
+        float var = 0;
+        for(int j=0;j<X->height;j++) {
+            for(int k=0;k<X->width;k++) {
+                var += (X->d[i][j][k] - mean)*(X->d[i][j][k] - mean);
+            }
+        }
+        var = var / (X->depth * X->width);
+        float stddev = sqrt(var);
+        if (stddev < 1e-6) {
+            for(int j=0;j<X->height;j++) {
+                for(int k=0;k<X->width;k++) {
+                    OUT->d[i][j][k] = (X->d[i][j][k] - mean);
+                }
+            }
+        } else {
+            for(int j=0;j<X->height;j++) {
+                for(int k=0;k<X->width;k++) {
+                    OUT->d[i][j][k] = (X->d[i][j][k] - mean) / stddev;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+int debugCheckingForNaNs2DMatrix(TwoDMatrix* X, char* name, int index) {
+    for(int i=0;i<X->height;i++) {
+        for(int j=0;j<X->width;j++) {
+            if (isnan(X->d[i][j])) {
+                printf("DEBUG: %s:%d %dx%d is nan\n", name, index, i, j);
+                exit(1);
+            }
+        }
+    }
+    return 0;
+}
+
+int debugCheckingForNaNs3DMatrix(ThreeDMatrix* X, char* name, int index) {
+    for(int i=0;i<X->depth;i++) {
+        for(int j=0;j<X->height;j++) {
+            for(int k=0;k<X->width;k++) {
+                if (isnan(X->d[i][j][k])) {
+                    printf("DEBUG: %s:%d %dx%dx%d is nan\n", name, index, i, j, k);
+                    exit(1);
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+

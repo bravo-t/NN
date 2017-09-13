@@ -636,6 +636,14 @@ int FCTrainCore(FCParameters* network_params,
                 debugPrintMatrix(bs[i]);
                 //debugPrintMatrix(Hs[i]);
                 layer_X = Hs[i];
+
+                /**********************/
+                /******* DEBUG ********/
+                debugCheckingForNaNs2DMatrix(Ws[i], "after forward prop, Ws", i);
+                debugCheckingForNaNs2DMatrix(bs[i], "after forward prop, bs", i);
+                debugCheckingForNaNs2DMatrix(Hs[i], "after forward prop, Hs", i);
+                /******* DEBUG ********/
+                /**********************/
             }
             
             
@@ -668,6 +676,12 @@ int FCTrainCore(FCParameters* network_params,
                 // Weight changes contributed by L2 regulization
                 L2RegLossBackward(dWs[i],Ws[i],reg_strength,dWs[i]);
                 debugPrintMatrix(dWs[i]);
+                /**********************/
+                /******* DEBUG ********/
+                debugCheckingForNaNs2DMatrix(dWs[i], "after forward prop, dWs", i);
+                debugCheckingForNaNs2DMatrix(dbs[i], "after forward prop, dbs", i);
+                /******* DEBUG ********/
+                /**********************/
             }
             // Update weights
             for (int i=0;i<network_depth;i++) {

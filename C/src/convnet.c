@@ -35,6 +35,8 @@ int trainConvnet(ConvnetParameters* network_params) {
     float learning_rate = network_params->learning_rate;
     float base_learning_rate = learning_rate;
     bool verbose = network_params->verbose;
+
+    bool normalize_data_per_channel = network_params->normalize_data_per_channel;
     
     bool enable_learning_rate_step_decay = network_params->enable_learning_rate_step_decay;
     bool enable_learning_rate_exponential_decay = network_params->enable_learning_rate_exponential_decay;
@@ -54,6 +56,13 @@ int trainConvnet(ConvnetParameters* network_params) {
     network_params->fcnet_param->learning_rate_decay_unit = learning_rate_decay_unit;
     network_params->fcnet_param->learning_rate_decay_a0 = learning_rate_decay_a0;
     network_params->fcnet_param->learning_rate_decay_k = learning_rate_decay_k;
+
+    if (normalize_data_per_channel) {
+        printf("CONVNET INFO: Normalizing input data\n");
+        for(int i=0;i<number_of_samples;i++) {
+            normalize3DMatrixPerDepth(training_data[i], training_data[i]);
+        }
+    }
 
     if (enable_padding) {
         for(int i=0;i<number_of_samples;i++) {
@@ -156,7 +165,7 @@ int trainConvnet(ConvnetParameters* network_params) {
     }
     for(int i=0;i<number_of_samples;i++) {
         dP3D[i] = matrixMalloc(sizeof(ThreeDMatrix));
-        init3DMatrix(dP3D[i],P[M-1][N-1]->depth, P[M-1][N-1]->height, P[M-1][N-1]->width);
+        init3DMatrix(dP3D[i],P[M-1][i]->depth, P[M-1][i]->height, P[M-1][i]->width);
     }
     // Initialize the fully connected network in convnet
     int* fcnet_hidden_layer_sizes = network_params->fcnet_param->hidden_layer_sizes;
@@ -244,6 +253,17 @@ int trainConvnet(ConvnetParameters* network_params) {
                         C[i][j][n]);
                 }
                 CONV_OUT = C[i][j];
+                
+                /**********************/
+                /******* DEBUG ********/
+                for(int x=0;x<filter_number[i*M+j];x++) {
+                    debugCheckingForNaNs3DMatrix(F[i][j][x], "after forward prop, F", x);
+                    debugCheckingForNaNs3DMatrix(b[i][j][x], "after forward prop, b", x);
+                }
+                for(int n=0;n<number_of_samples;n++) debugCheckingForNaNs3DMatrix(C[i][j][n], "after forward prop, C", n);
+                /******* DEBUG ********/
+                /**********************/
+
             }
             if (enable_maxpooling[i]) {
                 if (verbose) {
@@ -261,6 +281,13 @@ int trainConvnet(ConvnetParameters* network_params) {
                 P[i] = CONV_OUT;
             }
             CONV_OUT = P[i];
+            
+            /**********************/
+            /******* DEBUG ********/
+            for(int n=0;n<number_of_samples;n++) debugCheckingForNaNs3DMatrix(P[i][n], "after forward prop, P", n);
+            /******* DEBUG ********/
+            /**********************/
+
         }
 
         // Feed data to fully connected network
@@ -269,6 +296,13 @@ int trainConvnet(ConvnetParameters* network_params) {
         for(int i=0;i<number_of_samples;i++) {
             reshapeThreeDMatrix2Col(P[M-1][i],i,X);
         }
+
+        /**********************/
+        /******* DEBUG ********/
+        debugCheckingForNaNs2DMatrix(X, "after CONV->FC reshape, X", 0);
+        /******* DEBUG ********/
+        /**********************/
+
         network_params->fcnet_param->X = X;
 
         FCTrainCore(network_params->fcnet_param, 
@@ -277,10 +311,22 @@ int trainConvnet(ConvnetParameters* network_params) {
             NULL, NULL,
             NULL, NULL, NULL, NULL,
             dP2D, e, &current_fcnet_learning_rate, losses);
+
+        /**********************/
+        /******* DEBUG ********/
+        debugCheckingForNaNs2DMatrix(dP2D, "after FC back prop, dP2D", 0);
+        /******* DEBUG ********/
+        /**********************/
         if (e % 1000 == 0 || verbose) {
             printf("CONVNET INFO: Epoch: %d, data loss: %f, regulization loss: %f, total loss: %f\n", e, losses[0], losses[1], losses[0]+losses[1]);
         }
         restoreThreeDMatrixFromCol(dP2D, dP3D);
+
+        /**********************/
+        /******* DEBUG ********/
+        for(int n=0;n<number_of_samples;n++) debugCheckingForNaNs3DMatrix(dP3D[n], "after FC->CONV reshape, dP3D", n);
+        /******* DEBUG ********/
+        /**********************/
         
         // Backward propagation
         /* Schematic
@@ -320,6 +366,13 @@ int trainConvnet(ConvnetParameters* network_params) {
                     dC[i][N-1][n] = dP[i][n];
                 }
             }
+
+            /**********************/
+            /******* DEBUG ********/
+            for(int n=0;n<number_of_samples;n++) debugCheckingForNaNs3DMatrix(dC[i][N-1][n], "after max pooling backprop, dC", n);
+            /******* DEBUG ********/
+            /**********************/
+
             for(int j=N-1;j>=0;j--) {
                 if (verbose) {
                     printf("CONVNET INFO: Epoch: %d, CONV Backprop M = %d, N = %d\n",e , i, j);
@@ -377,6 +430,17 @@ int trainConvnet(ConvnetParameters* network_params) {
                             db[i][j]);
                     }
                 }
+
+                /**********************/
+                /******* DEBUG ********/
+                for(int x=0;x<dC[i][j][0]->depth;x++) {
+                    debugCheckingForNaNs3DMatrix(dF[i][j][x], "after backprop, dF", x);
+                    debugCheckingForNaNs3DMatrix(db[i][j][x], "after backprop, db", x);
+                }
+                for(int n=0;n<number_of_samples;n++) debugCheckingForNaNs3DMatrix(dC[i][j][n], "after backprop, dC", n);
+                /******* DEBUG ********/
+                /**********************/
+                
             }
         }
         

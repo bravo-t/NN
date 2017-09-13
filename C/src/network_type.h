@@ -87,6 +87,7 @@ typedef struct {
     float learning_rate_decay_a0;
     float learning_rate_decay_k;
     float learning_rate_decay_step;
+    bool normalize_data_per_channel;
     FCParameters* fcnet_param;
 } ConvnetParameters;
 
