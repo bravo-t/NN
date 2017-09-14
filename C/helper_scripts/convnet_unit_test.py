@@ -94,3 +94,18 @@ def max_pool_backward_naive(dout, cache):
 
     return dx
 
+def print_np_array(a):
+    n,c,h,w = a.shape
+    for i in range(n):
+        print("%d %d %d" % (c,h,w))
+        for j in range(c):
+            for k in range(h):
+                for l in range(w):
+                    # stupid python
+                    print("%f " % a[i,j,k,l], end="")
+                print("")
+
+conv_param = {"stride":2, "pad":0}
+pool_param = {"pool_width":2, "pool_height":2, "stride":2}
+x = np.random.rand(1,3,8,8)
+print_np_array(x)
