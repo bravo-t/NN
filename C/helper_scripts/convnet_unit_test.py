@@ -10,10 +10,13 @@ def conv_forward_naive(x, w, b, conv_param):
     N, C, H, W = x.shape
     F, C, HH, WW = w.shape
     x_padded = np.pad(x, ((0, 0), (0, 0), (pad, pad), (pad, pad)), mode='constant') #补零
-    H_new = 1 + (H + 2 * pad - HH) / stride
-    W_new = 1 + (W + 2 * pad - WW) / stride
+    H_new = int(1 + (H + 2 * pad - HH) / stride)
+    W_new = int(1 + (W + 2 * pad - WW) / stride)
     s = stride
+    print(H_new)
+    print(W_new)
     out = np.zeros((N, F, H_new, W_new))
+
 
     for i in xrange(N):       # ith image    
         for f in xrange(F):   # fth filter        
@@ -109,3 +112,9 @@ conv_param = {"stride":2, "pad":0}
 pool_param = {"pool_width":2, "pool_height":2, "stride":2}
 x = np.random.rand(1,3,8,8)
 print_np_array(x)
+f = np.random.rand(1,3,2,2)
+print_np_array(f)
+b = np.random.rand(1,1,1,1)
+print_np_array(b)
+out, cache = conv_forward_naive(x,f,b,conv_param)
+print_np_array(out)
