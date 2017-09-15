@@ -35,8 +35,8 @@ def conv_backward_naive(dout, cache):
     stride = conv_param['stride']
     F, C, HH, WW = w.shape
     N, C, H, W = x.shape
-    H_new = 1 + (H + 2 * pad - HH) / stride
-    W_new = 1 + (W + 2 * pad - WW) / stride
+    H_new = int(1 + (H + 2 * pad - HH) / stride)
+    W_new = int(1 + (W + 2 * pad - WW) / stride)
 
     dx = np.zeros_like(x)
     dw = np.zeros_like(w)
@@ -64,8 +64,8 @@ def max_pool_forward_naive(x, pool_param):
     HH, WW = pool_param['pool_height'], pool_param['pool_width']
     s = pool_param['stride']
     N, C, H, W = x.shape
-    H_new = 1 + (H - HH) / s
-    W_new = 1 + (W - WW) / s
+    H_new = int(1 + (H - HH) / s)
+    W_new = int(1 + (W - WW) / s)
     out = np.zeros((N, C, H_new, W_new))
     for i in xrange(N):    
         for j in xrange(C):        
@@ -84,8 +84,8 @@ def max_pool_backward_naive(dout, cache):
     HH, WW = pool_param['pool_height'], pool_param['pool_width']
     s = pool_param['stride']
     N, C, H, W = x.shape
-    H_new = 1 + (H - HH) / s
-    W_new = 1 + (W - WW) / s
+    H_new = int(1 + (H - HH) / s)
+    W_new = int(1 + (W - WW) / s)
     dx = np.zeros_like(x)
     for i in xrange(N):    
         for j in xrange(C):        
@@ -111,10 +111,36 @@ def print_np_array(a):
 conv_param = {"stride":2, "pad":0}
 pool_param = {"pool_width":2, "pool_height":2, "stride":2}
 x = np.random.rand(1,3,8,8)
+print("x")
 print_np_array(x)
 f = np.random.rand(1,3,2,2)
+print("f")
 print_np_array(f)
 b = np.random.rand(1,1,1,1)
+print("b")
 print_np_array(b)
 out, cache = conv_forward_naive(x,f,b,conv_param)
+print("out")
 print_np_array(out)
+a,b,c,d = out.shape
+dout = np.random.rand(a,b,c,d)
+#dout = np.random.randint(1,out.shape)
+print("dout")
+print_np_array(dout)
+dx, dw, db = conv_backward_naive(dout, cache)
+print("dx")
+print_np_array(dx)
+print("dw")
+print_np_array(dw)
+print("db")
+print_np_array(db)
+pool_out, pool_cache = max_pool_forward_naive(out, pool_param)
+print("pool_out")
+print_np_array(pool_out)
+a,b,c,d = pool_out.shape
+pool_dout = np.random.rand(a,b,c,d)
+print("pool_dout")
+print_np_array(pool_dout)
+pool_dx = max_pool_backward_naive(pool_dout, pool_cache)
+print("pool_dx")
+print_np_array(pool_dx)
