@@ -13,8 +13,6 @@ def conv_forward_naive(x, w, b, conv_param):
     H_new = int(1 + (H + 2 * pad - HH) / stride)
     W_new = int(1 + (W + 2 * pad - WW) / stride)
     s = stride
-    print(H_new)
-    print(W_new)
     out = np.zeros((N, F, H_new, W_new))
 
 
