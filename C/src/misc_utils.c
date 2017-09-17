@@ -45,13 +45,13 @@ ThreeDMatrix* load3DMatrixFromFile(char* filename) {
     fscanf(fp,"%d",&height);
     fscanf(fp,"%d",&width);
     float value;
-    TwoDMatrix* M = matrixMalloc(sizeof(TwoDMatrix));
+    ThreeDMatrix* M = matrixMalloc(sizeof(ThreeDMatrix));
     init3DMatrix(M,depth,height,width);
     for(int i=0;i<depth;i++) {
         for(int j=0;j<height;j++) {
             for(int k=0;k<width;k++) {
                 fscanf(fp,"%f",&value);
-                M->d[i][j] = value;
+                M->d[i][j][k] = value;
             }
         }
     }

@@ -95,6 +95,25 @@ def max_pool_backward_naive(dout, cache):
 
     return dx
 
+
+def max_pool_backward_naive_correct(dout, cache):
+    x, pool_param = cache
+    HH, WW = pool_param['pool_height'], pool_param['pool_width']
+    s = pool_param['stride']
+    N, C, H, W = x.shape
+    H_new = int(1 + (H - HH) / s)
+    W_new = int(1 + (W - WW) / s)
+    dx = np.zeros_like(x)
+    for i in xrange(N):    
+        for j in xrange(C):        
+            for k in xrange(H_new):            
+                for l in xrange(W_new):                
+                    window = x[i, j, k*s:HH+k*s, l*s:WW+l*s]                
+                    m = np.max(window)               #获得之前的那个值，这样下面只要windows==m就能得到相应的位置
+                    dx[i, j, k*s:HH+k*s, l*s:WW+l*s] += (window == m) * dout[i, j, k, l]
+
+    return dx
+
 def print_np_array(a):
     n,c,h,w = a.shape
     for i in range(n):
@@ -142,3 +161,6 @@ print_np_array(pool_dout)
 pool_dx = max_pool_backward_naive(pool_dout, pool_cache)
 print("pool_dx", end=" ")
 print_np_array(pool_dx)
+pool_dx_correct = max_pool_backward_naive_correct(pool_dout, pool_cache)
+print("pool_dx_correct", end=" ")
+print_np_array(pool_dx_correct)

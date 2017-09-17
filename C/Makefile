@@ -39,6 +39,9 @@ convnet.o: src/convnet.c src/convnet.h convnet_layers.o
 convnet_test: convnet_test.c convnet.o convnet_layers.o convnet_operations.o matrix_operations.o layers.o fully_connected_net.o misc_utils.o
 	$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
 
+convnet_unit_test: convnet_unit_test.c convnet.o convnet_layers.o convnet_operations.o matrix_operations.o layers.o fully_connected_net.o misc_utils.o
+	$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
+
 .PHONY: clean
 clean:
 	rm -f *.o *~ src/*~ 
