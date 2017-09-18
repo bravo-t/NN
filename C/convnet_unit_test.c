@@ -39,6 +39,17 @@ int main(int argc, char const *argv[])
     printf("Comparing out_after_conv_forward\n");
     check3DMatrixDiff(ref_out_after_conv_forward, out_after_conv_forward, thres);
 
+    ThreeDMatrix* padded = matrixMalloc(sizeof(ThreeDMatrix));
+    ThreeDMatrix* unpadded = matrixMalloc(sizeof(ThreeDMatrix));
+    zeroPadding(ref_out_after_conv_forward, 2, 2, padded);
+    unpad(padded, 2, 2, unpadded);
+    printf("ref_out_after_conv_forward\n");
+    print3DMatrix(ref_out_after_conv_forward);
+    printf("padded\n");
+    print3DMatrix(padded);
+    printf("unpadded\n");
+    print3DMatrix(unpadded);
+
     ThreeDMatrix* dout = load3DMatrixFromFile("test_data/convnet_dout_before_conv_backward.txt");
     ThreeDMatrix* dx_after_conv_backward = matrixMalloc(sizeof(ThreeDMatrix));
     ThreeDMatrix* ref_dx_after_conv_backward = load3DMatrixFromFile("test_data/convnet_dx_after_conv_backward.txt");

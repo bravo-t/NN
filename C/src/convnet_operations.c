@@ -25,7 +25,7 @@ int zeroPadding(ThreeDMatrix* X, int padding_height, int padding_width, ThreeDMa
                     (k<padding_width || k>=padding_width+X->width)) {
                     out->d[i][j][k] = 0;
                 } else {
-                    out->d[i][j][k] = X->d[i][j-padding_height][i-padding_width];
+                    out->d[i][j][k] = X->d[i][j-padding_height][k-padding_width];
                 }
             }
         }
