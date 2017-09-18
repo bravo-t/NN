@@ -93,13 +93,17 @@ int main(int argc, char const *argv[])
     ThreeDMatrix* pool_dout = load3DMatrixFromFile("test_data/convnet_pool_dout_before_pool_backward.txt");
     ThreeDMatrix* pool_dx_after_pool_backward = matrixMalloc(sizeof(ThreeDMatrix));
     ThreeDMatrix* ref_pool_dx_after_pool_backward = load3DMatrixFromFile("test_data/convnet_pool_dx_after_pool_backward.txt");
-    maxPoolingBackword(pool_dout, 
+    maxPoolingBackward(pool_dout, 
         ref_out_after_conv_forward, 
         2, 
         2, 
         2, 
         2, 
         pool_dx_after_pool_backward);
+    printf("pool_dout\n");
+    print3DMatrix(pool_dout);
+    printf("ref_out_after_conv_forward\n");
+    print3DMatrix(ref_out_after_conv_forward);
     printf("Comparing pool_dx_after_pool_backward\n");
     check3DMatrixDiff(ref_pool_dx_after_pool_backward, pool_dx_after_pool_backward, thres);
     return 0;

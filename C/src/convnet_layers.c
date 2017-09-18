@@ -91,10 +91,10 @@ int maxPoolingForward(ThreeDMatrix* X, int stride_y, int stride_x, int pooling_w
 ** dX <- | POOLING | <- dV
 **       -----------
 */
-int maxPoolingBackword(ThreeDMatrix* dV, ThreeDMatrix* X, int stride_y, int stride_x, int pooling_width, int pooling_height, ThreeDMatrix* dX) {
+int maxPoolingBackward(ThreeDMatrix* dV, ThreeDMatrix* X, int stride_y, int stride_x, int pooling_width, int pooling_height, ThreeDMatrix* dX) {
     init3DMatrix(dX, X->depth, X->height, X->width);
     for(int z=0;z<X->depth;z++) {
-        maxPoolingSingleSliceBackword(X, dV, pooling_height, pooling_width, stride_y, stride_x, z, dX->d[z]);
+        maxPoolingSingleSliceBackward(X, dV, pooling_height, pooling_width, stride_y, stride_x, z, dX->d[z]);
     }
     return 0;
 }

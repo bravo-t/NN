@@ -353,7 +353,7 @@ int trainConvnet(ConvnetParameters* network_params) {
                     printf("CONVNET INFO: Epoch: %d, POOLING Backprop M = %d\n", e, i);
                 }
                 for(int n=0;n<number_of_samples;n++) {
-                    maxPoolingBackword(dV[n], 
+                    maxPoolingBackward(dV[n], 
                         P[i][n], 
                         pooling_stride_y[i], 
                         pooling_stride_x[i], 
