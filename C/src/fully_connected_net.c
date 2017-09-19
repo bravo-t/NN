@@ -631,10 +631,14 @@ int FCTrainCore(FCParameters* network_params,
                     }
                     leakyReLUForward(Hs[i],alpha,Hs[i]);
                 }
-                //debugPrintMatrix(layer_X);
-                debugPrintMatrix(Ws[i]);
-                debugPrintMatrix(bs[i]);
-                //debugPrintMatrix(Hs[i]);
+                printf("%dth Hidden input, X\n",i);
+                printMatrix(layer_X);
+                printf("Ws[%d]\n",i);
+                printMatrix(Ws[i]);
+                printf("bs[%d]\n",i);
+                printMatrix(bs[i]);
+                printf("Hs[%d]\n",i);
+                printMatrix(Hs[i]);
                 layer_X = Hs[i];
 
                 /**********************/
@@ -648,7 +652,9 @@ int FCTrainCore(FCParameters* network_params,
             
             
             losses[0] = softmaxLoss(Hs[network_depth-1], correct_labels, dHs[network_depth-1]);
-            debugPrintMatrix(dHs[network_depth-1]);
+            //losses[0] = SVMLoss(Hs[network_depth-1], correct_labels, dHs[network_depth-1]);
+            printf("dscores\n");
+            printMatrix(dHs[network_depth-1]);
             losses[1] = L2RegLoss(Ws, network_depth, reg_strength);
             //if ((epoch % 1000 == 0 && iteration == 0) || verbose) {
             //    printf("%s: Epoch %d, data loss: %f, regulization loss: %f, total loss: %f\n",TAG,
@@ -657,8 +663,10 @@ int FCTrainCore(FCParameters* network_params,
             // Backward propagation
             // This dX is only a placeholder to babysit the backword function, of course we are not going to modify X
             for (int i=network_depth-1; i>=0; i--) {
-                debugPrintMatrix(dHs[i]);
-                debugPrintMatrix(Hs[i]);
+                printf("dHs[%d]\n",i);
+                printMatrix(dHs[i]);
+                printf("Hs[%d]\n",i);
+                printMatrix(Hs[i]);
                 if (i != network_depth-1) {
                     leakyReLUBackward(dHs[i],Hs[i],alpha,dHs[i]);
                     if (use_batchnorm) {
@@ -671,11 +679,16 @@ int FCTrainCore(FCParameters* network_params,
                 } else {
                     affineLayerBackword(dHs[i],X,Ws[i],bs[i],dX,dWs[i],dbs[i]);
                 }
-                debugPrintMatrix(dWs[i]);
-                debugPrintMatrix(Ws[i]);
+                printf("before reg, dbs[%d]\n",i);
+                printMatrix(dbs[i]);
+                printf("before reg, dWs[%d]\n",i);
+                printMatrix(dWs[i]);
+                printf("Ws[%d]\n",i);
+                printMatrix(Ws[i]);
                 // Weight changes contributed by L2 regulization
                 L2RegLossBackward(dWs[i],Ws[i],reg_strength,dWs[i]);
-                debugPrintMatrix(dWs[i]);
+                printf("after reg, dWs[%d]\n",i);
+                printMatrix(dWs[i]);
                 /**********************/
                 /******* DEBUG ********/
                 debugCheckingForNaNs2DMatrix(dWs[i], "after forward prop, dWs", i);

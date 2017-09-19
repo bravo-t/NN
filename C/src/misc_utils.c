@@ -132,6 +132,7 @@ void print3DMatrix(ThreeDMatrix *M) {
             }
             printf("\n");
         }
+        printf("--------------------------\n");
     }
 }
 

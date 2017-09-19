@@ -42,7 +42,7 @@ int init2DMatrixNormRand(TwoDMatrix* M, int height, int width, float mean, float
     for(int i = 0; i<height;i++) {
         data[i] = (float*) calloc(width,sizeof(float));
         for(int j=0;j<width;j++) {
-            data[i][j] = random_normal(mean,std)/sqrt(2.0/n);
+            data[i][j] = random_normal(mean,std)*sqrt(2.0/n);
         }
     }
     M->d = data;
@@ -616,14 +616,14 @@ int normalize3DMatrixPerDepth(ThreeDMatrix* X, ThreeDMatrix* OUT) {
                 mean += X->d[i][j][k];
             }
         }
-        mean = mean / (X->depth * X->width);
+        mean = mean / (X->height * X->width);
         float var = 0;
         for(int j=0;j<X->height;j++) {
             for(int k=0;k<X->width;k++) {
                 var += (X->d[i][j][k] - mean)*(X->d[i][j][k] - mean);
             }
         }
-        var = var / (X->depth * X->width);
+        var = var / (X->height * X->width);
         float stddev = sqrt(var);
         if (stddev < 1e-6) {
             for(int j=0;j<X->height;j++) {

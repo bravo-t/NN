@@ -295,6 +295,7 @@ int trainConvnet(ConvnetParameters* network_params) {
         init2DMatrix(X,number_of_samples,layer_data_depth*layer_data_height*layer_data_width);
         for(int i=0;i<number_of_samples;i++) {
             reshapeThreeDMatrix2Col(P[M-1][i],i,X);
+
         }
 
         /**********************/
@@ -314,6 +315,8 @@ int trainConvnet(ConvnetParameters* network_params) {
 
         /**********************/
         /******* DEBUG ********/
+        //printf("dP2D\n");
+        //printMatrix(dP2D);
         debugCheckingForNaNs2DMatrix(dP2D, "after FC back prop, dP2D", 0);
         /******* DEBUG ********/
         /**********************/
@@ -321,10 +324,13 @@ int trainConvnet(ConvnetParameters* network_params) {
             printf("CONVNET INFO: Epoch: %d, data loss: %f, regulization loss: %f, total loss: %f\n", e, losses[0], losses[1], losses[0]+losses[1]);
         }
         restoreThreeDMatrixFromCol(dP2D, dP3D);
-
         /**********************/
         /******* DEBUG ********/
-        for(int n=0;n<number_of_samples;n++) debugCheckingForNaNs3DMatrix(dP3D[n], "after FC->CONV reshape, dP3D", n);
+        for(int n=0;n<number_of_samples;n++) {
+            debugCheckingForNaNs3DMatrix(dP3D[n], "after FC->CONV reshape, dP3D", n);
+            //printf("dP3D[%d]\n", n);
+            //print3DMatrix(dP3D[n]);
+        }
         /******* DEBUG ********/
         /**********************/
         

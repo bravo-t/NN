@@ -67,15 +67,16 @@ int main() {
     convnet_params->enable_maxpooling = enable_maxpooling;
     convnet_params->enable_padding = false;
     convnet_params->epochs = 2000;
-    convnet_params->alpha = 0;
-    convnet_params->learning_rate = 0.01;
+    convnet_params->alpha = 0.1;
+    convnet_params->learning_rate = 1e-4;
     convnet_params->verbose = true;
+    convnet_params->normalize_data_per_channel = true;
     convnet_params->enable_learning_rate_step_decay = true;
     convnet_params->learning_rate_decay_unit = 20;
     convnet_params->learning_rate_decay_a0 = 1.0;
     convnet_params->learning_rate_decay_k = 0.5;
     convnet_params->fcnet_param->correct_labels = correct_labels;
-    int hidden_layer_sizes[2] = {100, 10};
+    int hidden_layer_sizes[2] = {10, 10};
     convnet_params->fcnet_param->hidden_layer_sizes = hidden_layer_sizes;
     convnet_params->fcnet_param->labels = 10;
     convnet_params->fcnet_param->network_depth = 2;
@@ -183,3 +184,5 @@ int writePPM(ThreeDMatrix* X, char* file) {
     fclose(fp);
     return 0;
 }
+
+

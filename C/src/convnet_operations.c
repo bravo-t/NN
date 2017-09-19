@@ -60,6 +60,16 @@ int convSingleFilter(ThreeDMatrix* X,ThreeDMatrix* F,ThreeDMatrix* b, int stride
                         int x_n = j*stride_x+n;
                         float res =  F->d[l][m][n] * X->d[l][x_m][x_n];
                         sum += res;
+                        /**********************/
+                        /******* DEBUG ********
+                        if (i== 0 && j == 0) {
+                            printf("F->d[%d][%d][%d] * X->d[%d][%d][%d] = %f * %f = %f\n",
+                                l,m,n,l,x_m,x_n,
+                                F->d[l][m][n], X->d[l][x_m][x_n],
+                                F->d[l][m][n] * X->d[l][x_m][x_n]);
+                        }
+                        ******* DEBUG ********/
+                        /**********************/
                     }
                 }
             }
