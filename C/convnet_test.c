@@ -57,7 +57,7 @@ int main() {
     convnet_params->N = 2;
     int stride[2] = {2, 2};
     int filter_size[2] = {2, 2};
-    int filter_number[2] = {64, 128};
+    int filter_number[2] = {32, 32};
     bool enable_maxpooling[1] = {false};
     convnet_params->filter_stride_x = stride;
     convnet_params->filter_stride_y = stride;
@@ -68,13 +68,13 @@ int main() {
     convnet_params->enable_padding = false;
     convnet_params->epochs = 2000;
     convnet_params->alpha = 0.1;
-    convnet_params->learning_rate = 1e-4;
+    convnet_params->learning_rate = 1e-3;
     convnet_params->verbose = true;
     convnet_params->normalize_data_per_channel = true;
     convnet_params->enable_learning_rate_step_decay = true;
-    convnet_params->learning_rate_decay_unit = 20;
+    convnet_params->learning_rate_decay_unit = 100;
     convnet_params->learning_rate_decay_a0 = 1.0;
-    convnet_params->learning_rate_decay_k = 0.5;
+    convnet_params->learning_rate_decay_k = 0.2;
     convnet_params->fcnet_param->correct_labels = correct_labels;
     int hidden_layer_sizes[2] = {10, 10};
     convnet_params->fcnet_param->hidden_layer_sizes = hidden_layer_sizes;

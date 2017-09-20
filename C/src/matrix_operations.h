@@ -41,7 +41,7 @@ int chop2DMatrix(TwoDMatrix* M, int height_start, int height_end, TwoDMatrix* OU
 int matrixYMeanVar(TwoDMatrix* M, TwoDMatrix* mean, TwoDMatrix* var);
 int matrixXMeanVar(TwoDMatrix* M, TwoDMatrix* mean, TwoDMatrix* var);
 int init3DMatrix(ThreeDMatrix* M, int depth, int height, int width);
-int init3DMatrixNormRand(ThreeDMatrix* M, int depth, int height, int width, float mean, float std);
+int init3DMatrixNormRand(ThreeDMatrix* M, int depth, int height, int width, float mean, float std, int n);
 int destroy3DMatrix (ThreeDMatrix* M);
 int elementMul3DMatrix(ThreeDMatrix* X, float n, ThreeDMatrix* OUT);
 int elementwiseAdd3DMatrix(ThreeDMatrix* A, ThreeDMatrix* B, ThreeDMatrix* OUT);

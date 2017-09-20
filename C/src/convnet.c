@@ -124,7 +124,7 @@ int trainConvnet(ConvnetParameters* network_params) {
                 b[i][j][k] = matrixMalloc(sizeof(ThreeDMatrix));
                 dF[i][j][k] = matrixMalloc(sizeof(ThreeDMatrix));
                 db[i][j][k] = matrixMalloc(sizeof(ThreeDMatrix));
-                init3DMatrixNormRand(F[i][j][k],layer_data_depth,filter_height[i*M+j],filter_width[i*M+j],0.0,1.0);
+                init3DMatrixNormRand(F[i][j][k],layer_data_depth,filter_height[i*M+j],filter_width[i*M+j],0.0,1.0,layer_data_height*layer_data_width);
                 init3DMatrix(b[i][j][k],1,1,1);
                 init3DMatrix(dF[i][j][k],layer_data_depth,filter_height[i*M+j],filter_width[i*M+j]);
                 init3DMatrix(db[i][j][k],1,1,1);
@@ -252,18 +252,32 @@ int trainConvnet(ConvnetParameters* network_params) {
                         alpha, 
                         C[i][j][n]);
                 }
-                CONV_OUT = C[i][j];
+                //CONV_OUT = C[i][j];
                 
                 /**********************/
-                /******* DEBUG ********/
+                /******* DEBUG ********
+                for(int n=0;n<number_of_samples;n++) {
+                    printf("CONV M = %d, N = %d, INPUT %d\n",i,j,n);
+                    print3DMatrix(CONV_OUT[n]);
+                }
                 for(int x=0;x<filter_number[i*M+j];x++) {
                     debugCheckingForNaNs3DMatrix(F[i][j][x], "after forward prop, F", x);
                     debugCheckingForNaNs3DMatrix(b[i][j][x], "after forward prop, b", x);
+                    printf("F[%d][%d][%d]\n", i, j, x);
+                    print3DMatrix(F[i][j][x]);
+                    printf("b[%d][%d][%d]\n", i, j, x);
+                    print3DMatrix(b[i][j][x]);
                 }
-                for(int n=0;n<number_of_samples;n++) debugCheckingForNaNs3DMatrix(C[i][j][n], "after forward prop, C", n);
-                /******* DEBUG ********/
+                for(int n=0;n<number_of_samples;n++) {
+                    debugCheckingForNaNs3DMatrix(C[i][j][n], "after forward prop, C", n);
+                    printf("C[%d][%d][%d]\n", i, j, n);
+                    print3DMatrix(C[i][j][n]);
+                    printf("0x0: CONV M = %d, N = %d, C = %d, %f\n",i,j,n,C[i][j][n]->d[0][0][0]);
+                    printf("1x1: CONV M = %d, N = %d, C = %d, %f\n",i,j,n,C[i][j][n]->d[0][1][1]);
+                }
+                ******* DEBUG ********/
                 /**********************/
-
+                CONV_OUT = C[i][j];
             }
             if (enable_maxpooling[i]) {
                 if (verbose) {

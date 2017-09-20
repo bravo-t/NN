@@ -92,7 +92,7 @@ int init3DMatrix(ThreeDMatrix* M, int depth, int height, int width) {
     return 0;
 }
 
-int init3DMatrixNormRand(ThreeDMatrix* M, int depth, int height, int width, float mean, float std) {
+int init3DMatrixNormRand(ThreeDMatrix* M, int depth, int height, int width, float mean, float std, int n) {
     if (M->initialized) return 0;
     M->height = height;
     M->width = width;
@@ -103,7 +103,7 @@ int init3DMatrixNormRand(ThreeDMatrix* M, int depth, int height, int width, floa
         for(int j=0;j<height;j++) {
             data[i][j] = (float*) calloc(width,sizeof(float));
             for(int k=0;k<width;k++) {
-                data[i][j][k] = random_normal(mean, std);
+                data[i][j][k] = random_normal(mean, std)*sqrt(2.0/n);
             }
         }
     }

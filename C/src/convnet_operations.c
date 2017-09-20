@@ -63,7 +63,13 @@ int convSingleFilter(ThreeDMatrix* X,ThreeDMatrix* F,ThreeDMatrix* b, int stride
                         /**********************/
                         /******* DEBUG ********
                         if (i== 0 && j == 0) {
-                            printf("F->d[%d][%d][%d] * X->d[%d][%d][%d] = %f * %f = %f\n",
+                            printf("EEROR: F->d[%d][%d][%d] * X->d[%d][%d][%d] = %f * %f = %f\n",
+                                l,m,n,l,x_m,x_n,
+                                F->d[l][m][n], X->d[l][x_m][x_n],
+                                F->d[l][m][n] * X->d[l][x_m][x_n]);
+                        }
+                        if (i== 1 && j == 1) {
+                            printf("CORRECT: F->d[%d][%d][%d] * X->d[%d][%d][%d] = %f * %f = %f\n",
                                 l,m,n,l,x_m,x_n,
                                 F->d[l][m][n], X->d[l][x_m][x_n],
                                 F->d[l][m][n] * X->d[l][x_m][x_n]);
@@ -73,7 +79,11 @@ int convSingleFilter(ThreeDMatrix* X,ThreeDMatrix* F,ThreeDMatrix* b, int stride
                     }
                 }
             }
+            //if (i== 0 && j == 0) {printf("ERROR: Window sum = %f\n",sum);}
+            //if (i== 1 && j == 1) {printf("CORRECT: Window sum = %f\n",sum);}
             sum += b->d[0][0][0];
+            //if (i== 0 && j == 0) {printf("ERROR: Window sum + bias = %f\n",sum);}
+            //if (i== 1 && j == 1) {printf("CORRECT: Window sum + bias = %f\n",sum);}
             out[i][j] = sum;
         }
     }
