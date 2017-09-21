@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <malloc.h>
+#include <math.h>
 #include "network_type.h"
 #include "matrix_operations.h"
 #include "layers.h"
@@ -124,7 +125,7 @@ int trainConvnet(ConvnetParameters* network_params) {
                 b[i][j][k] = matrixMalloc(sizeof(ThreeDMatrix));
                 dF[i][j][k] = matrixMalloc(sizeof(ThreeDMatrix));
                 db[i][j][k] = matrixMalloc(sizeof(ThreeDMatrix));
-                init3DMatrixNormRand(F[i][j][k],layer_data_depth,filter_height[i*M+j],filter_width[i*M+j],0.0,1.0,layer_data_height*layer_data_width);
+                init3DMatrixNormRand(F[i][j][k],layer_data_depth,filter_height[i*M+j],filter_width[i*M+j],0.0,1.0,sqrt(layer_data_height*layer_data_width*layer_data_depth));
                 init3DMatrix(b[i][j][k],1,1,1);
                 init3DMatrix(dF[i][j][k],layer_data_depth,filter_height[i*M+j],filter_width[i*M+j]);
                 init3DMatrix(db[i][j][k],1,1,1);
