@@ -77,7 +77,7 @@ int trainConvnet(ConvnetParameters* network_params) {
     printf("CONVNET INFO: Initializing learnable weights and intermediate layers\n");
     unsigned long long int total_parameters = 0;
     unsigned long long int total_memory = 0;
-    float* losses = malloc(sizeof(float)*2);
+    float* losses = malloc(sizeof(float)*3);
     /*
     C will hold intermediate values of CONV -> RELU layer, C[M][N][number_of_samples]
     P will hold intermediate values of POOL, P[M][number_of_samples]
@@ -336,7 +336,7 @@ int trainConvnet(ConvnetParameters* network_params) {
         /******* DEBUG ********/
         /**********************/
         if (e % 1000 == 0 || verbose) {
-            printf("CONVNET INFO: Epoch: %d, data loss: %f, regulization loss: %f, total loss: %f\n", e, losses[0], losses[1], losses[0]+losses[1]);
+            printf("CONVNET INFO: Epoch: %d, data loss: %f, regulization loss: %f, total loss: %f, training accuracy: %f\n", e, losses[0], losses[1], losses[0]+losses[1],losses[2]);
         }
         restoreThreeDMatrixFromCol(dP2D, dP3D);
         /**********************/

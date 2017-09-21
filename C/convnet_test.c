@@ -54,10 +54,10 @@ int main() {
     convnet_params->number_of_samples = 100;
     //convnet_params->number_of_samples = number_of_batch_data*10000;
     convnet_params->M = 1;
-    convnet_params->N = 2;
-    int stride[2] = {2, 2};
-    int filter_size[2] = {2, 2};
-    int filter_number[2] = {64, 128};
+    convnet_params->N = 3;
+    int stride[3] = {1, 2, 2};
+    int filter_size[3] = {16, 7, 2};
+    int filter_number[3] = {36, 36, 64};
     bool enable_maxpooling[1] = {false};
     convnet_params->filter_stride_x = stride;
     convnet_params->filter_stride_y = stride;
@@ -80,7 +80,7 @@ int main() {
     convnet_params->fcnet_param->hidden_layer_sizes = hidden_layer_sizes;
     convnet_params->fcnet_param->labels = 10;
     convnet_params->fcnet_param->network_depth = 2;
-    convnet_params->fcnet_param->reg_strength = 1e-2;
+    convnet_params->fcnet_param->reg_strength = 1;
     convnet_params->fcnet_param->learning_rate = convnet_params->learning_rate;
     trainConvnet(convnet_params);
     return 0;

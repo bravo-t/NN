@@ -656,6 +656,7 @@ int FCTrainCore(FCParameters* network_params,
             //printf("dscores\n");
             //printMatrix(dHs[network_depth-1]);
             losses[1] = L2RegLoss(Ws, network_depth, reg_strength);
+            losses[2] = training_accuracy(Hs[network_depth-1], correct_labels);
             //if ((epoch % 1000 == 0 && iteration == 0) || verbose) {
             //    printf("%s: Epoch %d, data loss: %f, regulization loss: %f, total loss: %f\n",TAG,
             //        epoch, data_loss, reg_loss, loss);

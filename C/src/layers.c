@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "network_type.h"
 #include "matrix_operations.h"
+#include "layers.h"
 
 int affineLayerForward(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* b, TwoDMatrix* OUT) {
     init2DMatrix(OUT, X->height, W->width);
@@ -226,6 +227,37 @@ float softmaxLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dsco
     destroy2DMatrix(probs);
     destroy2DMatrix(correct_probs);
     return data_loss;
+}
+
+float training_accuracy(TwoDMatrix* scores, TwoDMatrix* correct_labels) {
+    int correct = 0;
+    for(int i=0;i<scores->height;i++) {
+        int predicted = 0;
+        float max_score = -1e99;
+        int correct_label = (int) correct_labels->d[i][0];
+        for(int j=0;j<scores->width;j++) {
+            if (scores->d[i][j] > max_score) {
+                predicted = j;
+                max_score = scores->d[i][j];
+            }
+        }
+        if (correct_label == predicted) correct++;
+        /* DEBUG  
+        for(int j=0;j<scores->width;j++) {
+            if (j == predicted && correct_label == predicted) {
+                printf(ANSI_COLOR_GREEN "%f" ANSI_COLOR_RESET "\t",scores->d[i][j]);
+            } else if (j == predicted && correct_label != predicted) {
+                printf(ANSI_COLOR_RED "%f" ANSI_COLOR_RESET "\t",scores->d[i][j]);
+            } else if (j == correct_label && correct_label != predicted) {
+                printf(ANSI_COLOR_GREEN "%f" ANSI_COLOR_RESET "\t",scores->d[i][j]);
+            } else {
+                printf("%f\t",scores->d[i][j]);
+            }
+        }
+        printf("\n");
+        */
+    }
+    return ((float) correct)/(scores->height);
 }
 
 float L2RegLoss(TwoDMatrix** Ms,int network_depth, float reg_strength) {
