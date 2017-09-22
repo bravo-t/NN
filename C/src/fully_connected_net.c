@@ -292,9 +292,10 @@ int train(FCParameters* network_params) {
             debugPrintMatrix(dHs[network_depth-1]);
             float reg_loss = L2RegLoss(Ws, network_depth, reg_strength);
             float loss = data_loss + reg_loss;
+            float accu = training_accuracy(Hs[network_depth-1], correct_labels);
             if ((epoch % 1000 == 0 && iteration == 0) || verbose) {
-                printf("INFO: Epoch %d, data loss: %f, regulization loss: %f, total loss: %f\n",
-                    epoch, data_loss, reg_loss, loss);
+                printf("INFO: Epoch %d, data loss: %f, regulization loss: %f, total loss: %f, training accuracy: %f\n",
+                    epoch, data_loss, reg_loss, loss, accu);
             }
             // Backward propagation
             // This dX is only a placeholder to babysit the backword function, of course we are not going to modify X

@@ -336,8 +336,8 @@ int trainConvnet(ConvnetParameters* network_params) {
 
         /**********************/
         /******* DEBUG ********/
-        //printf("dP2D\n");
-        //printMatrix(dP2D);
+        printf("dP2D\n");
+        printMatrix(dP2D);
         debugCheckingForNaNs2DMatrix(dP2D, "after FC back prop, dP2D", 0);
         /******* DEBUG ********/
         /**********************/
@@ -408,6 +408,11 @@ int trainConvnet(ConvnetParameters* network_params) {
                     /* This is the begining of the whole network
                     ** So the input data should be training_data
                     */ 
+                    /*****************/
+                    /***** DEBUG *****/
+                    printf("This is the beginning of a network\n");
+                    /***** DEBUG *****/
+                    /*****************/
                     for(int n=0;n<number_of_samples;n++) {
                         convLayerBackward(training_data[n], 
                             C[i][j][n],
@@ -426,6 +431,11 @@ int trainConvnet(ConvnetParameters* network_params) {
                     /* This is the begining of a CONV layer
                     ** So the input data should be the output of the max pooling layer ahead of it, which is P[i-1][n]
                     */
+                    /*****************/
+                    /***** DEBUG *****/
+                    printf("This is the beginning of a conv layer\n");
+                    /***** DEBUG *****/
+                    /*****************/
                     for(int n=0;n<number_of_samples;n++) {
                         convLayerBackward(P[i-1][n], 
                             C[i][j][n],

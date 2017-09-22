@@ -5,6 +5,7 @@
 #include "network_type.h"
 #include "matrix_operations.h"
 #include "convnet_operations.h"
+#include "misc_utils.h"
 #include "convnet_layers.h"
 
 /*
@@ -59,11 +60,42 @@ int convLayerBackward(ThreeDMatrix* X,
     for(int i=0;i<dV->depth;i++) {
         init3DMatrix(dF[i],F[i]->depth,F[i]->height, F[i]->width);
     }
+    /*****************/
+    /***** DEBUG *****/
+    printf("X_padded\n");
+    print3DMatrix(X_padded);
+    printf("dV before ReLU\n");
+    print3DMatrix(dV);
+    /***** DEBUG *****/
+    /*****************/
     convReLUBackword(dV,V,alpha,dV);
+    /*****************/
+    /***** DEBUG *****/
+    printf("dV after ReLU\n");
+    print3DMatrix(dV);
+    /***** DEBUG *****/
+    /*****************/
     for(int z=0;z<dV->depth;z++) {
         convSingleFilterBackward(X_padded,F[z], dV,stride_y, stride_x, z, dX_padded, dF[z], db[z]);
+        /*****************/
+        /***** DEBUG *****/
+        printf("F[%d]\n",z);
+        print3DMatrix(F[z]);
+        printf("dF[%d]\n",z);
+        print3DMatrix(dF[z]);
+        printf("db[%d]\n",z);
+        print3DMatrix(db[z]);
+        /***** DEBUG *****/
+        /*****************/
     }
     unpad(dX_padded, padding_y, padding_x, dX);
+    /*****************/
+    /***** DEBUG *****/
+    printf("dX\n");
+    print3DMatrix(dX);
+    /***** DEBUG *****/
+    /*****************/
+
     destroy3DMatrix(X_padded);
     destroy3DMatrix(dX_padded);
     return 0;

@@ -231,6 +231,9 @@ float softmaxLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dsco
 
 float training_accuracy(TwoDMatrix* scores, TwoDMatrix* correct_labels) {
     int correct = 0;
+    /* DEBUG  */
+    printf("Calculated scores\n");
+    /**********/
     for(int i=0;i<scores->height;i++) {
         int predicted = 0;
         float max_score = -1e99;
@@ -242,20 +245,23 @@ float training_accuracy(TwoDMatrix* scores, TwoDMatrix* correct_labels) {
             }
         }
         if (correct_label == predicted) correct++;
-        /* DEBUG  
+        /* DEBUG  */
         for(int j=0;j<scores->width;j++) {
             if (j == predicted && correct_label == predicted) {
-                printf(ANSI_COLOR_GREEN "%f" ANSI_COLOR_RESET "\t",scores->d[i][j]);
+                //printf(ANSI_COLOR_GREEN "%f" ANSI_COLOR_RESET "\t",scores->d[i][j]);
+                printf("%f""\t",scores->d[i][j]);
             } else if (j == predicted && correct_label != predicted) {
-                printf(ANSI_COLOR_RED "%f" ANSI_COLOR_RESET "\t",scores->d[i][j]);
+                //printf(ANSI_COLOR_RED "%f" ANSI_COLOR_RESET "\t",scores->d[i][j]);
+                printf("%f""\t",scores->d[i][j]);
             } else if (j == correct_label && correct_label != predicted) {
-                printf(ANSI_COLOR_GREEN "%f" ANSI_COLOR_RESET "\t",scores->d[i][j]);
+                //printf(ANSI_COLOR_GREEN "%f" ANSI_COLOR_RESET "\t",scores->d[i][j]);
+                printf("%f""\t",scores->d[i][j]);
             } else {
                 printf("%f\t",scores->d[i][j]);
             }
         }
         printf("\n");
-        */
+        /**/
     }
     return ((float) correct)/(scores->height);
 }
