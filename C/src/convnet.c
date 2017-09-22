@@ -256,7 +256,7 @@ int trainConvnet(ConvnetParameters* network_params) {
                 //CONV_OUT = C[i][j];
                 
                 /**********************/
-                /******* DEBUG ********
+                /******* DEBUG ********/
                 for(int n=0;n<number_of_samples;n++) {
                     printf("CONV M = %d, N = %d, INPUT %d\n",i,j,n);
                     print3DMatrix(CONV_OUT[n]);
@@ -276,7 +276,7 @@ int trainConvnet(ConvnetParameters* network_params) {
                     printf("0x0: CONV M = %d, N = %d, C = %d, %f\n",i,j,n,C[i][j][n]->d[0][0][0]);
                     printf("1x1: CONV M = %d, N = %d, C = %d, %f\n",i,j,n,C[i][j][n]->d[0][1][1]);
                 }
-                ******* DEBUG ********/
+                /******* DEBUG ********/
                 /**********************/
                 CONV_OUT = C[i][j];
             }
@@ -296,10 +296,15 @@ int trainConvnet(ConvnetParameters* network_params) {
                 P[i] = CONV_OUT;
             }
             CONV_OUT = P[i];
+
             
             /**********************/
             /******* DEBUG ********/
-            for(int n=0;n<number_of_samples;n++) debugCheckingForNaNs3DMatrix(P[i][n], "after forward prop, P", n);
+            for(int n=0;n<number_of_samples;n++) {
+                printf("P[%d][%d]\n", i, n);
+                print3DMatrix(P[i][n]);
+                debugCheckingForNaNs3DMatrix(P[i][n], "after forward prop, P", n);
+            }
             /******* DEBUG ********/
             /**********************/
 
@@ -310,12 +315,13 @@ int trainConvnet(ConvnetParameters* network_params) {
         init2DMatrix(X,number_of_samples,layer_data_depth*layer_data_height*layer_data_width);
         for(int i=0;i<number_of_samples;i++) {
             reshapeThreeDMatrix2Col(P[M-1][i],i,X);
-
         }
 
         /**********************/
         /******* DEBUG ********/
         debugCheckingForNaNs2DMatrix(X, "after CONV->FC reshape, X", 0);
+        printf("fully connected net input:\n");
+        printMatrix(X);
         /******* DEBUG ********/
         /**********************/
 
