@@ -389,6 +389,8 @@ int trainConvnet(ConvnetParameters* network_params) {
                         dC[i][N-1][n]);
                 }
             } else {
+                // FIX ME
+                // In cases where maxpooling is not enabled, dP is all zeros.
                 for(int n=0;n<number_of_samples;n++) {
                     dC[i][N-1][n] = dP[i][n];
                 }

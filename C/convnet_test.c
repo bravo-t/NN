@@ -51,13 +51,13 @@ int main() {
     memset(convnet_params, 0, sizeof(ConvnetParameters));
     convnet_params->fcnet_param = (FCParameters*) malloc(sizeof(FCParameters));
     convnet_params->X = X;
-    convnet_params->number_of_samples = 100;
+    convnet_params->number_of_samples = 10;
     //convnet_params->number_of_samples = number_of_batch_data*10000;
     convnet_params->M = 1;
     convnet_params->N = 3;
-    int stride[3] = {1, 2, 2};
-    int filter_size[3] = {16, 7, 2};
-    int filter_number[3] = {36, 36, 64};
+    int stride[3] = {2, 2, 2};
+    int filter_size[3] = {16, 3, 2};
+    int filter_number[3] = {3, 3, 3};
     bool enable_maxpooling[1] = {false};
     convnet_params->filter_stride_x = stride;
     convnet_params->filter_stride_y = stride;
@@ -66,7 +66,7 @@ int main() {
     convnet_params->filter_number = filter_number;
     convnet_params->enable_maxpooling = enable_maxpooling;
     convnet_params->enable_padding = false;
-    convnet_params->epochs = 2000;
+    convnet_params->epochs = 20;
     convnet_params->alpha = 0.1;
     convnet_params->learning_rate = 1e-3;
     convnet_params->verbose = true;
@@ -76,7 +76,7 @@ int main() {
     convnet_params->learning_rate_decay_a0 = 1.0;
     convnet_params->learning_rate_decay_k = 0.8;
     convnet_params->fcnet_param->correct_labels = correct_labels;
-    int hidden_layer_sizes[2] = {100, 10};
+    int hidden_layer_sizes[2] = {10, 10};
     convnet_params->fcnet_param->hidden_layer_sizes = hidden_layer_sizes;
     convnet_params->fcnet_param->labels = 10;
     convnet_params->fcnet_param->network_depth = 2;
