@@ -373,14 +373,15 @@ int trainConvnet(ConvnetParameters* network_params) {
         ** db[M][N][filter_number]
         **
         */
-        ThreeDMatrix** dV = dP3D;
+        //ThreeDMatrix** dV = dP3D;
+        dP[M-1] = dP3D;
         for(int i=M-1;i>=0;i--) {
             if (enable_maxpooling[i]) {
                 if (verbose) {
                     printf("CONVNET INFO: Epoch: %d, POOLING Backprop M = %d\n", e, i);
                 }
                 for(int n=0;n<number_of_samples;n++) {
-                    maxPoolingBackward(dV[n], 
+                    maxPoolingBackward(dP[i][n], 
                         P[i][n], 
                         pooling_stride_y[i], 
                         pooling_stride_x[i], 
@@ -452,7 +453,7 @@ int trainConvnet(ConvnetParameters* network_params) {
                             dF[i][j], 
                             db[i][j]);
                     }
-                    dV = dP[i-1];
+                    //dV = dP[i-1];
                 } else {
                     for(int n=0;n<number_of_samples;n++) {
                         convLayerBackward(C[i][j-1][n], 
