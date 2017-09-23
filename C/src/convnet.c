@@ -543,6 +543,8 @@ int trainConvnet(ConvnetParameters* network_params) {
     destroy2DMatrix(dP2D);
     for(int i=0;i<number_of_samples;i++) {
         destroy3DMatrix(dX[i]);
+        // FIX ME
+        // In line 377, "dP[M-1] = dP3D;" Part of dP[M-1] is lost, and dP3D is freed before
         destroy3DMatrix(dP3D[i]);
     }
     free(dP3D);
