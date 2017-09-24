@@ -53,6 +53,7 @@ int vanillaUpdate(TwoDMatrix* M, TwoDMatrix* dM, float learning_rate, TwoDMatrix
     for(int i=0;i<M->height;i++) {
         for(int j=0;j<M->width;j++) {
             OUT->d[i][j] = M->d[i][j] - dM->d[i][j]*learning_rate;
+#if defined(DEBUG) && DEBUG > 3
             if (isnan(OUT->d[i][j])) {
                 printf("DEBUG: vanillaUpdate produced a nan: %f - %f * %f = %f\n",
                     M->d[i][j],
@@ -60,6 +61,7 @@ int vanillaUpdate(TwoDMatrix* M, TwoDMatrix* dM, float learning_rate, TwoDMatrix
                     learning_rate,
                     OUT->d[i][j]);
             }
+#endif
         }
     }
     /*
@@ -206,6 +208,7 @@ float softmaxLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dsco
             // log(0) will produce a nan, which will break the network. Add a small number to fix it
             correct_probs->d[i][0] = -log(probs->d[i][correct_index]+1e-6);
         }
+#if defined(DEBUG) && DEBUG > 3
         if (isnan(correct_probs->d[i][0])) {
             printf("DEBUG: softmaxLoss produced a nan, score=%f, max_score=%f, shifted=%f, exp_score=%f, exp_sum=%f, -log(%f) = nan\n", 
                 score->d[i][correct_index],
@@ -215,6 +218,7 @@ float softmaxLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dsco
                 exp_sum->d[i][0],
                 probs->d[i][correct_index]);
         }
+#endif
     }
     //printf("correct_probs = \n");
     //printMatrix(correct_probs);
@@ -231,9 +235,11 @@ float softmaxLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dsco
 
 float training_accuracy(TwoDMatrix* scores, TwoDMatrix* correct_labels) {
     int correct = 0;
+#if defined(DEBUG) && DEBUG > 3
     /* DEBUG  */
     printf("Calculated scores\n");
     /**********/
+#endif
     for(int i=0;i<scores->height;i++) {
         int predicted = 0;
         float max_score = -1e99;
@@ -245,6 +251,7 @@ float training_accuracy(TwoDMatrix* scores, TwoDMatrix* correct_labels) {
             }
         }
         if (correct_label == predicted) correct++;
+#if defined(DEBUG) && DEBUG > 3
         /* DEBUG  */
         for(int j=0;j<scores->width;j++) {
             if (j == predicted && correct_label == predicted) {
@@ -262,6 +269,7 @@ float training_accuracy(TwoDMatrix* scores, TwoDMatrix* correct_labels) {
         }
         printf("\n");
         /**/
+#endif
     }
     return ((float) correct)/(scores->height);
 }

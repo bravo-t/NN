@@ -60,6 +60,8 @@ int convLayerBackward(ThreeDMatrix* X,
     for(int i=0;i<dV->depth;i++) {
         init3DMatrix(dF[i],F[i]->depth,F[i]->height, F[i]->width);
     }
+
+#if defined(DEBUG) && DEBUG > 2
     /*****************/
     /***** DEBUG *****/
     printf("X_padded\n");
@@ -68,15 +70,21 @@ int convLayerBackward(ThreeDMatrix* X,
     print3DMatrix(dV);
     /***** DEBUG *****/
     /*****************/
+#endif
+
     convReLUBackword(dV,V,alpha,dV);
+#if defined(DEBUG) && DEBUG > 2
     /*****************/
     /***** DEBUG *****/
     printf("dV after ReLU\n");
     print3DMatrix(dV);
     /***** DEBUG *****/
     /*****************/
+#endif
+
     for(int z=0;z<dV->depth;z++) {
         convSingleFilterBackward(X_padded,F[z], dV,stride_y, stride_x, z, dX_padded, dF[z], db[z]);
+#if defined(DEBUG) && DEBUG > 2
         /*****************/
         /***** DEBUG *****/
         printf("F[%d]\n",z);
@@ -87,14 +95,18 @@ int convLayerBackward(ThreeDMatrix* X,
         print3DMatrix(db[z]);
         /***** DEBUG *****/
         /*****************/
+#endif
     }
     unpad(dX_padded, padding_y, padding_x, dX);
+
+#if defined(DEBUG) && DEBUG > 2
     /*****************/
     /***** DEBUG *****/
     printf("dX\n");
     print3DMatrix(dX);
     /***** DEBUG *****/
     /*****************/
+#endif
 
     destroy3DMatrix(X_padded);
     destroy3DMatrix(dX_padded);
@@ -137,13 +149,17 @@ int vanillaUpdateConvnet(ThreeDMatrix* X, ThreeDMatrix* dX, float learning_rate,
         for(int j=0;j<X->height;j++) {
             for(int k=0;k<X->width;k++) {
                 OUT->d[i][j][k] = X->d[i][j][k] - dX->d[i][j][k]*learning_rate;
+
+#if defined(DEBUG) && DEBUG > 2
                 if (isnan(OUT->d[i][j][k])) {
-                    printf("DEBUG: vanillaUpdateConvnet produced a nan: %f - %f * %f = %f\n",
+                    printf("FATAL: vanillaUpdateConvnet produced a nan: %f - %f * %f = %f\n",
                     X->d[i][j][k],
                     dX->d[i][j][k],
                     learning_rate,
                     OUT->d[i][j][k]);
                 }
+#endif
+
             }
         }
     }
