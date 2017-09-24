@@ -24,5 +24,6 @@ ThreeDMatrix* load3DMatrixFromFile(char* filename);
 float matrixError3D(ThreeDMatrix* a, ThreeDMatrix* b);
 void print3DMatrix(ThreeDMatrix *M);
 void check3DMatrixDiff(ThreeDMatrix* a, ThreeDMatrix* b, float thres);
+int writeImage(ThreeDMatrix* X, char* var_name, char* img_dir);
 
 #endif

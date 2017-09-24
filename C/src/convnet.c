@@ -38,6 +38,9 @@ int trainConvnet(ConvnetParameters* network_params) {
     bool verbose = network_params->verbose;
 
     bool normalize_data_per_channel = network_params->normalize_data_per_channel;
+
+    bool write_filters_as_images = network_params->write_filters_as_images;
+    char* filter_image_dir = network_params->filter_image_dir;
     
     bool enable_learning_rate_step_decay = network_params->enable_learning_rate_step_decay;
     bool enable_learning_rate_exponential_decay = network_params->enable_learning_rate_exponential_decay;
@@ -512,6 +515,19 @@ int trainConvnet(ConvnetParameters* network_params) {
         }
     }
     
+    // For fun
+    if (write_filters_as_images) {
+
+        for(int i=0;i<M;i++) {
+            for(int j=0;j<N;j++) {
+                for(int k=0;k<filter_number[i*M+j];k++) {
+                    char filter_name[100];
+                    sprintf(filter_name,"F[%d][%d][%d]",i,j,k);
+                    writeImage(F[i][j][k], filter_name, filter_image_dir);
+                }
+            }
+        }
+    }
 
     // Release memories, shutdown the network
     for(int i=0;i<M;i++) {

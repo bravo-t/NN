@@ -71,6 +71,8 @@ int main() {
     convnet_params->learning_rate = 1e-3;
     convnet_params->verbose = true;
     convnet_params->normalize_data_per_channel = true;
+    convnet_params->write_filters_as_images = true;
+    convnet_params->filter_image_dir = "img";
     convnet_params->enable_learning_rate_step_decay = true;
     convnet_params->learning_rate_decay_unit = 200;
     convnet_params->learning_rate_decay_a0 = 1.0;

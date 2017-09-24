@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "network_type.h"
 #include "matrix_operations.h"
 #include "fully_connected_net.h"
@@ -532,4 +533,85 @@ float memoryUsageReadable(unsigned long long int n, char unit) {
         case 'T': return (float) (n>>40);
         default: return (float) n;
     }
+}
+
+int writeImage(ThreeDMatrix* X, char* var_name, char* img_dir) {
+    ThreeDMatrix* X_normalized = matrixMalloc(sizeof(ThreeDMatrix));
+    init3DMatrix(X_normalized,X->depth,X->height,X->width);
+    for(int i=0;i<X_normalized->depth;i++) {
+        float mean = 0;
+        for(int j=0;j<X->height;j++) {
+            for(int k=0;k<X->width;k++) {
+                mean += X->d[i][j][k];
+            }
+        }
+        mean = mean / (X->height * X->width);
+        float var = 0;
+        for(int j=0;j<X->height;j++) {
+            for(int k=0;k<X->width;k++) {
+                var += (X->d[i][j][k] - mean)*(X->d[i][j][k] - mean);
+            }
+        }
+        var = var / (X->height * X->width);
+        float stddev = sqrt(var);
+        for(int j=0;j<X_normalized->height;j++) {
+            for(int k=0;k<X_normalized->width;k++) {
+                X_normalized->d[i][j][k] = (X->d[i][j][k] - mean) / stddev;
+                X_normalized->d[i][j][k] += 0.5;
+                if (X_normalized->d[i][j][k] < 0) X_normalized->d[i][j][k] = 0;
+                if (X_normalized->d[i][j][k] > 1) X_normalized->d[i][j][k] = 1;
+                X_normalized->d[i][j][k] *= 255;
+            }
+        }
+    }
+    for(int i=0;i<X_normalized->depth;i++) {
+        char* file = malloc(sizeof(char)*(strlen(var_name) + strlen(img_dir) + 20));
+        strcpy(file,img_dir);
+        strcat(file,"/");
+        strcat(file,var_name);
+        strcat(file,".");
+        char counter[50];
+        sprintf(counter,"%d",i);
+        strcat(file,counter);
+        strcat(file,".pgm");
+        FILE *fp = fopen(file, "w");
+        if (fp == NULL) {
+            printf("ERROR: Cannot open file %s\n", file);
+            continue;
+        }
+        fprintf(fp, "P2\n%d %d\n255\n", X_normalized->width, X_normalized->height);
+        for(int j=0;j<X_normalized->height;j++) {
+            for(int k=0;k<X_normalized->width;k++) {
+                fprintf(fp, "%d ", ((int) X_normalized->d[i][j][k]));
+            }
+            fprintf(fp, "\n");
+        }
+        fclose(fp);
+        free(file);
+    }
+    if (X_normalized->depth == 3) {
+        char* file = malloc(sizeof(char)*(strlen(var_name) + strlen(img_dir) + 20));
+        strcpy(file,img_dir);
+        strcat(file,"/");
+        strcat(file,var_name);
+        strcat(file,".ppm");
+        FILE *fp = fopen(file, "w");
+        if (fp == NULL) {
+            printf("ERROR: Cannot open file %s\n", file);
+            return 1;
+        }
+        fprintf(fp, "P3\n%d %d\n255\n", X_normalized->width, X_normalized->height);
+        for(int i=0;i<X_normalized->height;i++) {
+            for(int j=0;j<X_normalized->width;j++) {
+                for(int k=0;k<X_normalized->depth;k++) {
+                    fprintf(fp, "%d ", ((int) X_normalized->d[k][i][j]));
+                }
+            }
+            fprintf(fp, "\n");
+        }
+        fclose(fp);
+        free(file);
+    }
+    destroy3DMatrix(X_normalized);
+    return 0;
 }
