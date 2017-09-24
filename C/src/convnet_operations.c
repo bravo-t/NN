@@ -115,9 +115,11 @@ int maxPoolingSingleSliceBackward(ThreeDMatrix* X, ThreeDMatrix* dV, int pooling
     for (int i=0; i<=y_iter; i++) {
         for(int j=0;j<=x_iter;j++) {
             int window_start_y = i * stride_y;
-            int window_end_y = (i + 1) * stride_y - 1;
+            int window_end_y = pooling_height + window_start_y - 1;
+            //int window_end_y = (i + 1) * stride_y - 1;
             int window_start_x = j * stride_x;
-            int window_end_x = (j + 1) * stride_x - 1;
+            int window_end_x = pooling_width + window_start_x - 1;
+            //int window_end_x = (j + 1) * stride_x - 1;
             float max = X->d[z][window_start_y][window_start_x];
             int max_y = window_start_y;
             int max_x = window_start_x;
@@ -152,9 +154,11 @@ int convSingleFilterBackward(ThreeDMatrix* X,
         for(int j=0;j<=iter_x;j++) {
             db->d[0][0][0] += dV->d[z][i][j];
             int window_start_y = i * stride_y;
-            int window_end_y = (i + 1) * stride_y - 1;
+            int window_end_y = F->height + window_start_y - 1;
+            //int window_end_y = (i + 1) * stride_y - 1;
             int window_start_x = j * stride_x;
-            int window_end_x = (j + 1) * stride_x - 1;
+            int window_end_x = F->width + window_start_x - 1;
+            //int window_end_x = (j + 1) * stride_x - 1;
             for(int y=window_start_y;y<=window_end_y;y++) {
                 for(int x=window_start_x;x<=window_end_x;x++) {
                     for(int depth=0;depth<X->depth;depth++) {

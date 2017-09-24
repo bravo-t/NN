@@ -280,16 +280,16 @@ int train(FCParameters* network_params) {
                     }
                     leakyReLUForward(Hs[i],alpha,Hs[i]);
                 }
-                debugPrintMatrix(layer_X);
-                debugPrintMatrix(Ws[i]);
-                debugPrintMatrix(bs[i]);
-                debugPrintMatrix(Hs[i]);
+                //debugPrintMatrix(layer_X);
+                //debugPrintMatrix(Ws[i]);
+                //debugPrintMatrix(bs[i]);
+                //debugPrintMatrix(Hs[i]);
                 layer_X = Hs[i];
             }
             
             
             float data_loss = softmaxLoss(Hs[network_depth-1], correct_labels, dHs[network_depth-1]);
-            debugPrintMatrix(dHs[network_depth-1]);
+            //debugPrintMatrix(dHs[network_depth-1]);
             float reg_loss = L2RegLoss(Ws, network_depth, reg_strength);
             float loss = data_loss + reg_loss;
             float accu = training_accuracy(Hs[network_depth-1], correct_labels);
@@ -301,25 +301,25 @@ int train(FCParameters* network_params) {
             // This dX is only a placeholder to babysit the backword function, of course we are not going to modify X
             TwoDMatrix* dX = matrixMalloc(sizeof(TwoDMatrix));
             for (int i=network_depth-1; i>=0; i--) {
-                debugPrintMatrix(dHs[i]);
-                debugPrintMatrix(Hs[i]);
+                //debugPrintMatrix(dHs[i]);
+                //debugPrintMatrix(Hs[i]);
                 if (i != network_depth-1) {
                     leakyReLUBackward(dHs[i],Hs[i],alpha,dHs[i]);
                     if (use_batchnorm) {
                         batchnorm_backward(dHs[i], Hs[i], Hs_normalized[i], gammas[i], betas[i], means[i], vars[i], batchnorm_eps, dHs[i],  dgammas[i], dbetas[i]);
                     }
                 }
-                debugPrintMatrix(dHs[i]);
+                //debugPrintMatrix(dHs[i]);
                 if (i != 0) {
                     affineLayerBackword(dHs[i],Hs[i-1],Ws[i],bs[i],dHs[i-1],dWs[i],dbs[i]);
                 } else {
                     affineLayerBackword(dHs[i],X,Ws[i],bs[i],dX,dWs[i],dbs[i]);
                 }
-                debugPrintMatrix(dWs[i]);
-                debugPrintMatrix(Ws[i]);
+                //debugPrintMatrix(dWs[i]);
+                //debugPrintMatrix(Ws[i]);
                 // Weight changes contributed by L2 regulization
                 L2RegLossBackward(dWs[i],Ws[i],reg_strength,dWs[i]);
-                debugPrintMatrix(dWs[i]);
+                //debugPrintMatrix(dWs[i]);
             }
             destroy2DMatrix(dX);
             // Update weights
@@ -675,7 +675,7 @@ int FCTrainCore(FCParameters* network_params,
                         batchnorm_backward(dHs[i], Hs[i], Hs_normalized[i], gammas[i], betas[i], means[i], vars[i], batchnorm_eps, dHs[i],  dgammas[i], dbetas[i]);
                     }
                 }
-                debugPrintMatrix(dHs[i]);
+                //debugPrintMatrix(dHs[i]);
                 if (i != 0) {
                     affineLayerBackword(dHs[i],Hs[i-1],Ws[i],bs[i],dHs[i-1],dWs[i],dbs[i]);
                 } else {
