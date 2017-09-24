@@ -66,7 +66,7 @@ int main() {
     convnet_params->filter_number = filter_number;
     convnet_params->enable_maxpooling = enable_maxpooling;
     convnet_params->enable_padding = false;
-    convnet_params->epochs = 20;
+    convnet_params->epochs = 2000;
     convnet_params->alpha = 0.01;
     convnet_params->learning_rate = 1e-3;
     convnet_params->verbose = true;
