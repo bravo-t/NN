@@ -29,9 +29,8 @@ int trainConvnet(ConvnetParameters* network_params) {
     int* pooling_width = network_params->pooling_width;
     int* pooling_height = network_params->pooling_height;
     int epochs = network_params->epochs;
-    bool enable_padding = network_params->enable_padding;
-    int padding_width = network_params->padding_width;
-    int padding_height = network_params->padding_height;
+    int* padding_width = network_params->padding_width;
+    int* padding_height = network_params->padding_height;
     float alpha = network_params->alpha;
     float learning_rate = network_params->learning_rate;
     float base_learning_rate = learning_rate;
@@ -68,13 +67,12 @@ int trainConvnet(ConvnetParameters* network_params) {
         }
     }
 
-    if (enable_padding) {
-        for(int i=0;i<number_of_samples;i++) {
-            ThreeDMatrix* tmp = matrixMalloc(sizeof(ThreeDMatrix));
-            zeroPadding(training_data[i],padding_height,padding_width,tmp);
-            destroy3DMatrix(training_data[i]);
-            training_data[i] = tmp;
-        }
+    // Padding the input
+    for(int i=0;i<number_of_samples;i++) {
+        ThreeDMatrix* tmp = matrixMalloc(sizeof(ThreeDMatrix));
+        zeroPadding(training_data[i],padding_height[0],padding_width[0],tmp);
+        destroy3DMatrix(training_data[i]);
+        training_data[i] = tmp;
     }
 
     printf("CONVNET INFO: Initializing learnable weights and intermediate layers\n");
@@ -251,8 +249,8 @@ int trainConvnet(ConvnetParameters* network_params) {
                         filter_width[i*M+j], 
                         filter_stride_y[i*M+j], 
                         filter_stride_x[i*M+j], 
-                        0, 
-                        0, 
+                        padding_height[i*M+j+1], 
+                        padding_width[i*M+j+1], 
                         alpha, 
                         C[i][j][n]);
                 }
@@ -339,7 +337,7 @@ int trainConvnet(ConvnetParameters* network_params) {
             NULL, NULL,
             NULL, NULL, NULL, NULL,
             dP2D, e, &current_fcnet_learning_rate, losses);
-
+        destroy2DMatrix(X);
 #if defined(DEBUG) && DEBUG > 0
         /**********************/
         /******* DEBUG ********/
@@ -437,8 +435,8 @@ int trainConvnet(ConvnetParameters* network_params) {
                             C[i][j][n],
                             F[i][j], 
                             dC[i][j][n], 
-                            0, 
-                            0, 
+                            padding_height[i*M+j+1], 
+                            padding_width[i*M+j+1], 
                             filter_stride_y[i*M+j], 
                             filter_stride_x[i*M+j],
                             alpha,
@@ -463,8 +461,8 @@ int trainConvnet(ConvnetParameters* network_params) {
                             C[i][j][n],
                             F[i][j], 
                             dC[i][j][n], 
-                            0, 
-                            0, 
+                            padding_height[i*M+j+1], 
+                            padding_width[i*M+j+1],
                             filter_stride_y[i*M+j], 
                             filter_stride_x[i*M+j],
                             alpha,
@@ -479,8 +477,8 @@ int trainConvnet(ConvnetParameters* network_params) {
                             C[i][j][n],
                             F[i][j], 
                             dC[i][j][n], 
-                            0, 
-                            0, 
+                            padding_height[i*M+j+1], 
+                            padding_width[i*M+j+1],
                             filter_stride_y[i*M+j], 
                             filter_stride_x[i*M+j],
                             alpha,
@@ -576,14 +574,16 @@ int trainConvnet(ConvnetParameters* network_params) {
     destroy2DMatrix(dP2D);
     for(int i=0;i<number_of_samples;i++) {
         destroy3DMatrix(dX[i]);
-        // FIX ME
-        // In line 377, "dP[M-1] = dP3D;" Part of dP[M-1] is lost, and dP3D is freed before
-        //destroy3DMatrix(dP3D[i]);
     }
-    // FIX ME
-    // In line 377, "dP[M-1] = dP3D;" Part of dP[M-1] is lost, and dP3D is freed before
-    //free(dP3D);
-    free(dX);
+    free(F);
+    free(C);
+    free(b);
+    free(dF);
+    free(dC);
+    free(db);
+    free(losses);
+
+
     
     return 0;
 }

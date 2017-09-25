@@ -728,6 +728,7 @@ int FCTrainCore(FCParameters* network_params,
             }
         }
     }
+    destroy2DMatrix(X);
     for(int i=0;i<network_depth;i++) {
         destroy2DMatrix(dWs[i]);
         destroy2DMatrix(dbs[i]);
