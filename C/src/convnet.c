@@ -494,8 +494,13 @@ int trainConvnet(ConvnetParameters* network_params) {
                 for(int x=0;x<dC[i][j][0]->depth;x++) {
                     debugCheckingForNaNs3DMatrix(dF[i][j][x], "after backprop, dF", x);
                     debugCheckingForNaNs3DMatrix(db[i][j][x], "after backprop, db", x);
+                    printf("dF[%d][%d][%d]",i,j,x);
+                    print3DMatrix(dF[i][j][x]);
+                    printf("db[%d][%d][%d]",i,j,x);
+                    print3DMatrix(db[i][j][x]);
                 }
                 for(int n=0;n<number_of_samples;n++) debugCheckingForNaNs3DMatrix(dC[i][j][n], "after backprop, dC", n);
+
                 /******* DEBUG ********/
                 /**********************/
                 #endif
