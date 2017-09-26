@@ -67,14 +67,6 @@ int trainConvnet(ConvnetParameters* network_params) {
         }
     }
 
-    // Padding the input
-    for(int i=0;i<number_of_samples;i++) {
-        ThreeDMatrix* tmp = matrixMalloc(sizeof(ThreeDMatrix));
-        zeroPadding(training_data[i],padding_height[0],padding_width[0],tmp);
-        destroy3DMatrix(training_data[i]);
-        training_data[i] = tmp;
-    }
-
     printf("CONVNET INFO: Initializing learnable weights and intermediate layers\n");
     unsigned long long int total_parameters = 0;
     unsigned long long int total_memory = 0;
@@ -115,26 +107,26 @@ int trainConvnet(ConvnetParameters* network_params) {
         dF[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
         db[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
         for(int j=0;j<N;j++) {
-            F[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*M+j]);
-            b[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*M+j]);
+            F[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*N+j]);
+            b[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*N+j]);
             C[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
-            dF[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*M+j]);
-            db[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*M+j]);
+            dF[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*N+j]);
+            db[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*N+j]);
             dC[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
-            for(int k=0;k<filter_number[i*M+j];k++) {
+            for(int k=0;k<filter_number[i*N+j];k++) {
                 F[i][j][k] = matrixMalloc(sizeof(ThreeDMatrix));
                 b[i][j][k] = matrixMalloc(sizeof(ThreeDMatrix));
                 dF[i][j][k] = matrixMalloc(sizeof(ThreeDMatrix));
                 db[i][j][k] = matrixMalloc(sizeof(ThreeDMatrix));
-                init3DMatrixNormRand(F[i][j][k],layer_data_depth,filter_height[i*M+j],filter_width[i*M+j],0.0,1.0,sqrt(layer_data_height*layer_data_width*layer_data_depth));
+                init3DMatrixNormRand(F[i][j][k],layer_data_depth,filter_height[i*N+j],filter_width[i*N+j],0.0,1.0,sqrt(layer_data_height*layer_data_width*layer_data_depth));
                 init3DMatrix(b[i][j][k],1,1,1);
-                init3DMatrix(dF[i][j][k],layer_data_depth,filter_height[i*M+j],filter_width[i*M+j]);
+                init3DMatrix(dF[i][j][k],layer_data_depth,filter_height[i*N+j],filter_width[i*N+j]);
                 init3DMatrix(db[i][j][k],1,1,1);
             }
             int filter_depth = layer_data_depth;
-            layer_data_depth = filter_number[i*M+j];
-            layer_data_height = calcOutputSize(layer_data_height,0,filter_height[i*M+j],filter_stride_y[i*M+j]);
-            layer_data_width = calcOutputSize(layer_data_width,0,filter_width[i*M+j],filter_stride_x[i*M+j]);
+            layer_data_depth = filter_number[i*N+j];
+            layer_data_height = calcOutputSize(layer_data_height,padding_height[i*N+j],filter_height[i*N+j],filter_stride_y[i*N+j]);
+            layer_data_width = calcOutputSize(layer_data_width,padding_width[i*N+j],filter_width[i*N+j],filter_stride_x[i*N+j]);
             for(int l=0;l<number_of_samples;l++) {
                 C[i][j][l] = matrixMalloc(sizeof(ThreeDMatrix));
                 dC[i][j][l] = matrixMalloc(sizeof(ThreeDMatrix));
@@ -142,10 +134,10 @@ int trainConvnet(ConvnetParameters* network_params) {
                 init3DMatrix(dC[i][j][l], layer_data_depth, layer_data_height, layer_data_width);
             }
             printf("CONVNET INFO: CONV[%dx%d-%d]: [%dx%dx%d]\t\tweights: (%d*%d*%d)*%d=%d\n",
-                filter_width[i*M+j],filter_height[i*M+j],filter_depth, layer_data_width,layer_data_height,layer_data_depth,
-                filter_width[i*M+j],filter_height[i*M+j],filter_depth,layer_data_depth,filter_width[i*M+j]*filter_height[i*M+j]*filter_depth*layer_data_depth);
+                filter_width[i*N+j],filter_height[i*N+j],filter_depth, layer_data_width,layer_data_height,layer_data_depth,
+                filter_width[i*N+j],filter_height[i*N+j],filter_depth,layer_data_depth,filter_width[i*N+j]*filter_height[i*N+j]*filter_depth*layer_data_depth);
             total_memory += layer_data_depth*layer_data_height*layer_data_width;
-            total_parameters += filter_width[i*M+j]*filter_height[i*M+j]*filter_depth*layer_data_depth;
+            total_parameters += filter_width[i*N+j]*filter_height[i*N+j]*filter_depth*layer_data_depth;
         }
         if (enable_maxpooling[i]) {
             P[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
@@ -243,26 +235,26 @@ int trainConvnet(ConvnetParameters* network_params) {
                 for(int n=0;n<number_of_samples;n++) {
                     convLayerForward(CONV_OUT[n], 
                         F[i][j], 
-                        filter_number[i*M+j], 
+                        filter_number[i*N+j], 
                         b[i][j], 
-                        filter_height[i*M+j], 
-                        filter_width[i*M+j], 
-                        filter_stride_y[i*M+j], 
-                        filter_stride_x[i*M+j], 
-                        padding_height[i*M+j+1], 
-                        padding_width[i*M+j+1], 
+                        filter_height[i*N+j], 
+                        filter_width[i*N+j], 
+                        filter_stride_y[i*N+j], 
+                        filter_stride_x[i*N+j], 
+                        padding_height[i*N+j], 
+                        padding_width[i*N+j], 
                         alpha, 
                         C[i][j][n]);
                 }
                 //CONV_OUT = C[i][j];
-#if defined(DEBUG) && DEBUG > 0
+                #if defined(DEBUG) && DEBUG > 0
                 /**********************/
                 /******* DEBUG ********/
                 for(int n=0;n<number_of_samples;n++) {
                     printf("CONV M = %d, N = %d, INPUT %d\n",i,j,n);
                     print3DMatrix(CONV_OUT[n]);
                 }
-                for(int x=0;x<filter_number[i*M+j];x++) {
+                for(int x=0;x<filter_number[i*N+j];x++) {
                     debugCheckingForNaNs3DMatrix(F[i][j][x], "after forward prop, F", x);
                     debugCheckingForNaNs3DMatrix(b[i][j][x], "after forward prop, b", x);
                     printf("F[%d][%d][%d]\n", i, j, x);
@@ -279,7 +271,7 @@ int trainConvnet(ConvnetParameters* network_params) {
                 }
                 /******* DEBUG ********/
                 /**********************/
-#endif
+                #endif
                 CONV_OUT = C[i][j];
             }
             if (enable_maxpooling[i]) {
@@ -299,7 +291,7 @@ int trainConvnet(ConvnetParameters* network_params) {
             }
             CONV_OUT = P[i];
 
-#if defined(DEBUG) && DEBUG > 0
+            #if defined(DEBUG) && DEBUG > 0
             /**********************/
             /******* DEBUG ********/
             for(int n=0;n<number_of_samples;n++) {
@@ -309,7 +301,7 @@ int trainConvnet(ConvnetParameters* network_params) {
             }
             /******* DEBUG ********/
             /**********************/
-#endif
+            #endif
         }
 
         // Feed data to fully connected network
@@ -319,7 +311,7 @@ int trainConvnet(ConvnetParameters* network_params) {
             reshapeThreeDMatrix2Col(P[M-1][i],i,X);
         }
 
-#if defined(DEBUG) && DEBUG > 0
+        #if defined(DEBUG) && DEBUG > 0
         /**********************/
         /******* DEBUG ********/
         debugCheckingForNaNs2DMatrix(X, "after CONV->FC reshape, X", 0);
@@ -327,7 +319,7 @@ int trainConvnet(ConvnetParameters* network_params) {
         printMatrix(X);
         /******* DEBUG ********/
         /**********************/
-#endif
+        #endif
 
         network_params->fcnet_param->X = X;
 
@@ -338,7 +330,7 @@ int trainConvnet(ConvnetParameters* network_params) {
             NULL, NULL, NULL, NULL,
             dP2D, e, &current_fcnet_learning_rate, losses);
         destroy2DMatrix(X);
-#if defined(DEBUG) && DEBUG > 0
+        #if defined(DEBUG) && DEBUG > 0
         /**********************/
         /******* DEBUG ********/
         printf("dP2D\n");
@@ -346,23 +338,23 @@ int trainConvnet(ConvnetParameters* network_params) {
         debugCheckingForNaNs2DMatrix(dP2D, "after FC back prop, dP2D", 0);
         /******* DEBUG ********/
         /**********************/
-#endif
+        #endif
         if (e % 1000 == 0 || verbose) {
             printf("CONVNET INFO: Epoch: %d, data loss: %f, regulization loss: %f, total loss: %f, training accuracy: %f\n", e, losses[0], losses[1], losses[0]+losses[1],losses[2]);
         }
         //restoreThreeDMatrixFromCol(dP2D, dP3D);
         restoreThreeDMatrixFromCol(dP2D, dP[M-1]);
-#if defined(DEBUG) && DEBUG > 0
+        #if defined(DEBUG) && DEBUG > 0
         /**********************/
         /******* DEBUG ********/
         for(int n=0;n<number_of_samples;n++) {
             debugCheckingForNaNs3DMatrix(dP[M-1][n], "after FC->CONV reshape, dP[M-1][%d]", n);
-            //printf("dP3D[%d]\n", n);
-            //print3DMatrix(dP3D[n]);
+            //printf("dP[M-1][%d]\n", n);
+            //print3DMatrix(dP[M-1][n]);
         }
         /******* DEBUG ********/
         /**********************/
-#endif
+        #endif
 
         // Backward propagation
         /* Schematic
@@ -390,13 +382,21 @@ int trainConvnet(ConvnetParameters* network_params) {
                     printf("CONVNET INFO: Epoch: %d, POOLING Backprop M = %d\n", e, i);
                 }
                 for(int n=0;n<number_of_samples;n++) {
+                    #if defined(DEBUG) && DEBUG > 0
+                    printf("dP[%d][%d]\n", i,n);
+                    print3DMatrix(dP[i][n]);
+                    #endif
                     maxPoolingBackward(dP[i][n], 
-                        P[i][n], 
+                        C[i][N-1][n], 
                         pooling_stride_y[i], 
                         pooling_stride_x[i], 
                         pooling_width[i], 
                         pooling_height[i],
                         dC[i][N-1][n]);
+                    #if defined(DEBUG) && DEBUG > 0
+                    printf("dC[%d][N-1][%d]\n", i,n);
+                    print3DMatrix(dC[i][N-1][n]);
+                    #endif
                 }
             } else {
                 // FIX ME
@@ -406,13 +406,13 @@ int trainConvnet(ConvnetParameters* network_params) {
                 }
             }
 
-#if defined(DEBUG) && DEBUG > 0
+            #if defined(DEBUG) && DEBUG > 0
             /**********************/
             /******* DEBUG ********/
             for(int n=0;n<number_of_samples;n++) debugCheckingForNaNs3DMatrix(dC[i][N-1][n], "after max pooling backprop, dC", n);
             /******* DEBUG ********/
             /**********************/
-#endif
+            #endif
 
             for(int j=N-1;j>=0;j--) {
                 if (verbose) {
@@ -423,22 +423,22 @@ int trainConvnet(ConvnetParameters* network_params) {
                     ** So the input data should be training_data
                     */ 
 
-#if defined(DEBUG) && DEBUG > 0
+                    #if defined(DEBUG) && DEBUG > 0
                     /*****************/
                     /***** DEBUG *****/
                     printf("This is the beginning of a network\n");
                     /***** DEBUG *****/
                     /*****************/
-#endif
+                    #endif
                     for(int n=0;n<number_of_samples;n++) {
                         convLayerBackward(training_data[n], 
                             C[i][j][n],
                             F[i][j], 
                             dC[i][j][n], 
-                            padding_height[i*M+j+1], 
-                            padding_width[i*M+j+1], 
-                            filter_stride_y[i*M+j], 
-                            filter_stride_x[i*M+j],
+                            padding_height[i*N+j], 
+                            padding_width[i*N+j], 
+                            filter_stride_y[i*N+j], 
+                            filter_stride_x[i*N+j],
                             alpha,
                             dX[n], 
                             dF[i][j], 
@@ -448,23 +448,23 @@ int trainConvnet(ConvnetParameters* network_params) {
                     /* This is the begining of a CONV layer
                     ** So the input data should be the output of the max pooling layer ahead of it, which is P[i-1][n]
                     */
-#if defined(DEBUG) && DEBUG > 0
+                    #if defined(DEBUG) && DEBUG > 0
                     /*****************/
                     /***** DEBUG *****/
                     printf("This is the beginning of a conv layer\n");
                     /***** DEBUG *****/
                     /*****************/
-#endif
+                    #endif
 
                     for(int n=0;n<number_of_samples;n++) {
                         convLayerBackward(P[i-1][n], 
                             C[i][j][n],
                             F[i][j], 
                             dC[i][j][n], 
-                            padding_height[i*M+j+1], 
-                            padding_width[i*M+j+1],
-                            filter_stride_y[i*M+j], 
-                            filter_stride_x[i*M+j],
+                            padding_height[i*N+j], 
+                            padding_width[i*N+j],
+                            filter_stride_y[i*N+j], 
+                            filter_stride_x[i*N+j],
                             alpha,
                             dP[i-1][n], 
                             dF[i][j], 
@@ -477,10 +477,10 @@ int trainConvnet(ConvnetParameters* network_params) {
                             C[i][j][n],
                             F[i][j], 
                             dC[i][j][n], 
-                            padding_height[i*M+j+1], 
-                            padding_width[i*M+j+1],
-                            filter_stride_y[i*M+j], 
-                            filter_stride_x[i*M+j],
+                            padding_height[i*N+j], 
+                            padding_width[i*N+j],
+                            filter_stride_y[i*N+j], 
+                            filter_stride_x[i*N+j],
                             alpha,
                             dC[i][j-1][n], 
                             dF[i][j], 
@@ -488,7 +488,7 @@ int trainConvnet(ConvnetParameters* network_params) {
                     }
                 }
 
-#if defined(DEBUG) && DEBUG > 0
+                #if defined(DEBUG) && DEBUG > 0
                 /**********************/
                 /******* DEBUG ********/
                 for(int x=0;x<dC[i][j][0]->depth;x++) {
@@ -498,14 +498,14 @@ int trainConvnet(ConvnetParameters* network_params) {
                 for(int n=0;n<number_of_samples;n++) debugCheckingForNaNs3DMatrix(dC[i][j][n], "after backprop, dC", n);
                 /******* DEBUG ********/
                 /**********************/
-#endif
+                #endif
             }
         }
 
         // Update parameters
         for(int i=0;i<M;i++) {
             for(int j=0;j<N;j++) {
-                for(int k=0;k<filter_number[i*M+j];k++) {
+                for(int k=0;k<filter_number[i*N+j];k++) {
                     vanillaUpdateConvnet(F[i][j][k], dF[i][j][k], learning_rate, F[i][j][k]);
                     vanillaUpdateConvnet(b[i][j][k], db[i][j][k], learning_rate, b[i][j][k]);
                 }
@@ -518,7 +518,7 @@ int trainConvnet(ConvnetParameters* network_params) {
 
         for(int i=0;i<M;i++) {
             for(int j=0;j<N;j++) {
-                for(int k=0;k<filter_number[i*M+j];k++) {
+                for(int k=0;k<filter_number[i*N+j];k++) {
                     char filter_name[100];
                     sprintf(filter_name,"F[%d][%d][%d]",i,j,k);
                     writeImage(F[i][j][k], filter_name, filter_image_dir);
@@ -530,7 +530,7 @@ int trainConvnet(ConvnetParameters* network_params) {
     // Release memories, shutdown the network
     for(int i=0;i<M;i++) {
         for(int j=0;j<N;j++) {
-            for(int k=0;k<filter_number[i*M+j];k++) {
+            for(int k=0;k<filter_number[i*N+j];k++) {
                 destroy3DMatrix(F[i][j][k]);
                 destroy3DMatrix(dF[i][j][k]);
                 destroy3DMatrix(b[i][j][k]);

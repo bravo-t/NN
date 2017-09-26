@@ -76,7 +76,6 @@ typedef struct {
     int* pooling_stride_y;
     int* pooling_width;
     int* pooling_height;
-    bool* enable_padding;
     int* padding_width;
     int* padding_height;
     bool verbose;
