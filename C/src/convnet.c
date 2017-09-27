@@ -212,11 +212,11 @@ int trainConvnet(ConvnetParameters* network_params) {
     b will be a 2D array that holds biases, b[M][N][filter_number]
     */
     /* INPUT -> [[CONV -> RELU]*N -> POOL?]*M -> [FC -> RELU]*K -> FC */
-    ThreeDMatrix** CONV_OUT = training_data;
     //ThreeDMatrix* dX = matrixMalloc(sizeof(ThreeDMatrix));
     //init3DMatrix(dX, training_data->depth, training_data->height, training_data->width);
     printf("CONVNET INFO: Training network...\n");
     for(int e=1;e<=epochs;e++) {
+        ThreeDMatrix** CONV_OUT = training_data;
         learning_rate = decayLearningRate(enable_learning_rate_step_decay,
             enable_learning_rate_exponential_decay,
             enable_learning_rate_invert_t_decay,
@@ -494,9 +494,9 @@ int trainConvnet(ConvnetParameters* network_params) {
                 for(int x=0;x<dC[i][j][0]->depth;x++) {
                     debugCheckingForNaNs3DMatrix(dF[i][j][x], "after backprop, dF", x);
                     debugCheckingForNaNs3DMatrix(db[i][j][x], "after backprop, db", x);
-                    printf("dF[%d][%d][%d]",i,j,x);
+                    printf("dF[%d][%d][%d]\n",i,j,x);
                     print3DMatrix(dF[i][j][x]);
-                    printf("db[%d][%d][%d]",i,j,x);
+                    printf("db[%d][%d][%d]\n",i,j,x);
                     print3DMatrix(db[i][j][x]);
                 }
                 for(int n=0;n<number_of_samples;n++) debugCheckingForNaNs3DMatrix(dC[i][j][n], "after backprop, dC", n);
