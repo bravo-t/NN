@@ -118,7 +118,8 @@ int trainConvnet(ConvnetParameters* network_params) {
                 b[i][j][k] = matrixMalloc(sizeof(ThreeDMatrix));
                 dF[i][j][k] = matrixMalloc(sizeof(ThreeDMatrix));
                 db[i][j][k] = matrixMalloc(sizeof(ThreeDMatrix));
-                init3DMatrixNormRand(F[i][j][k],layer_data_depth,filter_height[i*N+j],filter_width[i*N+j],0.0,1.0,sqrt(layer_data_height*layer_data_width*layer_data_depth));
+                //init3DMatrixNormRand(F[i][j][k],layer_data_depth,filter_height[i*N+j],filter_width[i*N+j],0.0,1.0,sqrt(layer_data_height*layer_data_width*layer_data_depth));
+                init3DMatrixNormRand(F[i][j][k],layer_data_depth,filter_height[i*N+j],filter_width[i*N+j],0.0,1.0,layer_data_height*layer_data_width*layer_data_depth);
                 init3DMatrix(b[i][j][k],1,1,1);
                 init3DMatrix(dF[i][j][k],layer_data_depth,filter_height[i*N+j],filter_width[i*N+j]);
                 init3DMatrix(db[i][j][k],1,1,1);
@@ -339,9 +340,9 @@ int trainConvnet(ConvnetParameters* network_params) {
         /******* DEBUG ********/
         /**********************/
         #endif
-        if (e % 1000 == 0 || verbose) {
+        //if (e % 1000 == 0 || verbose) {
             printf("CONVNET INFO: Epoch: %d, data loss: %f, regulization loss: %f, total loss: %f, training accuracy: %f\n", e, losses[0], losses[1], losses[0]+losses[1],losses[2]);
-        }
+        //}
         //restoreThreeDMatrixFromCol(dP2D, dP3D);
         restoreThreeDMatrixFromCol(dP2D, dP[M-1]);
         #if defined(DEBUG) && DEBUG > 0

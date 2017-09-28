@@ -57,7 +57,7 @@ int main() {
     convnet_params->N = 1;
     int stride[3] = {2, 2, 1};
     int filter_size[3] = {16, 3, 2};
-    int filter_number[3] = {36,64,64};
+    int filter_number[3] = {36,25,16};
     bool enable_maxpooling[3] = {false, false, false};
     int maxpooling_stride[3] = {2,2,2};
     int maxpooling_size[3] = {2,2,2};
@@ -74,9 +74,9 @@ int main() {
     convnet_params->pooling_stride_y = maxpooling_stride;
     convnet_params->padding_height = padding;
     convnet_params->padding_width = padding;
-    convnet_params->epochs = 200;
+    convnet_params->epochs = 2000;
     convnet_params->alpha = 0.01;
-    convnet_params->learning_rate = 1e-4;
+    convnet_params->learning_rate = 5e-4;
     convnet_params->verbose = true;
     convnet_params->normalize_data_per_channel = true;
     convnet_params->write_filters_as_images = true;
@@ -90,7 +90,7 @@ int main() {
     convnet_params->fcnet_param->hidden_layer_sizes = hidden_layer_sizes;
     convnet_params->fcnet_param->labels = 10;
     convnet_params->fcnet_param->network_depth = 2;
-    convnet_params->fcnet_param->reg_strength = 10;
+    convnet_params->fcnet_param->reg_strength = 1;
     convnet_params->fcnet_param->learning_rate = convnet_params->learning_rate;
     trainConvnet(convnet_params);
     return 0;

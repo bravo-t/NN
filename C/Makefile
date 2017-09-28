@@ -1,5 +1,5 @@
-ifeq ($(DEBUG),1)
-	PRE_CFLAGS = -DDEBUG -g -O0
+ifdef DEBUG
+	PRE_CFLAGS = -DDEBUG=$(DEBUG) -g -O0
 else
 	PRE_CFLAGS = -g -O0
 endif
@@ -7,7 +7,7 @@ CC=gcc
 LIBS=-lm
 CFLAGS=$(PRE_CFLAGS) -std=gnu99 -Wall
 
-default: convnet_test
+default: mnist_test
 
 fully_connected_network: fully_connected_network.c misc_utils.o matrix_operations.o layers.o fully_connected_net.o
 	$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
@@ -37,6 +37,9 @@ convnet.o: src/convnet.c src/convnet.h convnet_layers.o
 	$(CC) -c -o $@ $< $(LIBS) $(CFLAGS)
 
 convnet_test: convnet_test.c convnet.o convnet_layers.o convnet_operations.o matrix_operations.o layers.o fully_connected_net.o misc_utils.o
+	$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
+
+mnist_test: mnist.c convnet.o convnet_layers.o convnet_operations.o matrix_operations.o layers.o fully_connected_net.o misc_utils.o
 	$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
 
 convnet_unit_test: convnet_unit_test.c convnet.o convnet_layers.o convnet_operations.o matrix_operations.o layers.o fully_connected_net.o misc_utils.o
