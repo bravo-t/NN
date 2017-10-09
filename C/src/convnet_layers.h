@@ -22,4 +22,13 @@ int vanillaUpdateConvnet(
     float learning_rate, 
     ThreeDMatrix* OUT);
 
+int RMSProp(
+    TwoDMatrix* X, 
+    TwoDMatrix* dX, 
+    TwoDMatrix* cache, 
+    float learning_rate, 
+    float decay_rate, 
+    float eps, 
+    TwoDMatrix* OUT);
+
 #endif

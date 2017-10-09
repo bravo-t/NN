@@ -40,12 +40,17 @@ int broadcastDiv(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT);
 int chop2DMatrix(TwoDMatrix* M, int height_start, int height_end, TwoDMatrix* OUT);
 int matrixYMeanVar(TwoDMatrix* M, TwoDMatrix* mean, TwoDMatrix* var);
 int matrixXMeanVar(TwoDMatrix* M, TwoDMatrix* mean, TwoDMatrix* var);
+
 int init3DMatrix(ThreeDMatrix* M, int depth, int height, int width);
 int init3DMatrixNormRand(ThreeDMatrix* M, int depth, int height, int width, float mean, float std, int n);
 int destroy3DMatrix (ThreeDMatrix* M);
 int elementMul3DMatrix(ThreeDMatrix* X, float n, ThreeDMatrix* OUT);
+int elementAdd3DMatrix(ThreeDMatrix* X, float n, ThreeDMatrix* OUT);
+int elementSqrt3DMatrix(ThreeDMatrix* X, float n, ThreeDMatrix* OUT);
 int elementwiseAdd3DMatrix(ThreeDMatrix* A, ThreeDMatrix* B, ThreeDMatrix* OUT);
 int elementwiseSub3DMatrix(ThreeDMatrix* A, ThreeDMatrix* B, ThreeDMatrix* OUT);
+int elementwiseMul3DMatrix(ThreeDMatrix* A, ThreeDMatrix* B, ThreeDMatrix* OUT);
+int elementwiseDiv3DMatrix(ThreeDMatrix* A, ThreeDMatrix* B, ThreeDMatrix* OUT);
 ThreeDMatrix* chop3DMatrix(ThreeDMatrix* X, int start_y, int start_x, int end_y, int end_x);
 int assign3DMatrix(ThreeDMatrix* in, int start_y, int start_x, int end_y, int end_x, ThreeDMatrix* X);
 float decayLearningRate(bool enable_step_decay, bool enable_exponential_decay, bool enable_invert_t_decay, int decay_unit, float decay_k, float decay_a0, int epoch, float base_learning_rate, float learning_rate);

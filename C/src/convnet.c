@@ -36,6 +36,9 @@ int trainConvnet(ConvnetParameters* network_params) {
     float base_learning_rate = learning_rate;
     bool verbose = network_params->verbose;
 
+    bool use_rmsprop = false;
+    // bool use_rmsprop = network_params->use_rmsprop;
+
     bool normalize_data_per_channel = network_params->normalize_data_per_channel;
 
     bool write_filters_as_images = network_params->write_filters_as_images;
@@ -51,7 +54,7 @@ int trainConvnet(ConvnetParameters* network_params) {
     network_params->fcnet_param->use_momentum_update = false;
     network_params->fcnet_param->use_batchnorm = false;
     network_params->fcnet_param->use_nag_update = false;
-    network_params->fcnet_param->use_rmsprop = false;
+    network_params->fcnet_param->use_rmsprop = use_rmsprop;
     float current_fcnet_learning_rate = network_params->fcnet_param->learning_rate;
     network_params->fcnet_param->enable_learning_rate_step_decay = enable_learning_rate_step_decay;
     network_params->fcnet_param->enable_learning_rate_exponential_decay = enable_learning_rate_exponential_decay;

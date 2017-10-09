@@ -323,7 +323,7 @@ int train(FCParameters* network_params) {
             }
             destroy2DMatrix(dX);
             // Update weights
-            if (verbose) {
+            if (0) {
                 printf("INFO: Epoch %d, updating weights with learning rate %f\n",
                     epoch, learning_rate);
             }

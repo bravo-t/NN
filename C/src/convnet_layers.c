@@ -172,3 +172,38 @@ int vanillaUpdateConvnet(ThreeDMatrix* X, ThreeDMatrix* dX, float learning_rate,
     */
     return 0;
 }
+
+int RMSPropConvnet(ThreeDMatrix* X, ThreeDMatrix* dX, ThreeDMatrix* cache, float learning_rate, float decay_rate, float eps, ThreeDMatrix* OUT) {
+    ThreeDMatrix* cache_scaled = matrixMalloc(sizeof(ThreeDMatrix));
+    init3DMatrix(cache_scaled, X->height, X->width);
+    elementMul3DMatrix(cache,decay_rate,cache_scaled);
+    ThreeDMatrix* dX_squared = matrixMalloc(sizeof(ThreeDMatrix));
+    init3DMatrix(dX_squared, dX->height, dX->width);
+    elementwiseMul3DMatrix(dX,dX,dX_squared);
+    ThreeDMatrix* dX_squared_scaled = matrixMalloc(sizeof(ThreeDMatrix));
+    init3DMatrix(dX_squared_scaled, dX->height, dX->width);
+    elementMul3DMatrix(dX_squared,1-decay_rate,dX_squared_scaled);
+    elementwiseAdd3DMatrix(cache_scaled,dX_squared_scaled,cache);
+    destroy3DMatrix(cache_scaled);
+    destroy3DMatrix(dX_squared);
+    destroy3DMatrix(dX_squared_scaled);
+    ThreeDMatrix* cache_sqrt = matrixMalloc(sizeof(ThreeDMatrix));
+    init3DMatrix(cache_sqrt, X->height, X->width);
+    elementSqrt3DMatrix(cache,cache_sqrt);
+    ThreeDMatrix* cache_sqrt_eps = matrixMalloc(sizeof(ThreeDMatrix));
+    init3DMatrix(cache_sqrt_eps, X->height, X->width);
+    elementAdd3DMatrix(cache_sqrt, eps, cache_sqrt_eps);
+    ThreeDMatrix* dX_scaled = matrixMalloc(sizeof(ThreeDMatrix));
+    init3DMatrix(dX_scaled, X->height, X->width);
+    elementMul3DMatrix(dX,learning_rate,dX_scaled);
+    ThreeDMatrix* X_update = matrixMalloc(sizeof(ThreeDMatrix));
+    init3DMatrix(X_update, dX->height, dX->width);
+    elementwiseDiv3DMatrix(dX_scaled,cache_sqrt_eps,X_update);
+    elementwiseSub3DMatrix(X,X_update,OUT);
+    destroy3DMatrix(cache_sqrt);
+    destroy3DMatrix(cache_sqrt_eps);
+    destroy3DMatrix(dX_scaled);
+    destroy3DMatrix(X_update);
+    return 0;
+}
+

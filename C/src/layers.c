@@ -360,10 +360,11 @@ int RMSProp(TwoDMatrix* X, TwoDMatrix* dX, TwoDMatrix* cache, float learning_rat
     elementAdd(cache_sqrt, eps, cache_sqrt_eps);
     TwoDMatrix* dX_scaled = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(dX_scaled, X->height, X->width);
-    elementMul(dX,-1*learning_rate,dX_scaled);
+    elementMul(dX,learning_rate,dX_scaled);
     TwoDMatrix* X_update = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(X_update, dX->height, dX->width);
-    elementwiseAdd2DMatrix(X,X_update,OUT);
+    elementwiseDiv2DMatrix(dX_scaled,cache_sqrt_eps,X_update);
+    elementwiseSub2DMatrix(X,X_update,OUT);
     destroy2DMatrix(cache_sqrt);
     destroy2DMatrix(cache_sqrt_eps);
     destroy2DMatrix(dX_scaled);
