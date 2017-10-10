@@ -540,7 +540,7 @@ int elementAdd3DMatrix(ThreeDMatrix* X, float n, ThreeDMatrix* OUT) {
     return 0;
 }
 
-int elementSqrt3DMatrix(ThreeDMatrix* X, float n, ThreeDMatrix* OUT) {
+int elementSqrt3DMatrix(ThreeDMatrix* X, ThreeDMatrix* OUT) {
     init3DMatrix(OUT, X->depth, X->height, X->width);
     for (int i=0; i<OUT->depth; i++) {
         for(int j=0;j<OUT->height;j++) {

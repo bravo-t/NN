@@ -46,7 +46,7 @@ int init3DMatrixNormRand(ThreeDMatrix* M, int depth, int height, int width, floa
 int destroy3DMatrix (ThreeDMatrix* M);
 int elementMul3DMatrix(ThreeDMatrix* X, float n, ThreeDMatrix* OUT);
 int elementAdd3DMatrix(ThreeDMatrix* X, float n, ThreeDMatrix* OUT);
-int elementSqrt3DMatrix(ThreeDMatrix* X, float n, ThreeDMatrix* OUT);
+int elementSqrt3DMatrix(ThreeDMatrix* X, ThreeDMatrix* OUT);
 int elementwiseAdd3DMatrix(ThreeDMatrix* A, ThreeDMatrix* B, ThreeDMatrix* OUT);
 int elementwiseSub3DMatrix(ThreeDMatrix* A, ThreeDMatrix* B, ThreeDMatrix* OUT);
 int elementwiseMul3DMatrix(ThreeDMatrix* A, ThreeDMatrix* B, ThreeDMatrix* OUT);

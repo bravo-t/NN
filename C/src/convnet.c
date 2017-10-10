@@ -36,8 +36,9 @@ int trainConvnet(ConvnetParameters* network_params) {
     float base_learning_rate = learning_rate;
     bool verbose = network_params->verbose;
 
-    bool use_rmsprop = false;
-    // bool use_rmsprop = network_params->use_rmsprop;
+    bool use_rmsprop = network_params->use_rmsprop;
+    float rmsprop_decay_rate = network_params->rmsprop_decay_rate;
+    float rmsprop_eps = network_params->rmsprop_eps;
 
     bool normalize_data_per_channel = network_params->normalize_data_per_channel;
 
@@ -54,7 +55,6 @@ int trainConvnet(ConvnetParameters* network_params) {
     network_params->fcnet_param->use_momentum_update = false;
     network_params->fcnet_param->use_batchnorm = false;
     network_params->fcnet_param->use_nag_update = false;
-    network_params->fcnet_param->use_rmsprop = use_rmsprop;
     float current_fcnet_learning_rate = network_params->fcnet_param->learning_rate;
     network_params->fcnet_param->enable_learning_rate_step_decay = enable_learning_rate_step_decay;
     network_params->fcnet_param->enable_learning_rate_exponential_decay = enable_learning_rate_exponential_decay;
@@ -68,6 +68,10 @@ int trainConvnet(ConvnetParameters* network_params) {
         for(int i=0;i<number_of_samples;i++) {
             normalize3DMatrixPerDepth(training_data[i], training_data[i]);
         }
+    }
+    
+    if (use_rmsprop) {
+        printf("CONVNET INFO: RMSProp is enabled.\n");
     }
 
     printf("CONVNET INFO: Initializing learnable weights and intermediate layers\n");
@@ -88,6 +92,12 @@ int trainConvnet(ConvnetParameters* network_params) {
     ThreeDMatrix**** dF = malloc(sizeof(ThreeDMatrix***)*M);
     ThreeDMatrix**** b = malloc(sizeof(ThreeDMatrix***)*M);
     ThreeDMatrix**** db = malloc(sizeof(ThreeDMatrix***)*M);
+    ThreeDMatrix**** Fcache = NULL;
+    ThreeDMatrix**** bcache = NULL;
+    if (use_rmsprop) {
+        Fcache = (ThreeDMatrix****) malloc(sizeof(ThreeDMatrix***)*M);
+        bcache = (ThreeDMatrix****) malloc(sizeof(ThreeDMatrix***)*M);
+    }
     TwoDMatrix* dP2D = matrixMalloc(sizeof(TwoDMatrix));
     //ThreeDMatrix** dP3D = malloc(sizeof(ThreeDMatrix*)*number_of_samples);
 
@@ -109,6 +119,10 @@ int trainConvnet(ConvnetParameters* network_params) {
         dC[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
         dF[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
         db[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
+        if (use_rmsprop) {
+            Fcache[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
+            bcache[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
+        }
         for(int j=0;j<N;j++) {
             F[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*N+j]);
             b[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*N+j]);
@@ -116,6 +130,10 @@ int trainConvnet(ConvnetParameters* network_params) {
             dF[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*N+j]);
             db[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*N+j]);
             dC[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
+            if (use_rmsprop) {
+                Fcache[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*N+j]);
+                bcache[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*N+j]);
+            }
             for(int k=0;k<filter_number[i*N+j];k++) {
                 F[i][j][k] = matrixMalloc(sizeof(ThreeDMatrix));
                 b[i][j][k] = matrixMalloc(sizeof(ThreeDMatrix));
@@ -126,6 +144,12 @@ int trainConvnet(ConvnetParameters* network_params) {
                 init3DMatrix(b[i][j][k],1,1,1);
                 init3DMatrix(dF[i][j][k],layer_data_depth,filter_height[i*N+j],filter_width[i*N+j]);
                 init3DMatrix(db[i][j][k],1,1,1);
+                if (use_rmsprop) {
+                    Fcache[i][j][k] = matrixMalloc(sizeof(ThreeDMatrix));
+                    bcache[i][j][k] = matrixMalloc(sizeof(ThreeDMatrix));
+                    init3DMatrix(Fcache[i][j][k],layer_data_depth,filter_height[i*N+j],filter_width[i*N+j]);
+                    init3DMatrix(bcache[i][j][k],1,1,1);
+                }
             }
             int filter_depth = layer_data_depth;
             layer_data_depth = filter_number[i*N+j];
@@ -170,6 +194,12 @@ int trainConvnet(ConvnetParameters* network_params) {
     int K = network_params->fcnet_param->network_depth;
     TwoDMatrix** Ws = malloc(sizeof(TwoDMatrix*)*K);
     TwoDMatrix** bs = malloc(sizeof(TwoDMatrix*)*K);
+    TwoDMatrix** Wscache = NULL;
+    TwoDMatrix** bscache = NULL;
+    if (use_rmsprop) {
+        Wscache = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*K);
+        bscache = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*K);
+    }
     int fcnet_labels = network_params->fcnet_param->labels;
     fcnet_hidden_layer_sizes[K-1] = fcnet_labels;
     printf("FCNET INFO: INPUT[%dx%d]\t\t\tweights: 0\n",number_of_samples,layer_data_depth*layer_data_height*layer_data_width);
@@ -181,6 +211,12 @@ int trainConvnet(ConvnetParameters* network_params) {
         bs[i] = matrixMalloc(sizeof(TwoDMatrix));
         init2DMatrixNormRand(Ws[i],former_width,fcnet_hidden_layer_sizes[i],0.0,1.0, former_width);
         init2DMatrixZero(bs[i],1,fcnet_hidden_layer_sizes[i]);
+        if (use_rmsprop) {
+            Wscache[i] = matrixMalloc(sizeof(TwoDMatrix));
+            bscache[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrixZero(Wscache[i],former_width,fcnet_hidden_layer_sizes[i]);
+            init2DMatrixZero(bscache[i],1,fcnet_hidden_layer_sizes[i]);
+        }
         printf("FCNET INFO: FC[%dx%dx%d]\t\t\tweights: %d*%d=%d\n",1,1,fcnet_hidden_layer_sizes[i],former_width,fcnet_hidden_layer_sizes[i],former_width*fcnet_hidden_layer_sizes[i]);
         // Initialize variables for optimization
         /*
@@ -330,7 +366,7 @@ int trainConvnet(ConvnetParameters* network_params) {
         FCTrainCore(network_params->fcnet_param, 
             Ws, bs, 
             NULL, NULL, NULL, NULL,
-            NULL, NULL,
+            Wscache, bscache,
             NULL, NULL, NULL, NULL,
             dP2D, e, &current_fcnet_learning_rate, losses);
         destroy2DMatrix(X);
@@ -512,11 +548,22 @@ int trainConvnet(ConvnetParameters* network_params) {
         }
 
         // Update parameters
-        for(int i=0;i<M;i++) {
-            for(int j=0;j<N;j++) {
-                for(int k=0;k<filter_number[i*N+j];k++) {
-                    vanillaUpdateConvnet(F[i][j][k], dF[i][j][k], learning_rate, F[i][j][k]);
-                    vanillaUpdateConvnet(b[i][j][k], db[i][j][k], learning_rate, b[i][j][k]);
+        if (use_rmsprop) {
+            for(int i=0;i<M;i++) {
+                for(int j=0;j<N;j++) {
+                    for(int k=0;k<filter_number[i*N+j];k++) {
+                        RMSPropConvnet(F[i][j][k], dF[i][j][k], Fcache[i][j][k], learning_rate, rmsprop_decay_rate, rmsprop_eps, F[i][j][k]);
+                        RMSPropConvnet(b[i][j][k], db[i][j][k], bcache[i][j][k], learning_rate, rmsprop_decay_rate, rmsprop_eps, b[i][j][k]);
+                    }
+                }
+            }
+        } else {
+            for(int i=0;i<M;i++) {
+                for(int j=0;j<N;j++) {
+                    for(int k=0;k<filter_number[i*N+j];k++) {
+                        vanillaUpdateConvnet(F[i][j][k], dF[i][j][k], learning_rate, F[i][j][k]);
+                        vanillaUpdateConvnet(b[i][j][k], db[i][j][k], learning_rate, b[i][j][k]);
+                    }
                 }
             }
         }
@@ -544,6 +591,10 @@ int trainConvnet(ConvnetParameters* network_params) {
                 destroy3DMatrix(dF[i][j][k]);
                 destroy3DMatrix(b[i][j][k]);
                 destroy3DMatrix(db[i][j][k]);
+                if (use_rmsprop) {
+                    destroy3DMatrix(Fcache[i][j][k]);
+                    destroy3DMatrix(bcache[i][j][k]);
+                }
             }
             for(int l=0;l<number_of_samples;l++) {
                 destroy3DMatrix(C[i][j][l]);
@@ -555,6 +606,10 @@ int trainConvnet(ConvnetParameters* network_params) {
             free(dF[i][j]);
             free(dC[i][j]);
             free(db[i][j]);
+            if (use_rmsprop) {
+                free(Fcache[i][j]);
+                free(bcache[i][j]);
+            }
         }
         free(F[i]);
         free(C[i]);
@@ -562,6 +617,10 @@ int trainConvnet(ConvnetParameters* network_params) {
         free(dF[i]);
         free(dC[i]);
         free(db[i]);
+        if (use_rmsprop) {
+            free(Fcache[i]);
+            free(bcache[i]);
+        }
         if (enable_maxpooling[i]) {
             for(int m=0;m<number_of_samples;m++) {
                 destroy3DMatrix(P[i][m]);
@@ -591,8 +650,10 @@ int trainConvnet(ConvnetParameters* network_params) {
     free(dC);
     free(db);
     free(losses);
+    if (use_rmsprop) {
+        free(Fcache);
+        free(bcache);
+    }
 
-
-    
     return 0;
 }

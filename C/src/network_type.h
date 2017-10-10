@@ -87,6 +87,9 @@ typedef struct {
     float learning_rate_decay_k;
     float learning_rate_decay_step;
     bool normalize_data_per_channel;
+    bool use_rmsprop;
+    float rmsprop_decay_rate;
+    float rmsprop_eps;
     bool write_filters_as_images;
     char* filter_image_dir;
     FCParameters* fcnet_param;

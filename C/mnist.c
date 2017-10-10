@@ -27,7 +27,7 @@ int main() {
     memset(convnet_params, 0, sizeof(ConvnetParameters));
     convnet_params->fcnet_param = (FCParameters*) malloc(sizeof(FCParameters));
     convnet_params->X = training_data;
-    convnet_params->number_of_samples = 10;
+    convnet_params->number_of_samples = 100;
     //convnet_params->number_of_samples = number_of_batch_data*10000;
     convnet_params->M = 4;
     convnet_params->N = 1;
@@ -53,7 +53,13 @@ int main() {
     convnet_params->epochs = 2000;
     convnet_params->alpha = 1e-3;
     convnet_params->learning_rate = 0.001;
-    convnet_params->verbose = false;
+    convnet_params->verbose = true;
+    convnet_params->use_rmsprop = true;
+    convnet_params->rmsprop_decay_rate = 0.9;
+    convnet_params->rmsprop_eps = 1e-5;
+    convnet_params->fcnet_param->use_rmsprop = true;
+    convnet_params->fcnet_param->decay_rate = 0.9;
+    convnet_params->fcnet_param->eps = 1e-5;
     convnet_params->normalize_data_per_channel = true;
     convnet_params->write_filters_as_images = true;
     convnet_params->filter_image_dir = "img";
