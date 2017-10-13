@@ -268,7 +268,6 @@ int trainConvnet(ConvnetParameters* network_params) {
             learning_rate);
         for(int iter=0;iter < number_of_samples/minibatch_size; iter++) {
             ThreeDMatrix** CONV_OUT = training_data + iter*sizeof(ThreeDMatrix*);
-            printf("DEBUG: Epoch %d, iteration %d, data start addr %x, end addr %x\n",e,iter,CONV_OUT, training_data + (iter+1)*sizeof(ThreeDMatrix*) - 1);
             // Forward propagation
             for(int i=0;i<M;i++) {
                 for(int j=0;j<N;j++) {
