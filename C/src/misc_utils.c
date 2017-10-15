@@ -539,28 +539,19 @@ int writeImage(ThreeDMatrix* X, char* var_name, char* img_dir) {
     ThreeDMatrix* X_normalized = matrixMalloc(sizeof(ThreeDMatrix));
     init3DMatrix(X_normalized,X->depth,X->height,X->width);
     for(int i=0;i<X_normalized->depth;i++) {
-        float mean = 0;
+        float min_value = X->d[i][0][0];
+        float max_value = X->d[i][0][0];
         for(int j=0;j<X->height;j++) {
             for(int k=0;k<X->width;k++) {
-                mean += X->d[i][j][k];
+                if (X->d[i][j][k] > max_value) max_value = X->d[i][j][k];
+                if (X->d[i][j][k] < min_value) min_value = X->d[i][j][k];
             }
         }
-        mean = mean / (X->height * X->width);
-        float var = 0;
-        for(int j=0;j<X->height;j++) {
-            for(int k=0;k<X->width;k++) {
-                var += (X->d[i][j][k] - mean)*(X->d[i][j][k] - mean);
-            }
-        }
-        var = var / (X->height * X->width);
-        float stddev = sqrt(var);
+        float scale_factor = 255/(max_value - min_value);
         for(int j=0;j<X_normalized->height;j++) {
             for(int k=0;k<X_normalized->width;k++) {
-                X_normalized->d[i][j][k] = (X->d[i][j][k] - mean) / stddev;
-                X_normalized->d[i][j][k] += 0.5;
-                if (X_normalized->d[i][j][k] < 0) X_normalized->d[i][j][k] = 0;
-                if (X_normalized->d[i][j][k] > 1) X_normalized->d[i][j][k] = 1;
-                X_normalized->d[i][j][k] *= 255;
+                X_normalized->d[i][j][k] -= min_value;
+                X_normalized->d[i][j][k] = X_normalized->d[i][j][k] / scale_factor;
             }
         }
     }
