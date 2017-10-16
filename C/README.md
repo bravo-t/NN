@@ -7,7 +7,7 @@
   * In "test" mode, this program reads in the weights dumped out earlier, and calculate scores on the input date set.
 * How to compile
   * Clone, or download all the source files.
-  * Compile with `make`
+  * Compile with `make`.
 * How to use
   * You have to create a config file for network configuration. An example of it is [fc.config](fc.config).
     * The syntax of this config file is like `key = value`.
@@ -62,4 +62,4 @@
   * And as specified, you will get all learned weights dumped out in [network.params](network.params), which can be loaded later for testing
 
 * Note  
-Currently this project is actively updating to implement a convolutional neural network, I tried my best to avoid touching codes related with fully connected network, but please don't be surprised if you met compilation errors or stupid errors like that.
+The convolutional neurual network part of this project is also completed, however it doesn't have a UI for you to run it like the fully connected network above. I will implement it in a few days, before that happens, you can check [mnist.c](mnist.c), which is the main function to run CNN on MNIST dataset, if you want to take a peek at the network. Also currently `make` is made to compile mnist.c.
