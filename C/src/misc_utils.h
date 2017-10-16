@@ -25,5 +25,12 @@ float matrixError3D(ThreeDMatrix* a, ThreeDMatrix* b);
 void print3DMatrix(ThreeDMatrix *M);
 void check3DMatrixDiff(ThreeDMatrix* a, ThreeDMatrix* b, float thres);
 int writeImage(ThreeDMatrix* X, char* var_name, char* img_dir);
+int verticallyFlipSample(ThreeDMatrix* in, ThreeDMatrix* out);
+int horizontallyFlipSample(ThreeDMatrix* in, ThreeDMatrix* out);
+int shuffleTrainingSamples(ThreeDMatrix** in, 
+    int number_of_samples, 
+    bool vertically_flip_samples,
+    bool horizontally_flip_samples,
+    ThreeDMatrix** out);
 
 #endif

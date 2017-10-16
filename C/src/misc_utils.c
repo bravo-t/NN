@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 #include "network_type.h"
 #include "matrix_operations.h"
 #include "fully_connected_net.h"
@@ -550,8 +551,8 @@ int writeImage(ThreeDMatrix* X, char* var_name, char* img_dir) {
         float scale_factor = 255/(max_value - min_value);
         for(int j=0;j<X_normalized->height;j++) {
             for(int k=0;k<X_normalized->width;k++) {
-                X_normalized->d[i][j][k] -= min_value;
-                X_normalized->d[i][j][k] = X_normalized->d[i][j][k] / scale_factor;
+                X_normalized->d[i][j][k] = X->d[i][j][k] - min_value;
+                X_normalized->d[i][j][k] = X_normalized->d[i][j][k] * scale_factor;
             }
         }
     }
@@ -604,5 +605,70 @@ int writeImage(ThreeDMatrix* X, char* var_name, char* img_dir) {
         free(file);
     }
     destroy3DMatrix(X_normalized);
+    return 0;
+}
+
+int verticallyFlipSample(ThreeDMatrix* in, ThreeDMatrix* out) {
+    init3DMatrix(out, in->depth, in->height, in->width);
+    int half_height = in->height / 2;
+    float tmp = 0.0f;
+    for(int i=0;i<in->depth;i++) {
+        for(int j=0;j<half_height;j++) {
+            int swap_index = out->height - 1 - j;
+            if ( j != swap_index) {
+                for (int k=0;k<in->width;k++) {
+                    tmp = in->d[i][j][k];
+                    out->d[i][j][k] = in->d[i][swap_index][k];
+                    out->d[i][swap_index][k] = tmp;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+int horizontallyFlipSample(ThreeDMatrix* in, ThreeDMatrix* out) {
+    init3DMatrix(out, in->depth, in->height, in->width);
+    int half_width = in->width / 2;
+    float tmp = 0.0f;
+    for(int i=0;i<in->depth;i++) {
+        for(int j=0;j<in->height;j++) {
+            for (int k=0;k<half_width;k++) {
+                int swap_index = out->width - 1 - j;
+                if (k != swap_index) {
+                    tmp = in->d[i][j][k];
+                    out->d[i][j][k] = in->d[i][j][swap_index];
+                    out->d[i][j][swap_index] = tmp;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+int shuffleTrainingSamples(ThreeDMatrix** in, 
+    int number_of_samples, 
+    bool vertically_flip_samples,
+    bool horizontally_flip_samples,
+    ThreeDMatrix** out) {
+    srand(time(NULL));
+    if (number_of_samples > 1) {
+        for(int i=number_of_samples-1;i>1;i--) {
+            int j = i + (int) ((number_of_samples-i) * (rand() / (RAND_MAX + 1.0)));
+            ThreeDMatrix* tmp = in[i];
+            out[i] = in[j];
+            out[j] = tmp;
+            if (vertically_flip_samples) {
+                if (rand() % 2) {
+                    verticallyFlipSample(out[i],out[i]);
+                }
+            }
+            if (horizontally_flip_samples) {
+                if (rand() % 2) {
+                    horizontallyFlipSample(out[i],out[i]);
+                }
+            }
+        }
+    }
     return 0;
 }

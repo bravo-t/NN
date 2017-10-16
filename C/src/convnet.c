@@ -36,6 +36,10 @@ int trainConvnet(ConvnetParameters* network_params) {
     float learning_rate = network_params->learning_rate;
     float base_learning_rate = learning_rate;
     bool verbose = network_params->verbose;
+    
+    bool shuffle_training_samples = network_params->shuffle_training_samples;
+    bool vertically_flip_training_samples = network_params->vertically_flip_training_samples;
+    bool horizontally_flip_training_samples = network_params->horizontally_flip_training_samples;
 
     bool use_rmsprop = network_params->use_rmsprop;
     float rmsprop_decay_rate = network_params->rmsprop_decay_rate;
@@ -266,7 +270,12 @@ int trainConvnet(ConvnetParameters* network_params) {
             e,
             base_learning_rate,
             learning_rate);
-        for(int iter=0;iter < number_of_samples/minibatch_size; iter++) {
+
+        int iterations = number_of_samples/minibatch_size;
+        float total_data_loss = 0.0f;
+        float total_reg_loss = 0.0f;
+        float training_accu = 0.0f;
+        for(int iter=0;iter <iterations; iter++) {
             ThreeDMatrix** CONV_OUT = training_data + iter*sizeof(ThreeDMatrix*);
             // Forward propagation
             for(int i=0;i<M;i++) {
@@ -381,9 +390,12 @@ int trainConvnet(ConvnetParameters* network_params) {
             /******* DEBUG ********/
             /**********************/
             #endif
-            if (iter == 0 || verbose) {
-                printf("CONVNET INFO: Epoch: %d, data loss: %f, regulization loss: %f, total loss: %f, training accuracy: %f\n", e, losses[0], losses[1], losses[0]+losses[1],losses[2]);
+            if (verbose) {
+                printf("CONVNET INFO: Epoch: %d iteration %d, data loss: %f, regulization loss: %f, total loss: %f, training accuracy: %f\n", e, iter, losses[0], losses[1], losses[0]+losses[1],losses[2]);
             }
+            total_data_loss += losses[0];
+            total_reg_loss += losses[1];
+            training_accu += losses[2];
             //restoreThreeDMatrixFromCol(dP2D, dP3D);
             restoreThreeDMatrixFromCol(dP2D, dP[M-1]);
             #if defined(DEBUG) && DEBUG > 0
@@ -569,6 +581,15 @@ int trainConvnet(ConvnetParameters* network_params) {
                     }
                 }
             }
+        }
+
+        printf("CONVNET INFO:  Epoch: %d, data loss: %f, regulization loss: %f, total loss: %f, training accuracy: %f\n", e, total_data_loss/iterations, total_reg_loss/iterations, total_data_loss/iterations+total_reg_loss/iterations,training_accu/iterations);
+        if (shuffle_training_samples) {
+            shuffleTrainingSamples(training_data, 
+                number_of_samples, 
+                vertically_flip_training_samples, 
+                horizontally_flip_training_samples,
+                training_data);
         }
     }
     

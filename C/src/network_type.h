@@ -77,6 +77,9 @@ typedef struct {
     int* padding_width;
     int* padding_height;
     bool verbose;
+    bool shuffle_training_samples;
+    bool vertically_flip_training_samples;
+    bool horizontally_flip_training_samples;
     bool enable_learning_rate_step_decay;
     bool enable_learning_rate_exponential_decay;
     bool enable_learning_rate_invert_t_decay;
