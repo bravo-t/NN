@@ -37,7 +37,7 @@ int trainConvnet(ConvnetParameters* network_params) {
     float base_learning_rate = learning_rate;
     bool verbose = network_params->verbose;
     
-    bool shuffle_training_samples = network_params->shuffle_training_samples;
+    int shuffle_training_samples = network_params->shuffle_training_samples;
     bool vertically_flip_training_samples = network_params->vertically_flip_training_samples;
     bool horizontally_flip_training_samples = network_params->horizontally_flip_training_samples;
 
@@ -584,12 +584,14 @@ int trainConvnet(ConvnetParameters* network_params) {
         }
 
         printf("CONVNET INFO:  Epoch: %d, data loss: %f, regulization loss: %f, total loss: %f, training accuracy: %f\n", e, total_data_loss/iterations, total_reg_loss/iterations, total_data_loss/iterations+total_reg_loss/iterations,training_accu/iterations);
-        if (shuffle_training_samples) {
+        if (shuffle_training_samples != 0 && e % shuffle_training_samples == 0) {
             shuffleTrainingSamples(training_data, 
+                network_params->fcnet_param->correct_labels,
                 number_of_samples, 
                 vertically_flip_training_samples, 
                 horizontally_flip_training_samples,
-                training_data);
+                training_data,
+                network_params->fcnet_param->correct_labels);
         }
     }
     

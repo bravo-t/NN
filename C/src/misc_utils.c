@@ -646,26 +646,32 @@ int horizontallyFlipSample(ThreeDMatrix* in, ThreeDMatrix* out) {
     return 0;
 }
 
-int shuffleTrainingSamples(ThreeDMatrix** in, 
+int shuffleTrainingSamples(ThreeDMatrix** data_in, 
+    TwoDMatrix* label_in,
     int number_of_samples, 
     bool vertically_flip_samples,
     bool horizontally_flip_samples,
-    ThreeDMatrix** out) {
+    ThreeDMatrix** data_out,
+    TwoDMatrix* label_out) {
+    if (label_out != label_in) copyTwoDMatrix(label_in, label_out);
     srand(time(NULL));
     if (number_of_samples > 1) {
         for(int i=number_of_samples-1;i>1;i--) {
             int j = i + (int) ((number_of_samples-i) * (rand() / (RAND_MAX + 1.0)));
-            ThreeDMatrix* tmp = in[i];
-            out[i] = in[j];
-            out[j] = tmp;
+            ThreeDMatrix* tmp = data_in[i];
+            data_out[i] = data_in[j];
+            data_out[j] = tmp;
+            float label_tmp = label_in->[i][0];
+            label_out->[i][0] = label_in->[j][0];
+            label_out->[j][0] = label_tmp;
             if (vertically_flip_samples) {
                 if (rand() % 2) {
-                    verticallyFlipSample(out[i],out[i]);
+                    verticallyFlipSample(data_out[i],data_out[i]);
                 }
             }
             if (horizontally_flip_samples) {
                 if (rand() % 2) {
-                    horizontallyFlipSample(out[i],out[i]);
+                    horizontallyFlipSample(data_out[i],data_out[i]);
                 }
             }
         }
