@@ -2,6 +2,7 @@
 
 import numpy as np
 import glob
+from scipy import interpolate
 
 def readPGM(filename):
     with open(filename, 'r') as f:
@@ -37,11 +38,30 @@ def writePGM(X,filename):
                 f.write(str(int(X[i,j]))+" ")
             f.write("\n")
 
-files = glob.glob("img_bk/*.pgm")
+def sizeUp(X):
+    xmin,xmax = 0,X.shape[1]
+    ymin,ymax = 0,X.shape[0]
+    xgrids = xmax - xmin
+    ygrids = ymax - ymin
+    #print("DEBUG: xgrids = %d, , ygrids = %d",xgrids,ygrids)
+    X_grid = np.linspace(xmin,xmax,xgrids)
+    Y_grid = np.linspace(ymin,ymax,ygrids)
+    #print("DEBUG: X_grid = "+X_grid+", Y_grid = "+Y_grid)
+    x,y = np.meshgrid(X_grid,Y_grid)
+    f = interpolate.interp2d(x,y,X,kind='cubic')
+    xgrids_new = 2 * xgrids - 1
+    ygrids_new = 2 * ygrids - 1
+    Xnew = np.linspace(xmin,xmax,xgrids_new)
+    Ynew = np.linspace(ymin,ymax,ygrids_new)
+    out = f(Xnew,Ynew)
+    return out
+
+files = glob.glob("img/*.pgm")
 for f in files:
     print("Processing "+f)
     data = readPGM(f)
     white = whitenData(data)
+    white = sizeUp(sizeUp(white))
     max_value = np.max(white)
     min_value = np.min(white)
     if max_value == min_value:
@@ -51,6 +71,6 @@ for f in files:
     white = white * m
     temp = f.split("/")
     filename = temp[1]
-    writePGM(white,"img/"+filename)
+    writePGM(white,"img_white/"+filename)
 
 

@@ -595,9 +595,20 @@ int trainConvnet(ConvnetParameters* network_params) {
         }
     }
     
+    /******* TODO ********
+    dumpConvnetConfig(M,N,
+        filter_number,filter_stride_x, filter_stride_y, filter_width, filter_hight, 
+        enable_maxpooling,pooling_stride_x,pooling_stride_y,pooling_width,pooling_height,
+        padding_width, padding_height,
+        shuffle_training_samples,vertically_flip_training_samples, horizontally_flip_training_samples,
+        epochs, alpha, normalize_data_per_channel, 
+        fcnet_hidden_layer_sizes,correct_labels, K,
+        F,b,P,
+        Ws,bs);
+    *********************/
+
     // For fun
     if (write_filters_as_images) {
-
         for(int i=0;i<M;i++) {
             for(int j=0;j<N;j++) {
                 for(int k=0;k<filter_number[i*N+j];k++) {

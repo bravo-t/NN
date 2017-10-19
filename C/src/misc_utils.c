@@ -203,6 +203,18 @@ void write2DMatrix(FILE* fp, TwoDMatrix* M) {
     }
 }
 
+void write3DMatrix(FILE* fp, ThreeDMatrix* M) {
+    for(int i=0;i<M->depth;i++) {
+        for(int j=0;j<M->height;j++) {
+            for(int k=0;k<M->width;k++) {
+                fprintf(fp,"%f ",M->d[i][j][k]);
+            }
+            fprintf(fp,"\n");
+        }
+    }
+}
+
+
 void getKeyValueFromFile(FILE* fp, char** retval) {
     char* line = malloc(sizeof(char)*200);
     char* line_start = line;
@@ -661,9 +673,9 @@ int shuffleTrainingSamples(ThreeDMatrix** data_in,
             ThreeDMatrix* tmp = data_in[i];
             data_out[i] = data_in[j];
             data_out[j] = tmp;
-            float label_tmp = label_in->[i][0];
-            label_out->[i][0] = label_in->[j][0];
-            label_out->[j][0] = label_tmp;
+            float label_tmp = label_in->d[i][0];
+            label_out->d[i][0] = label_in->d[j][0];
+            label_out->d[j][0] = label_tmp;
             if (vertically_flip_samples) {
                 if (rand() % 2) {
                     verticallyFlipSample(data_out[i],data_out[i]);
@@ -677,4 +689,62 @@ int shuffleTrainingSamples(ThreeDMatrix** data_in,
         }
     }
     return 0;
+}
+
+int dumpConvnetConfig(int M,int N,
+    int* filter_number,int* filter_stride_x, int* filter_stride_y, int* filter_width, int* filter_hight, 
+    bool* enable_maxpooling,int* pooling_stride_x,int* pooling_stride_y,int* pooling_width,int* pooling_height,
+    int* padding_width, int* padding_height,
+    int epochs, float alpha, bool normalize_data_per_channel, 
+    int* fcnet_hidden_layer_sizes, TwoDMatrix* correct_labels, int K,
+    ThreeDMatrix**** F,ThreeDMatrix**** b,
+    TwoDMatrix** Ws,TwoDMatrix** bs,
+    char* output_dir) {
+    int file_name_length = strlen(output_dir) + strlen("/network.params") + 10;
+    char* out_file = malloc(sizeof(char)*file_name_length);
+    strcpy(out_file,output_dir);
+    strcat(out_file,"/network.params");
+    
+    FILE* out = fopen(out_file,"w");
+    if (out == NULL) {
+        printf("ERROR: Cannot open %s to read\n",out_file);
+        exit(1);
+    }
+    
+    fprintf(out, "M=%d\n",M);
+    fprintf(out, "N=%d\n",N);
+    fprintf(out, "filter_number=");
+    for(int i=0;i<M*N;i++) {
+        fprintf(out, "%d",filter_number[i]);
+        if (i != M*N-1) fprintf(out, ",");
+    }
+    fprintf(out, "\n");
+    fprintf(out, "filter_stride_x=");
+    for(int i=0;i<M*N;i++) {
+        fprintf(out, "%d",filter_stride_x[i]);
+        if (i != M*N-1) fprintf(out, ",");
+    }
+    fprintf(out, "\n");
+    fprintf(out, "filter_stride_y=");
+    for(int i=0;i<M*N;i++) {
+        fprintf(out, "%d",filter_stride_y[i]);
+        if (i != M*N-1) fprintf(out, ",");
+    }
+    fprintf(out, "\n");
+    fprintf(out, "filter_width=");
+    for(int i=0;i<M*N;i++) {
+        fprintf(out, "%d",filter_width[i]);
+        if (i != M*N-1) fprintf(out, ",");
+    }
+    fprintf(out, "\n");
+    fprintf(out, "filter_height=");
+    for(int i=0;i<M*N;i++) {
+        fprintf(out, "%d",filter_height[i]);
+        if (i != M*N-1) fprintf(out, ",");
+    }
+    fprintf(out, "\n");
+    
+
+    printf("INFO: Network parameters dumped to %s\n",out_file);
+
 }
