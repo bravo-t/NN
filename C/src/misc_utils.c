@@ -695,8 +695,7 @@ int dumpConvnetConfig(int M,int N,
     int* filter_number,int* filter_stride_x, int* filter_stride_y, int* filter_width, int* filter_hight, 
     bool* enable_maxpooling,int* pooling_stride_x,int* pooling_stride_y,int* pooling_width,int* pooling_height,
     int* padding_width, int* padding_height,
-    int epochs, float alpha, bool normalize_data_per_channel, 
-    int* fcnet_hidden_layer_sizes, TwoDMatrix* correct_labels, int K,
+    int epochs, float alpha, bool normalize_data_per_channel, int K,
     ThreeDMatrix**** F,ThreeDMatrix**** b,
     TwoDMatrix** Ws,TwoDMatrix** bs,
     char* output_dir) {
@@ -711,8 +710,12 @@ int dumpConvnetConfig(int M,int N,
         exit(1);
     }
     
+    fprintf(out, "epochs=%d\n", epochs);
+    fprintf(out, "alpha=%f\n", alpha);
+    fprintf(out, "normalize_data_per_channel=%d\n", normalize_data_per_channel);
     fprintf(out, "M=%d\n",M);
     fprintf(out, "N=%d\n",N);
+    fprintf(out, "K=%d\n",K);
     fprintf(out, "filter_number=");
     for(int i=0;i<M*N;i++) {
         fprintf(out, "%d",filter_number[i]);
@@ -744,6 +747,55 @@ int dumpConvnetConfig(int M,int N,
     }
     fprintf(out, "\n");
     
+    // bool* enable_maxpooling,int* pooling_stride_x,int* pooling_stride_y,int* pooling_width,int* pooling_height,
+    // int* padding_width, int* padding_height,
+    fprintf(out, "enable_maxpooling=");
+    for(int i=0;i<M;i++) {
+        fprintf(out, "%d",enable_maxpooling[i]);
+        if (i != M-1) fprintf(out, ",");
+    }
+    fprintf(out, "\n");
+    fprintf(out, "pooling_stride_x=");
+    for(int i=0;i<M;i++) {
+        fprintf(out, "%d",pooling_stride_x[i]);
+        if (i != M-1) fprintf(out, ",");
+    }
+    fprintf(out, "\n");
+    fprintf(out, "pooling_stride_y=");
+    for(int i=0;i<M;i++) {
+        fprintf(out, "%d",pooling_stride_y[i]);
+        if (i != M-1) fprintf(out, ",");
+    }
+    fprintf(out, "\n");
+    fprintf(out, "pooling_width=");
+    for(int i=0;i<M;i++) {
+        fprintf(out, "%d",pooling_width[i]);
+        if (i != M-1) fprintf(out, ",");
+    }
+    fprintf(out, "\n");
+    fprintf(out, "pooling_height=");
+    for(int i=0;i<M;i++) {
+        fprintf(out, "%d",pooling_height[i]);
+        if (i != M-1) fprintf(out, ",");
+    }
+    fprintf(out, "\n");
+
+    fprintf(out, "padding_width=");
+    for(int i=0;i<M;i++) {
+        fprintf(out, "%d",padding_width[i]);
+        if (i != M-1) fprintf(out, ",");
+    }
+    fprintf(out, "\n");
+    fprintf(out, "padding_height=");
+    for(int i=0;i<M;i++) {
+        fprintf(out, "%d",padding_height[i]);
+        if (i != M-1) fprintf(out, ",");
+    }
+    fprintf(out, "\n");
+
+
+
+
 
     printf("INFO: Network parameters dumped to %s\n",out_file);
 
