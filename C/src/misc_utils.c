@@ -194,6 +194,27 @@ TwoDMatrix* load2DMatrix(FILE* fp) {
     return M;
 }
 
+ThreeDMatrix* load3DMatrix(FILE* fp) {
+    char buff[8192];
+    fscanf(fp,"%s",buff);
+    int depth,height,width;
+    fscanf(fp,"%d",&depth);
+    fscanf(fp,"%d",&height);
+    fscanf(fp,"%d",&width);
+    float value;
+    ThreeDMatrix* M = matrixMalloc(sizeof(ThreeDMatrix));
+    init3DMatrix(M,depth,height,width);
+    for(int i=0;i<depth;i++) {
+        for(int j=0;j<height;j++) {
+            for(int k=0;k<width;k++) {
+                fscanf(fp,"%f",&value);
+                M->d[i][j][k] = value;
+            }
+        }
+    }
+    return M;
+}
+
 void write2DMatrix(FILE* fp, TwoDMatrix* M) {
     for(int i=0;i<M->height;i++) {
         for(int j=0;j<M->width;j++) {
@@ -695,7 +716,7 @@ int dumpConvnetConfig(int M,int N,
     int* filter_number,int* filter_stride_x, int* filter_stride_y, int* filter_width, int* filter_hight, 
     bool* enable_maxpooling,int* pooling_stride_x,int* pooling_stride_y,int* pooling_width,int* pooling_height,
     int* padding_width, int* padding_height,
-    int epochs, float alpha, bool normalize_data_per_channel, int K,
+    float alpha, bool normalize_data_per_channel, int K,
     ThreeDMatrix**** F,ThreeDMatrix**** b,
     TwoDMatrix** Ws,TwoDMatrix** bs,
     char* output_dir) {
@@ -710,12 +731,11 @@ int dumpConvnetConfig(int M,int N,
         exit(1);
     }
     
-    fprintf(out, "epochs=%d\n", epochs);
-    fprintf(out, "alpha=%f\n", alpha);
-    fprintf(out, "normalize_data_per_channel=%d\n", normalize_data_per_channel);
     fprintf(out, "M=%d\n",M);
     fprintf(out, "N=%d\n",N);
     fprintf(out, "K=%d\n",K);
+    fprintf(out, "alpha=%f\n", alpha);
+    fprintf(out, "normalize_data_per_channel=%d\n", normalize_data_per_channel);
     fprintf(out, "filter_number=");
     for(int i=0;i<M*N;i++) {
         fprintf(out, "%d",filter_number[i]);
@@ -793,10 +813,39 @@ int dumpConvnetConfig(int M,int N,
     }
     fprintf(out, "\n");
 
+    for(int i=0;i<M;i++) {
+        for(int j=0;j<N;j++) {
+            for(int k=0;k<filter_number[i*N+j];k++) {
+                fprintf(out,"F[%d][%d][%d] %d %d %d\n",i,j,k,
+                    F[i][j][k]->depth,F[i][j][k]->height,F[i][j][k]->width);
+                write3DMatrix(out,F[i][j][k]);
+            }
+        }
+    }
 
+    for(int i=0;i<M;i++) {
+        for(int j=0;j<N;j++) {
+            for(int k=0;k<filter_number[i*N+j];k++) {
+                fprintf(out,"b[%d][%d][%d] %d %d %d\n",i,j,k,
+                    b[i][j][k]->depth,F[i][j][k]->height,F[i][j][k]->width);
+                write3DMatrix(out,b[i][j][k]);
+            }
+        }
+    }
 
+    for(int i=0;i<K;i++) {
+        fprintf(out,"Ws[%d] %d %d\n",i,
+            Ws[i]->height,Ws[i]->width);
+        write2DMatrix(out,Ws[i]);
+    }
 
+    for(int i=0;i<K;i++) {
+        fprintf(out,"bs[%d] %d %d\n",i,
+            bs[i]->height,bs[i]->width);
+        write2DMatrix(out,bs[i]);
+    }
 
     printf("INFO: Network parameters dumped to %s\n",out_file);
-
+    
+    return 0;
 }
