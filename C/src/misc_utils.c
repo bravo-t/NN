@@ -712,6 +712,8 @@ int shuffleTrainingSamples(ThreeDMatrix** data_in,
     return 0;
 }
 
+int 
+
 int dumpConvnetConfig(int M,int N,
     int* filter_number,int* filter_stride_x, int* filter_stride_y, int* filter_width, int* filter_hight, 
     bool* enable_maxpooling,int* pooling_stride_x,int* pooling_stride_y,int* pooling_width,int* pooling_height,
@@ -844,8 +846,54 @@ int dumpConvnetConfig(int M,int N,
             bs[i]->height,bs[i]->width);
         write2DMatrix(out,bs[i]);
     }
-
+    
+    fclose(out);
     printf("INFO: Network parameters dumped to %s\n",out_file);
     
+    return 0;
+}
+
+int loadConvnetConfig(int* M,int* N,
+    int** filter_number,int** filter_stride_x, int** filter_stride_y, int** filter_width, int** filter_hight, 
+    bool** enable_maxpooling,int** pooling_stride_x,int** pooling_stride_y,int** pooling_width,int** pooling_height,
+    int** padding_width, int** padding_height,
+    float* alpha, bool* normalize_data_per_channel, int* K,
+    ThreeDMatrix***** F,ThreeDMatrix***** b,
+    TwoDMatrix*** Ws,TwoDMatrix*** bs,
+    char* dir) {
+    int file_name_length = strlen(dir) + strlen("/network.params") + 10;
+    char* filename = malloc(sizeof(char)*file_name_length);
+    strcpy(filename,dir);
+    strcat(filename,"/network.params");
+    printf("INFO: Loading network parameters from %s\n",filename);
+    FILE* fp = fopen(filename,"r");
+    if (fp == NULL) {
+        printf("ERROR: Cannot open %s to read\n",filename);
+        exit(1);
+    }
+    char** key_values = malloc(sizeof(char*)*2);
+    key_values[0] = (char*) malloc(sizeof(char)*100);
+    key_values[1] = (char*) malloc(sizeof(char)*100);
+    for(int i=0;i<5;i++) {
+        getKeyValueFromFile(fp,key_values);
+        if (! strcmp(key_values[0],"M")) {
+            *M = strtol(key_values[1],NULL,10);
+        } else if (! strcmp(key_values[0],"N")) {
+            *N = strtof(key_values[1],NULL);
+        } else if (! strcmp(key_values[0],"K")) {
+            *K = strtof(key_values[1],NULL);
+        } else if (! strcmp(key_values[0],"alpha")) {
+            *alpha = strtof(key_values[1],NULL);
+        } else if (! strcmp(key_values[0],"normalize_data_per_channel")) {
+            *normalize_data_per_channel = strtof(key_values[1],NULL);
+        } else {
+            printf("ERROR: Unrecognized keyword: %s, ignored\n",key_values[0]);
+        }
+    }
+    
+    fclose(fp);
+    free(key_values[0]);
+    free(key_values[1]);
+    free(key_values);
     return 0;
 }
