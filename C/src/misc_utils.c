@@ -712,13 +712,25 @@ int shuffleTrainingSamples(ThreeDMatrix** data_in,
     return 0;
 }
 
-int 
+int splitStr(char* input, int* output) {
+    char* str = malloc(sizeof(char)*8192);
+    strcpy(str, input);
+    char str_start = str;
+    int i = 0;
+    for(char* token = strsep(&str, ","); token != NULL; token = strsep(&str, ",")) {
+        if (token[0] != '\0') {
+            output[i] = strtol(token,NULL,10);
+            i++;
+        }
+    }
+    return 0;
+}
 
 int dumpConvnetConfig(int M,int N,
     int* filter_number,int* filter_stride_x, int* filter_stride_y, int* filter_width, int* filter_hight, 
     bool* enable_maxpooling,int* pooling_stride_x,int* pooling_stride_y,int* pooling_width,int* pooling_height,
     int* padding_width, int* padding_height,
-    float alpha, bool normalize_data_per_channel, int K,
+    float alpha, bool normalize_data_per_channel, int K, int training_data_depth,
     ThreeDMatrix**** F,ThreeDMatrix**** b,
     TwoDMatrix** Ws,TwoDMatrix** bs,
     char* output_dir) {
@@ -861,6 +873,7 @@ int loadConvnetConfig(int* M,int* N,
     ThreeDMatrix***** F,ThreeDMatrix***** b,
     TwoDMatrix*** Ws,TwoDMatrix*** bs,
     char* dir) {
+    int training_data_depth;
     int file_name_length = strlen(dir) + strlen("/network.params") + 10;
     char* filename = malloc(sizeof(char)*file_name_length);
     strcpy(filename,dir);
@@ -890,7 +903,91 @@ int loadConvnetConfig(int* M,int* N,
             printf("ERROR: Unrecognized keyword: %s, ignored\n",key_values[0]);
         }
     }
+    *filter_number = (int*) malloc(sizeof(int)*(*M)*(*N));
+    *filter_stride_x = (int*) malloc(sizeof(int)*(*M)*(*N));
+    *filter_stride_y = (int*) malloc(sizeof(int)*(*M)*(*N));
+    *filter_width = (int*) malloc(sizeof(int)*(*M)*(*N));
+    *filter_height = (int*) malloc(sizeof(int)*(*M)*(*N));
+    *enable_maxpooling = (bool*) malloc(sizeof(int)*(*M));
+    *pooling_stride_x = (int*) malloc(sizeof(int)*(*M));
+    *pooling_stride_y = (int*) malloc(sizeof(int)*(*M));
+    *pooling_width = (int*) malloc(sizeof(int)*(*M));
+    *pooling_height = (int*) malloc(sizeof(int)*(*M));
+    *padding_width = (int*) malloc(sizeof(int)*(*M));
+    *padding_height = (int*) malloc(sizeof(int)*(*M));
+    for(int i=0;i<12;i++) {
+        if (! strcmp(key_values[0],"filter_number")) {
+            splitStr(key_values[1],*filter_number);
+        } else if (! strcmp(key_values[0],"filter_stride_x")) {
+            splitStr(key_values[1],*filter_stride_x);
+        } else if (! strcmp(key_values[0],"filter_stride_y")) {
+            splitStr(key_values[1],*filter_stride_y);
+        } else if (! strcmp(key_values[0],"filter_width")) {
+            splitStr(key_values[1],*filter_width);
+        } else if (! strcmp(key_values[0],"filter_height")) {
+            splitStr(key_values[1],*filter_height);
+        } else if (! strcmp(key_values[0],"enable_maxpooling")) {
+            splitStr(key_values[1],*enable_maxpooling);
+        } else if (! strcmp(key_values[0],"pooling_stride_x")) {
+            splitStr(key_values[1],*pooling_stride_x);
+        } else if (! strcmp(key_values[0],"pooling_stride_y")) {
+            splitStr(key_values[1],*pooling_stride_y);
+        } else if (! strcmp(key_values[0],"pooling_width")) {
+            splitStr(key_values[1],*pooling_width);
+        } else if (! strcmp(key_values[0],"pooling_height")) {
+            splitStr(key_values[1],*pooling_height);
+        } else if (! strcmp(key_values[0],"padding_width")) {
+            splitStr(key_values[1],*padding_width);
+        } else if (! strcmp(key_values[0],"padding_height")) {
+            splitStr(key_values[1],*padding_height);
+        } else {
+            printf("ERROR: Unrecognized keyword: %s, ignored\n",key_values[0]);
+        }
+    }
     
+    *F = (ThreeDMatrix****) malloc(sizeof(ThreeDMatrix***)*M);
+    *b = (ThreeDMatrix****) malloc(sizeof(ThreeDMatrix***)*M);
+    for(int i=0;i<M;i++) {
+        (*F)[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
+        (*b)[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
+        for(int j=0;j<N;j++) {
+            (*F)[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*N+j]);
+            (*b)[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*filter_number[i*N+j]);
+        }
+    }
+
+    *Ws = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*K);
+    *bs = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*K);
+    for(int i=0;i<K;i++) {
+        (*Ws)[i] = matrixMalloc(sizeof(TwoDMatrix));
+        (*bs)[i] = matrixMalloc(sizeof(TwoDMatrix));
+    }
+    
+
+    for(int i=0;i<M;i++) {
+        for(int j=0;j<N;j++) {
+            for(int k=0;k<filter_number[i*N+j];k++) {
+                (*F)[i][j][k] = load3DMatrix(fp);
+            }
+        }
+    }
+
+    for(int i=0;i<M;i++) {
+        for(int j=0;j<N;j++) {
+            for(int k=0;k<filter_number[i*N+j];k++) {
+                (*b)[i][j][k] = load3DMatrix(fp);
+            }
+        }
+    }
+
+    for(int i=0;i<K;i++) {
+        (*Ws)[i] = load2DMatrix(fp);
+    }
+
+    for(int i=0;i<K;i++) {
+        (*bs)[i] = load2DMatrix(fp);
+    }
+
     fclose(fp);
     free(key_values[0]);
     free(key_values[1]);
