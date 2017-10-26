@@ -494,7 +494,7 @@ float verifyWithTrainingData(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoDMat
     return 100.0f*correct_count/(iterations*minibatch_size);
 }
 
-int test(FCParameters* network_params) {
+int test(FCParameters* network_params, TwoDMatrix* scores) {
     TwoDMatrix** Ws = NULL;
     TwoDMatrix** bs = NULL;
     TwoDMatrix* test_data = network_params->X;
@@ -507,7 +507,6 @@ int test(FCParameters* network_params) {
     TwoDMatrix** mean_caches = NULL;
     TwoDMatrix** var_caches = NULL;
     loadNetworkConfig(network_params->params_save_dir, &network_depth, &alpha, &Ws, &bs, &use_batchnorm, &mean_caches, &var_caches, &gammas, &betas, &batchnorm_eps);
-    TwoDMatrix* scores = matrixMalloc(sizeof(TwoDMatrix));
     selftest(test_data,Ws,bs, alpha, network_depth, use_batchnorm, mean_caches, var_caches, batchnorm_eps, gammas, betas, scores);
     //printf("Scores are calculated as:\n");
     //printMatrix(scores);
