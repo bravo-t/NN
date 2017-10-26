@@ -56,6 +56,7 @@ int trainConvnet(ConvnetParameters* network_params) {
     int learning_rate_decay_unit = network_params->learning_rate_decay_unit;
     float learning_rate_decay_a0 = network_params->learning_rate_decay_a0;
     float learning_rate_decay_k = network_params->learning_rate_decay_k;
+    char* param_dir = network_params->params_save_dir;
     // Turn these features off to reduce the complexity for now
     network_params->fcnet_param->use_momentum_update = false;
     network_params->fcnet_param->use_batchnorm = false;
@@ -595,17 +596,14 @@ int trainConvnet(ConvnetParameters* network_params) {
         }
     }
     
-    /******* TODO ********
     dumpConvnetConfig(M,N,
-        filter_number,filter_stride_x, filter_stride_y, filter_width, filter_hight, 
-        enable_maxpooling,pooling_stride_x,pooling_stride_y,pooling_width,pooling_height,
-        padding_width, padding_height,
-        shuffle_training_samples,vertically_flip_training_samples, horizontally_flip_training_samples,
-        epochs, alpha, normalize_data_per_channel, 
-        fcnet_hidden_layer_sizes,correct_labels, K,
-        F,b,P,
-        Ws,bs);
-    *********************/
+    filter_number,filter_stride_x, filter_stride_y, filter_width, filter_height, 
+    enable_maxpooling,pooling_stride_x,pooling_stride_y,pooling_width,pooling_height,
+    padding_width, padding_height,
+    alpha, normalize_data_per_channel, K,
+    F, b,
+    Ws,bs,
+    param_dir);
 
     // For fun
     if (write_filters_as_images) {
@@ -693,4 +691,8 @@ int trainConvnet(ConvnetParameters* network_params) {
     }
 
     return 0;
+}
+
+int testConvnet(ConvnetParameters* convnet_params, TwoDMatrix* labels) {
+    
 }

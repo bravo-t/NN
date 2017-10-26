@@ -34,6 +34,7 @@ typedef struct {
     int learning_rate_decay_unit;
     float learning_rate_decay_a0;
     float learning_rate_decay_k;
+    int shuffle_training_samples;
     bool verbose;
     bool use_momentum_update;
     bool use_nag_update;
@@ -93,6 +94,7 @@ typedef struct {
     float rmsprop_eps;
     bool write_filters_as_images;
     char* filter_image_dir;
+    char* params_save_dir;
     FCParameters* fcnet_param;
 } ConvnetParameters;
 

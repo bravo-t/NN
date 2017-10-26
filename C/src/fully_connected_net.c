@@ -42,6 +42,7 @@ int train(FCParameters* network_params) {
     int learning_rate_decay_unit = network_params->learning_rate_decay_unit;
     float learning_rate_decay_a0 = network_params->learning_rate_decay_a0;
     float learning_rate_decay_k = network_params->learning_rate_decay_k;
+    int shuffle_training_samples = network_params->shuffle_training_samples;
 
     bool verbose = network_params->verbose;
     // Below are control variables for optimizers
@@ -350,6 +351,9 @@ int train(FCParameters* network_params) {
                     vanillaUpdate(betas[i],dbetas[i],learning_rate,betas[i]);
                 }
             }
+        }
+        if (shuffle_training_samples != 0 && epoch % shuffle_training_samples == 0) {
+            shuffleTrainingSamplesFCNet(training_data, correct_labels, training_data, correct_labels);
         }
     }
     // Verify the result with training data

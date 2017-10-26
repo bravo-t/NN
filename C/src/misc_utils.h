@@ -35,17 +35,25 @@ int shuffleTrainingSamples(ThreeDMatrix** data_in,
     ThreeDMatrix** data_out,
     TwoDMatrix* label_out);
 
+int shuffleTrainingSamplesFCNet(TwoDMatrix* data_in, TwoDMatrix* label_in, TwoDMatrix* data_out, TwoDMatrix* label_out);
+
 ThreeDMatrix* load3DMatrix(FILE* fp);
 void write3DMatrix(FILE* fp, ThreeDMatrix* M);
 int dumpConvnetConfig(int M,int N,
-    int* filter_number,int* filter_stride_x, int* filter_stride_y, int* filter_width, int* filter_hight, 
+    int* filter_number,int* filter_stride_x, int* filter_stride_y, int* filter_width, int* filter_height, 
     bool* enable_maxpooling,int* pooling_stride_x,int* pooling_stride_y,int* pooling_width,int* pooling_height,
     int* padding_width, int* padding_height,
     float alpha, bool normalize_data_per_channel, int K,
     ThreeDMatrix**** F,ThreeDMatrix**** b,
     TwoDMatrix** Ws,TwoDMatrix** bs,
     char* output_dir);
-
-
+int loadConvnetConfig(int* M,int* N,
+    int** filter_number,int** filter_stride_x, int** filter_stride_y, int** filter_width, int** filter_height, 
+    bool** enable_maxpooling,int** pooling_stride_x,int** pooling_stride_y,int** pooling_width,int** pooling_height,
+    int** padding_width, int** padding_height,
+    float* alpha, bool* normalize_data_per_channel, int* K,
+    ThreeDMatrix***** F,ThreeDMatrix***** b,
+    TwoDMatrix*** Ws,TwoDMatrix*** bs,
+    char* dir);
 
 #endif
