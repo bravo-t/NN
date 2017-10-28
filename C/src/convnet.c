@@ -696,13 +696,71 @@ int trainConvnet(ConvnetParameters* network_params) {
 int testConvnet(ConvnetParameters* convnet_params, TwoDMatrix* labels) {
     ThreeDMatrix**** F = NULL;
     ThreeDMatrix**** b = NULL;
+    TwoDMatrix** Ws = NULL;
+    TwoDMatrix** bs = NULL;
+    int M = 0;
+    int N = 0;
+    int* filter_number = NULL;
+    int* filter_stride_x = NULL;
+    int* filter_stride_y = NULL;
+    int* filter_width = NULL;
+    int* filter_height = NULL;
+    bool* enable_maxpooling = NULL;
+    int* pooling_stride_x = NULL;
+    int* pooling_stride_y = NULL;
+    int* pooling_width = NULL;
+    int* pooling_height = NULL;
+    int* padding_width = NULL; 
+    int* padding_height = NULL;
+    float alpha = 0;
+    bool normalize_data_per_channel = true;
+    int K = 0;
     ThreeDMatrix** test_data = convnet_params->X;
-    loadConvnetConfig(int* M,int* N,
-    int** filter_number,int** filter_stride_x, int** filter_stride_y, int** filter_width, int** filter_height, 
-    bool** enable_maxpooling,int** pooling_stride_x,int** pooling_stride_y,int** pooling_width,int** pooling_height,
-    int** padding_width, int** padding_height,
-    float* alpha, bool* normalize_data_per_channel, int* K,
-    ThreeDMatrix***** F,ThreeDMatrix***** b,
-    TwoDMatrix*** Ws,TwoDMatrix*** bs,
-    char* dir);
+    loadConvnetConfig(&M,&N,
+    &filter_number,&filter_stride_x, &filter_stride_y, &filter_width, &filter_height, 
+    &enable_maxpooling, &pooling_stride_x, &pooling_stride_y, &pooling_width, &pooling_height,
+    &padding_width, &padding_height,
+    &alpha, &normalize_data_per_channel, &K,
+    &F,&b,
+    &Ws,&bs,
+    convnet_params->params_save_dir);
+
+}
+
+int testConvnetCore(int M,int N,
+    int* filter_number,int* filter_stride_x, int* filter_stride_y, int* filter_width, int* filter_height, 
+    bool* enable_maxpooling,int* pooling_stride_x,int* pooling_stride_y,int* pooling_width,int* pooling_height,
+    int* padding_width, int* padding_height,
+    float alpha, bool normalize_data_per_channel, int K,
+    ThreeDMatrix**** F,ThreeDMatrix**** b,
+    TwoDMatrix** Ws,TwoDMatrix** bs,
+    ThreeDMatrix* labels) {
+    ThreeDMatrix**** C = malloc(sizeof(ThreeDMatrix***)*M);
+    ThreeDMatrix*** P = malloc(sizeof(ThreeDMatrix**)*M);
+    for(int i=0;i<M;i++) {
+        C[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
+        for(int j=0;j<N;j++) {
+            C[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*minibatch_size);
+            int filter_depth = layer_data_depth;
+            layer_data_depth = filter_number[i*N+j];
+            layer_data_height = calcOutputSize(layer_data_height,padding_height[i*N+j],filter_height[i*N+j],filter_stride_y[i*N+j]);
+            layer_data_width = calcOutputSize(layer_data_width,padding_width[i*N+j],filter_width[i*N+j],filter_stride_x[i*N+j]);
+            for(int l=0;l<minibatch_size;l++) {
+                C[i][j][l] = matrixMalloc(sizeof(ThreeDMatrix));
+                init3DMatrix(C[i][j][l], layer_data_depth, layer_data_height, layer_data_width);
+            }
+        }
+        if (enable_maxpooling[i]) {
+            P[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*minibatch_size);
+            layer_data_height = calcOutputSize(layer_data_height,0,pooling_height[i],pooling_stride_y[i]);
+            layer_data_width = calcOutputSize(layer_data_width,0,pooling_width[i],pooling_stride_x[i]);
+            for(int m=0;m<minibatch_size;m++) {
+                P[i][m] = matrixMalloc(sizeof(ThreeDMatrix));
+                init3DMatrix(P[i][m],layer_data_depth,layer_data_height,layer_data_width);
+            }
+        } else {
+            P[i] = C[i][N-1];
+            dP[i] = dC[i][N-1];
+        }
+    }
 }
