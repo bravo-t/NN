@@ -716,18 +716,27 @@ int testConvnet(ConvnetParameters* convnet_params, TwoDMatrix* labels) {
     bool normalize_data_per_channel = true;
     int K = 0;
     ThreeDMatrix** test_data = convnet_params->X;
+    init2DMatrix(labels,convnet_params->number_of_samples,1);
     loadConvnetConfig(&M,&N,
-    &filter_number,&filter_stride_x, &filter_stride_y, &filter_width, &filter_height, 
-    &enable_maxpooling, &pooling_stride_x, &pooling_stride_y, &pooling_width, &pooling_height,
-    &padding_width, &padding_height,
-    &alpha, &normalize_data_per_channel, &K,
-    &F,&b,
-    &Ws,&bs,
-    convnet_params->params_save_dir);
-
+        &filter_number,&filter_stride_x, &filter_stride_y, &filter_width, &filter_height, 
+        &enable_maxpooling, &pooling_stride_x, &pooling_stride_y, &pooling_width, &pooling_height,
+        &padding_width, &padding_height,
+        &alpha, &normalize_data_per_channel, &K,
+        &F,&b,
+        &Ws,&bs,
+        convnet_params->params_save_dir);
+    testConvnetCore( M, N, convnet_params->number_of_samples,
+        filter_number, filter_stride_x,  filter_stride_y,  filter_width,  filter_height, 
+        enable_maxpooling, pooling_stride_x, pooling_stride_y, pooling_width, pooling_height,
+        padding_width,  padding_height,
+        alpha, normalize_data_per_channel, K,
+        F, b,
+        Ws, bs,
+        ThreeDMatrix* labels);
+    return 0;
 }
 
-int testConvnetCore(int M,int N,
+int testConvnetCore(int M,int N, int number_of_samples,
     int* filter_number,int* filter_stride_x, int* filter_stride_y, int* filter_width, int* filter_height, 
     bool* enable_maxpooling,int* pooling_stride_x,int* pooling_stride_y,int* pooling_width,int* pooling_height,
     int* padding_width, int* padding_height,
@@ -740,21 +749,21 @@ int testConvnetCore(int M,int N,
     for(int i=0;i<M;i++) {
         C[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
         for(int j=0;j<N;j++) {
-            C[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*minibatch_size);
+            C[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
             int filter_depth = layer_data_depth;
             layer_data_depth = filter_number[i*N+j];
             layer_data_height = calcOutputSize(layer_data_height,padding_height[i*N+j],filter_height[i*N+j],filter_stride_y[i*N+j]);
             layer_data_width = calcOutputSize(layer_data_width,padding_width[i*N+j],filter_width[i*N+j],filter_stride_x[i*N+j]);
-            for(int l=0;l<minibatch_size;l++) {
+            for(int l=0;l<number_of_samples;l++) {
                 C[i][j][l] = matrixMalloc(sizeof(ThreeDMatrix));
                 init3DMatrix(C[i][j][l], layer_data_depth, layer_data_height, layer_data_width);
             }
         }
         if (enable_maxpooling[i]) {
-            P[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*minibatch_size);
+            P[i] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
             layer_data_height = calcOutputSize(layer_data_height,0,pooling_height[i],pooling_stride_y[i]);
             layer_data_width = calcOutputSize(layer_data_width,0,pooling_width[i],pooling_stride_x[i]);
-            for(int m=0;m<minibatch_size;m++) {
+            for(int m=0;m<number_of_samples;m++) {
                 P[i][m] = matrixMalloc(sizeof(ThreeDMatrix));
                 init3DMatrix(P[i][m],layer_data_depth,layer_data_height,layer_data_width);
             }
@@ -763,4 +772,45 @@ int testConvnetCore(int M,int N,
             dP[i] = dC[i][N-1];
         }
     }
+    for(int i=0;i<M;i++) {
+        for(int j=0;j<N;j++) {
+            for(int n=0;n<number_of_samples;n++) {
+                convLayerForward(CONV_OUT[n], 
+                    F[i][j], 
+                    filter_number[i*N+j], 
+                    b[i][j], 
+                    filter_height[i*N+j], 
+                    filter_width[i*N+j], 
+                    filter_stride_y[i*N+j], 
+                    filter_stride_x[i*N+j], 
+                    padding_height[i*N+j], 
+                    padding_width[i*N+j], 
+                    alpha, 
+                    C[i][j][n]);
+            }
+            CONV_OUT = C[i][j];
+        }
+        if (enable_maxpooling[i]) {
+            for(int n=0;n<number_of_samples;n++) {
+                maxPoolingForward(CONV_OUT[n], 
+                    pooling_stride_y[i], 
+                    pooling_stride_x[i], 
+                    pooling_width[i], 
+                    pooling_height[i], 
+                    P[i][n]);
+            }
+        } else {
+            P[i] = CONV_OUT;
+        }
+        CONV_OUT = P[i];
+    }
+    TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
+    init2DMatrix(X,number_of_samples,layer_data_depth*layer_data_height*layer_data_width);
+    for(int i=0;i<number_of_samples;i++) {
+        reshapeThreeDMatrix2Col(P[M-1][i],i,X);
+    }
+    selftest(X,Ws,bs, alpha, K, 
+        false, NULL, NULL, NULL, NULL, NULL, 
+        scores);
+    return 0;
 }
