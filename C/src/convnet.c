@@ -693,7 +693,7 @@ int trainConvnet(ConvnetParameters* network_params) {
     return 0;
 }
 
-int testConvnet(ConvnetParameters* convnet_params, TwoDMatrix* labels) {
+int testConvnet(ConvnetParameters* convnet_params, TwoDMatrix* scores) {
     ThreeDMatrix**** F = NULL;
     ThreeDMatrix**** b = NULL;
     TwoDMatrix** Ws = NULL;
@@ -716,7 +716,7 @@ int testConvnet(ConvnetParameters* convnet_params, TwoDMatrix* labels) {
     bool normalize_data_per_channel = true;
     int K = 0;
     ThreeDMatrix** test_data = convnet_params->X;
-    init2DMatrix(labels,convnet_params->number_of_samples,1);
+    init2DMatrix(scores,convnet_params->number_of_samples,1);
     loadConvnetConfig(&M,&N,
         &filter_number,&filter_stride_x, &filter_stride_y, &filter_width, &filter_height, 
         &enable_maxpooling, &pooling_stride_x, &pooling_stride_y, &pooling_width, &pooling_height,
@@ -725,32 +725,35 @@ int testConvnet(ConvnetParameters* convnet_params, TwoDMatrix* labels) {
         &F,&b,
         &Ws,&bs,
         convnet_params->params_save_dir);
-    testConvnetCore( M, N, convnet_params->number_of_samples,
+    testConvnetCore( test_data, M, N, convnet_params->number_of_samples,
         filter_number, filter_stride_x,  filter_stride_y,  filter_width,  filter_height, 
         enable_maxpooling, pooling_stride_x, pooling_stride_y, pooling_width, pooling_height,
         padding_width,  padding_height,
         alpha, normalize_data_per_channel, K,
         F, b,
         Ws, bs,
-        ThreeDMatrix* labels);
+        scores);
     return 0;
 }
 
-int testConvnetCore(int M,int N, int number_of_samples,
+int testConvnetCore(ThreeDMatrix** test_data, int M,int N, int number_of_samples,
     int* filter_number,int* filter_stride_x, int* filter_stride_y, int* filter_width, int* filter_height, 
     bool* enable_maxpooling,int* pooling_stride_x,int* pooling_stride_y,int* pooling_width,int* pooling_height,
     int* padding_width, int* padding_height,
     float alpha, bool normalize_data_per_channel, int K,
     ThreeDMatrix**** F,ThreeDMatrix**** b,
     TwoDMatrix** Ws,TwoDMatrix** bs,
-    ThreeDMatrix* labels) {
+    TwoDMatrix* scores) {
     ThreeDMatrix**** C = malloc(sizeof(ThreeDMatrix***)*M);
     ThreeDMatrix*** P = malloc(sizeof(ThreeDMatrix**)*M);
+    int layer_data_depth = test_data[0]->depth;
+    int layer_data_height = test_data[0]->height;
+    int layer_data_width = test_data[0]->width;
     for(int i=0;i<M;i++) {
         C[i] = (ThreeDMatrix***) malloc(sizeof(ThreeDMatrix**)*N);
         for(int j=0;j<N;j++) {
             C[i][j] = (ThreeDMatrix**) malloc(sizeof(ThreeDMatrix*)*number_of_samples);
-            int filter_depth = layer_data_depth;
+            //int filter_depth = layer_data_depth;
             layer_data_depth = filter_number[i*N+j];
             layer_data_height = calcOutputSize(layer_data_height,padding_height[i*N+j],filter_height[i*N+j],filter_stride_y[i*N+j]);
             layer_data_width = calcOutputSize(layer_data_width,padding_width[i*N+j],filter_width[i*N+j],filter_stride_x[i*N+j]);
@@ -769,9 +772,9 @@ int testConvnetCore(int M,int N, int number_of_samples,
             }
         } else {
             P[i] = C[i][N-1];
-            dP[i] = dC[i][N-1];
         }
     }
+    ThreeDMatrix** CONV_OUT = test_data;
     for(int i=0;i<M;i++) {
         for(int j=0;j<N;j++) {
             for(int n=0;n<number_of_samples;n++) {
@@ -810,7 +813,7 @@ int testConvnetCore(int M,int N, int number_of_samples,
         reshapeThreeDMatrix2Col(P[M-1][i],i,X);
     }
     selftest(X,Ws,bs, alpha, K, 
-        false, NULL, NULL, NULL, NULL, NULL, 
+        false, NULL, NULL, 0, NULL, NULL, 
         scores);
     return 0;
 }
