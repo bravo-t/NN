@@ -1023,3 +1023,162 @@ int loadConvnetConfig(int* M,int* N,
     free(key_values);
     return 0;
 }
+
+ConvnetParameters* readConvnetConfigFile(char* filename) {
+    FILE* fp = fopen(filename,"r");
+    if (fp == NULL) {
+        printf("ERROR: Cannot open %s to read\n",filename);
+        exit(1);
+    }
+    ConvnetParameters* convnet_params = malloc(sizeof(ConvnetParameters));
+    memset(convnet_params, 0, sizeof(ConvnetParameters));
+    convnet_params->fcnet_param = (FCParameters*) malloc(sizeof(FCParameters));
+    // Assign default values 
+    convnet_params->shuffle_training_samples = true;
+    convnet_params->vertically_flip_training_samples = true;
+    convnet_params->horizontally_flip_training_samples = true;
+    convnet_params->alpha = 1e-3;
+    convnet_params->learning_rate = 0.001;
+    convnet_params->verbose = false;
+    convnet_params->use_rmsprop = true;
+    convnet_params->rmsprop_decay_rate = 0.9;
+    convnet_params->rmsprop_eps = 1e-5;
+    convnet_params->fcnet_param->use_rmsprop = true;
+    convnet_params->fcnet_param->decay_rate = 0.9;
+    convnet_params->fcnet_param->eps = 1e-5;
+    convnet_params->normalize_data_per_channel = true;
+    convnet_params->enable_learning_rate_step_decay = true;
+    convnet_params->learning_rate_decay_unit = 250;
+    convnet_params->learning_rate_decay_a0 = 1.0;
+    convnet_params->learning_rate_decay_k = 0.9;
+    convnet_params->fcnet_param->learning_rate = convnet_params->learning_rate;
+
+    char** key_values = malloc(sizeof(char*)*2);
+    key_values[0] = (char*) malloc(sizeof(char)*8192);
+    key_values[1] = (char*) malloc(sizeof(char)*8192);
+    bool mode_defined = false;
+    bool params_dir_defined = false;
+    bool data_set_defined = false;
+    bool correct_labels_defined = false;
+    bool hidden_layer_sizes_defined = false;
+    bool labels_defined = false;
+    bool epochs_defined = false;
+    bool minibatch_defined = false;
+    bool number_of_samples_defined = false;
+    bool minibatch_size_defined = false;
+    bool M_defined = false;
+    bool N_defined = false;
+    bool K_defined = false;
+    bool filter_stride_y_defined = false;
+    bool filter_stride_x_defined = false;
+    bool filter_height_defined = false;
+    bool filter_width_defined = false;
+    bool filter_number_defined = false;
+    bool enable_maxpooling_defined = false;
+    bool pooling_height_defined = false;
+    bool pooling_width_defined = false;
+    bool pooling_stride_y_defined = false;
+    bool pooling_stride_x_defined = false;
+    bool padding_height_defined = false;
+    bool padding_width_defined = false;
+    while (! feof(fp)) {
+        key_values[0][0] = '\0';
+        key_values[1][0] = '\0';
+        getKeyValueFromFile(fp,key_values);
+        if (key_values[0][0] == '#' || key_values[0][0] == '\0') {
+            continue;
+        }
+        if (! strcmp(key_values[0],"data_set")) {
+            convnet_params->X = load3DMatrixFromFile(key_values[1]);
+            data_set_defined = true;
+        } else if (! strcmp(key_values[0],"correct_labels")) {
+            convnet_params->fc_param->correct_labels = load2DMatrixFromFile(key_values[1]);
+            correct_labels_defined = true;
+        } else if (! strcmp(key_values[0],"hidden_layer_sizes")) {
+            int layers[8192];
+            int network_depth = 0;
+            char* sizes = malloc(sizeof(char)*8192);
+            strcpy(sizes,key_values[1]);
+            char* sizes_ptr = sizes;
+            for(char* token = strsep(&sizes_ptr, ","); token != NULL; token = strsep(&sizes_ptr, ",")) {
+                if (token[0] != '\0') {
+                    layers[network_depth] = strtol(token,NULL,10);
+                    network_depth++;
+                }
+            }
+            convnet_params->fc_param->hidden_layer_sizes = (int*) malloc(sizeof(int)*network_depth);
+            for(int i=0;i<network_depth;i++) {
+                convnet_params->fc_param->hidden_layer_sizes[i] = layers[i];
+            }
+            convnet_params->fc_param->network_depth = network_depth;
+            hidden_layer_sizes_defined = true;
+            free(sizes);
+        } else if (! strcmp(key_values[0],"labels")) {
+            convnet_params->fc_param->labels = strtol(key_values[1],NULL,10);
+            labels_defined = true;
+        } else if (! strcmp(key_values[0],"minibatch_size")) {
+            convnet_params->minibatch_size = strtol(key_values[1],NULL,10);
+            minibatch_defined = true;
+        } else if (! strcmp(key_values[0],"alpha")) {
+            convnet_params->alpha = strtof(key_values[1],NULL);
+        } else if (! strcmp(key_values[0],"learing_rate")) {
+            convnet_params->learning_rate = strtof(key_values[1],NULL);
+        } else if (! strcmp(key_values[0],"epochs")) {
+            convnet_params->epochs = strtol(key_values[1],NULL,10);
+            epochs_defined = true;
+        } else if (! strcmp(key_values[0],"verbose")) {
+            convnet_params->verbose = strtol(key_values[1],NULL,10);
+        } else if (! strcmp(key_values[0],"use_rmsprop")) {
+            convnet_params->use_rmsprop = strtol(key_values[1],NULL,10);
+        } else if (! strcmp(key_values[0],"shuffle_training_samples")) {
+            convnet_params->shuffle_training_samples = strtof(key_values[1],NULL);
+        } else if (! strcmp(key_values[0],"mode")) {
+            convnet_params->mode = (char*) malloc(sizeof(char)*strlen(key_values[1]));
+            strcpy(convnet_params->mode,key_values[1]);
+            mode_defined = true;
+        } else if (! strcmp(key_values[0],"params_dir")) {
+            convnet_params->params_save_dir = (char*) malloc(sizeof(char)*strlen(key_values[1]));
+            strcpy(convnet_params->params_save_dir,key_values[1]);
+            params_dir_defined = true;
+        } else {
+            printf("ERROR: Unrecognized keyword %s, ignored\n",key_values[0]);
+        }
+    }
+    free(key_values[0]);
+    free(key_values[1]);
+    free(key_values);
+    if (! mode_defined) {
+        printf("ERROR: Mode not defined\n");
+        exit(1);
+    }
+    if (! params_dir_defined) {
+        printf("ERROR: Dir to load or save params not defined\n");
+        exit(1);
+    }
+    if (! data_set_defined) {
+        printf("ERROR: Data set not defined\n");
+        exit(1);
+    }
+    if (! correct_labels_defined && strcmp(convnet_params->mode,"test")) {
+        printf("ERROR: Correct labels not defined\n");
+        exit(1);
+    }
+    if (! hidden_layer_sizes_defined && strcmp(convnet_params->mode,"test")) {
+        printf("ERROR: Sizes of hidden layers not defined\n");
+        exit(1);
+    }
+    if (! minibatch_defined) {
+        printf("ERROR: Minibatch size not defined\n");
+        exit(1);
+    }
+    if (! labels_defined && strcmp(convnet_params->mode,"test")) {
+        printf("ERROR: Number of lables not defined\n");
+        exit(1);
+    }
+    if (! epochs_defined && strcmp(convnet_params->mode,"test")) {
+        printf("ERROR: Epochs not defined\n");
+        exit(1);
+    }
+    convnet_params->fc_param->hidden_layer_sizes[convnet_params->fc_param->network_depth-1] = convnet_params->fc_param->labels;
+    return convnet_params;
+}
