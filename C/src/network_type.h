@@ -56,7 +56,7 @@ typedef struct {
     float learning_rate;
     int epochs;
     int minibatch_size;
-    
+    char* mode;
     /* Below parameters are used to config the convolutional network with pattern 
     INPUT -> [[CONV -> RELU]*N -> POOL?]*M -> [FC -> RELU]*K -> FC
     K is not used here, since the config of full connected network will be stored in fcnet_param

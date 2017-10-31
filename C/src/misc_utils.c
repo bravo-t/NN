@@ -61,6 +61,36 @@ ThreeDMatrix* load3DMatrixFromFile(char* filename) {
     return M;
 }
 
+ThreeDMatrix** load3DMatricesFromFile(char* filename, int number_of_matrices) {
+    FILE* fp = fopen(filename, "r");
+    if (fp == NULL) {
+        printf("ERROR: Cannot open %s to read\n",filename);
+        exit(1);
+    }
+    ThreeDMatrix** M = malloc(sizeof(ThreeDMatrix*)*number_of_matrices);
+    for(int i=0;i<number_of_matrices;i++) {
+        char buff[8192];
+        fscanf(fp,"%s",buff);
+        int depth,height,width;
+        fscanf(fp,"%d",&depth);
+        fscanf(fp,"%d",&height);
+        fscanf(fp,"%d",&width);
+        float value;
+        M[i] = (ThreeDMatrix*) matrixMalloc(sizeof(ThreeDMatrix));
+        init3DMatrix(M[i],depth,height,width);
+        for(int z=0;z<depth;z++) {
+            for(int y=0;y<height;y++) {
+                for(int x=0;x<width;x++) {
+                    fscanf(fp,"%f",&value);
+                    M[i]->d[z][y][x] = value;
+                }
+            }
+        }
+    }
+    fclose(fp);
+    return M;
+}
+
 float matrixError(TwoDMatrix* a, TwoDMatrix* b) {
     if (a->height != b->height) {
         printf("HOLY ERROR: Height does not match, your code is really messed up\n");
@@ -1024,6 +1054,28 @@ int loadConvnetConfig(int* M,int* N,
     return 0;
 }
 
+int CSS2Array(char* str, int* array) {
+    int data[8192];
+    int counter = 0;
+    char* n = malloc(sizeof(char)*8192);
+    strcpy(n,str);
+    char* sizes_ptr = n;
+    for(char* token = strsep(&sizes_ptr, ","); token != NULL; token = strsep(&sizes_ptr, ",")) {
+        if (token[0] != '\0') {
+            data[counter] = strtol(token,NULL,10);
+            counter++;
+        }
+    }
+    
+    array = (int*) malloc(sizeof(int)*counter);
+    for(int i=0;i<counter;i++) {
+        
+        array[i] = data[i];
+    }
+    free(n);
+    return counter;
+}
+
 ConvnetParameters* readConvnetConfigFile(char* filename) {
     FILE* fp = fopen(filename,"r");
     if (fp == NULL) {
@@ -1047,7 +1099,9 @@ ConvnetParameters* readConvnetConfigFile(char* filename) {
     convnet_params->fcnet_param->decay_rate = 0.9;
     convnet_params->fcnet_param->eps = 1e-5;
     convnet_params->normalize_data_per_channel = true;
-    convnet_params->enable_learning_rate_step_decay = true;
+    convnet_params->enable_learning_rate_step_decay = false;
+    convnet_params->enable_learning_rate_exponential_decay = false;
+    convnet_params->enable_learning_rate_invert_t_decay = false;
     convnet_params->learning_rate_decay_unit = 250;
     convnet_params->learning_rate_decay_a0 = 1.0;
     convnet_params->learning_rate_decay_k = 0.9;
@@ -1065,7 +1119,6 @@ ConvnetParameters* readConvnetConfigFile(char* filename) {
     bool epochs_defined = false;
     bool minibatch_defined = false;
     bool number_of_samples_defined = false;
-    bool minibatch_size_defined = false;
     bool M_defined = false;
     bool N_defined = false;
     bool K_defined = false;
@@ -1089,10 +1142,13 @@ ConvnetParameters* readConvnetConfigFile(char* filename) {
             continue;
         }
         if (! strcmp(key_values[0],"data_set")) {
-            convnet_params->X = load3DMatrixFromFile(key_values[1]);
+            if (! number_of_samples_defined) {
+                printf("ERROR: number_of_samples must be defined before data_set\n");
+            }
+            convnet_params->X = load3DMatricesFromFile(key_values[1],convnet_params->number_of_samples);
             data_set_defined = true;
         } else if (! strcmp(key_values[0],"correct_labels")) {
-            convnet_params->fc_param->correct_labels = load2DMatrixFromFile(key_values[1]);
+            convnet_params->fcnet_param->correct_labels = load2DMatrixFromFile(key_values[1]);
             correct_labels_defined = true;
         } else if (! strcmp(key_values[0],"hidden_layer_sizes")) {
             int layers[8192];
@@ -1106,15 +1162,177 @@ ConvnetParameters* readConvnetConfigFile(char* filename) {
                     network_depth++;
                 }
             }
-            convnet_params->fc_param->hidden_layer_sizes = (int*) malloc(sizeof(int)*network_depth);
+            convnet_params->fcnet_param->hidden_layer_sizes = (int*) malloc(sizeof(int)*network_depth);
             for(int i=0;i<network_depth;i++) {
-                convnet_params->fc_param->hidden_layer_sizes[i] = layers[i];
+                convnet_params->fcnet_param->hidden_layer_sizes[i] = layers[i];
             }
-            convnet_params->fc_param->network_depth = network_depth;
+            convnet_params->fcnet_param->network_depth = network_depth;
             hidden_layer_sizes_defined = true;
+            K_defined = true;
             free(sizes);
+        /*
+        } else if (! strcmp(key_values[0],"filter_number")) { 
+            int data[8192];
+            int counter = 0;
+            char* n = malloc(sizeof(char)*8192);
+            strcpy(n,key_values[1]);
+            char* sizes_ptr = n;
+            for(char* token = strsep(&sizes_ptr, ","); token != NULL; token = strsep(&sizes_ptr, ",")) {
+                if (token[0] != '\0') {
+                    data[counter] = strtol(token,NULL,10);
+                    counter++;
+                }
+            }
+            
+            convnet_params->filter_number = (int*) malloc(sizeof(int)*counter);
+            for(int i=0;i<counter;i++) {
+                
+                convnet_params->filter_number[i] = data[i];
+            }
+            filter_number_defined = true;
+            free(n);
+        } else if (! strcmp(key_values[0],"filter_stride_x")) { 
+            int data[8192];
+            int counter = 0;
+            char* n = malloc(sizeof(char)*8192);
+            strcpy(n,key_values[1]);
+            char* sizes_ptr = n;
+            for(char* token = strsep(&sizes_ptr, ","); token != NULL; token = strsep(&sizes_ptr, ",")) {
+                if (token[0] != '\0') {
+                    data[counter] = strtol(token,NULL,10);
+                    counter++;
+                }
+            }
+            
+            convnet_params->filter_stride_x = (int*) malloc(sizeof(int)*counter);
+            for(int i=0;i<counter;i++) {
+                
+                convnet_params->filter_stride_x[i] = data[i];
+            }
+            filter_stride_x_defined = true;
+            free(n);
+        } else if (! strcmp(key_values[0],"filter_stride_y")) { 
+            int data[8192];
+            int counter = 0;
+            char* n = malloc(sizeof(char)*8192);
+            strcpy(n,key_values[1]);
+            char* sizes_ptr = n;
+            for(char* token = strsep(&sizes_ptr, ","); token != NULL; token = strsep(&sizes_ptr, ",")) {
+                if (token[0] != '\0') {
+                    data[counter] = strtol(token,NULL,10);
+                    counter++;
+                }
+            }
+            
+            convnet_params->filter_stride_y = (int*) malloc(sizeof(int)*counter);
+            for(int i=0;i<counter;i++) {
+                
+                convnet_params->filter_stride_y[i] = data[i];
+            }
+            filter_stride_y_defined = true;
+            free(n);
+        } else if (! strcmp(key_values[0],"filter_stride")) { 
+            int data[8192];
+            int counter = 0;
+            char* n = malloc(sizeof(char)*8192);
+            strcpy(n,key_values[1]);
+            char* sizes_ptr = n;
+            for(char* token = strsep(&sizes_ptr, ","); token != NULL; token = strsep(&sizes_ptr, ",")) {
+                if (token[0] != '\0') {
+                    data[counter] = strtol(token,NULL,10);
+                    counter++;
+                }
+            }
+            
+            convnet_params->filter_stride_x = (int*) malloc(sizeof(int)*counter);
+            convnet_params->filter_stride_y = (int*) malloc(sizeof(int)*counter);
+            for(int i=0;i<counter;i++) {
+                
+                convnet_params->filter_stride_x[i] = data[i];
+                convnet_params->filter_stride_y[i] = data[i];
+            }
+            filter_stride_x_defined = true;
+            filter_stride_y_defined = true;
+            free(n);
+        */
+        } else if (! strcmp(key_values[0],"number_of_samples")) { 
+            convnet_params->number_of_samples = strtol(key_values[1],NULL,10);
+            number_of_samples_defined = true;
+        } else if (! strcmp(key_values[0],"filter_number")) { 
+            CSS2Array(key_values[1],convnet_params->filter_number);
+            filter_number_defined = true;
+        } else if (! strcmp(key_values[0],"filter_stride_x")) { 
+            CSS2Array(key_values[1],convnet_params->filter_stride_x);
+            filter_stride_x_defined = true;
+        } else if (! strcmp(key_values[0],"filter_stride_y")) { 
+            CSS2Array(key_values[1],convnet_params->filter_stride_y);
+            filter_stride_y_defined = true;
+        } else if (! strcmp(key_values[0],"filter_stride")) { 
+            CSS2Array(key_values[1],convnet_params->filter_stride_x);
+            filter_stride_x_defined = true;
+            CSS2Array(key_values[1],convnet_params->filter_stride_y);
+            filter_stride_y_defined = true;
+        } else if (! strcmp(key_values[0],"filter_height")) { 
+            CSS2Array(key_values[1],convnet_params->filter_height);
+            filter_height_defined = true;
+        } else if (! strcmp(key_values[0],"filter_width")) { 
+            CSS2Array(key_values[1],convnet_params->filter_width);
+            filter_width_defined = true;
+        } else if (! strcmp(key_values[0],"filter_size")) { 
+            CSS2Array(key_values[1],convnet_params->filter_height);
+            filter_height_defined = true;
+            CSS2Array(key_values[1],convnet_params->filter_width);
+            filter_width_defined = true;
+        } else if (! strcmp(key_values[0],"enable_maxpooling")) { 
+            int* tmp = NULL;
+            CSS2Array(key_values[1],tmp);
+            convnet_params->enable_maxpooling = malloc(sizeof(bool)*convnet_params->M);
+            for(int i=0;i<convnet_params->M;i++) {
+                convnet_params->enable_maxpooling[i] = (bool) tmp[i];
+            }
+            free(tmp);
+            enable_maxpooling_defined = true;
+        } else if (! strcmp(key_values[0],"pooling_stride_x")) { 
+            CSS2Array(key_values[1],convnet_params->pooling_stride_x);
+            pooling_stride_x_defined = true;
+        } else if (! strcmp(key_values[0],"pooling_stride_y")) { 
+            CSS2Array(key_values[1],convnet_params->pooling_stride_y);
+            pooling_stride_y_defined = true;
+        } else if (! strcmp(key_values[0],"pooling_stride")) { 
+            CSS2Array(key_values[1],convnet_params->pooling_stride_x);
+            pooling_stride_x_defined = true;
+            CSS2Array(key_values[1],convnet_params->pooling_stride_y);
+            pooling_stride_y_defined = true;
+        } else if (! strcmp(key_values[0],"pooling_width")) { 
+            CSS2Array(key_values[1],convnet_params->pooling_width);
+            pooling_width_defined = true;
+        } else if (! strcmp(key_values[0],"pooling_height")) { 
+            CSS2Array(key_values[1],convnet_params->pooling_height);
+            pooling_height_defined = true;
+        } else if (! strcmp(key_values[0],"pooling_size")) { 
+            CSS2Array(key_values[1],convnet_params->pooling_width);
+            pooling_width_defined = true;
+            CSS2Array(key_values[1],convnet_params->pooling_height);
+            pooling_height_defined = true;
+        } else if (! strcmp(key_values[0],"padding_width")) { 
+            CSS2Array(key_values[1],convnet_params->padding_width);
+            padding_width_defined = true;
+        } else if (! strcmp(key_values[0],"padding_height")) { 
+            CSS2Array(key_values[1],convnet_params->padding_height);
+            padding_height_defined = true;
+        } else if (! strcmp(key_values[0],"padding_size")) { 
+            CSS2Array(key_values[1],convnet_params->padding_width);
+            padding_width_defined = true;
+            CSS2Array(key_values[1],convnet_params->padding_height);
+            padding_height_defined = true;
+        } else if (! strcmp(key_values[0],"M")) {
+            convnet_params->M = strtol(key_values[1],NULL,10);
+            M_defined = true;
+        } else if (! strcmp(key_values[0],"N")) {
+            convnet_params->N = strtol(key_values[1],NULL,10);
+            N_defined = true;
         } else if (! strcmp(key_values[0],"labels")) {
-            convnet_params->fc_param->labels = strtol(key_values[1],NULL,10);
+            convnet_params->fcnet_param->labels = strtol(key_values[1],NULL,10);
             labels_defined = true;
         } else if (! strcmp(key_values[0],"minibatch_size")) {
             convnet_params->minibatch_size = strtol(key_values[1],NULL,10);
@@ -1126,6 +1344,24 @@ ConvnetParameters* readConvnetConfigFile(char* filename) {
         } else if (! strcmp(key_values[0],"epochs")) {
             convnet_params->epochs = strtol(key_values[1],NULL,10);
             epochs_defined = true;
+        } else if (! strcmp(key_values[0],"vertically_flip_training_samples")) {
+            convnet_params->vertically_flip_training_samples = strtol(key_values[1],NULL,10);
+        } else if (! strcmp(key_values[0],"horizontally_flip_training_samples")) {
+            convnet_params->horizontally_flip_training_samples = strtol(key_values[1],NULL,10);
+        } else if (! strcmp(key_values[0],"rmsprop_decay_rate")) {
+            convnet_params->rmsprop_decay_rate = strtof(key_values[1],NULL);
+        } else if (! strcmp(key_values[0],"rmsprop_eps")) {
+            convnet_params->rmsprop_eps = strtof(key_values[1],NULL);
+        } else if (! strcmp(key_values[0],"normalize_data_per_channel")) {
+            convnet_params->normalize_data_per_channel= strtol(key_values[1],NULL,10);
+        } else if (! strcmp(key_values[0],"enable_learning_rate_step_decay")) {
+            convnet_params->enable_learning_rate_step_decay = strtol(key_values[1],NULL,10);
+        } else if (! strcmp(key_values[0],"learning_rate_decay_unit")) {
+            convnet_params->learning_rate_decay_unit = strtol(key_values[1],NULL,10);
+        } else if (! strcmp(key_values[0],"learning_rate_decay_a0")) {
+            convnet_params->learning_rate_decay_a0 = strtof(key_values[1],NULL);
+        } else if (! strcmp(key_values[0],"learning_rate_decay_k")) {
+            convnet_params->learning_rate_decay_k = strtof(key_values[1],NULL);
         } else if (! strcmp(key_values[0],"verbose")) {
             convnet_params->verbose = strtol(key_values[1],NULL,10);
         } else if (! strcmp(key_values[0],"use_rmsprop")) {
@@ -1150,6 +1386,9 @@ ConvnetParameters* readConvnetConfigFile(char* filename) {
     if (! mode_defined) {
         printf("ERROR: Mode not defined\n");
         exit(1);
+    }
+    if (! number_of_samples_defined) {
+        printf("ERROR: number_of_samples not defined\n");
     }
     if (! params_dir_defined) {
         printf("ERROR: Dir to load or save params not defined\n");
@@ -1179,6 +1418,76 @@ ConvnetParameters* readConvnetConfigFile(char* filename) {
         printf("ERROR: Epochs not defined\n");
         exit(1);
     }
-    convnet_params->fc_param->hidden_layer_sizes[convnet_params->fc_param->network_depth-1] = convnet_params->fc_param->labels;
+    if (! M_defined) {
+        printf("ERROR: M is not defined\n");
+        exit(1);
+    }
+    if (! N_defined) {
+        printf("ERROR: N is not defined\n");
+        exit(1);
+    }
+    if (! K_defined) {
+        printf("ERROR: Sizes of hidden layers in fully connected network are not defined\n");
+        exit(1);
+    }
+    if (! filter_stride_y_defined) {
+        printf("ERROR: Strides of filters in Y direction are not defined\n");
+        exit(1);
+    }
+    if (! filter_stride_x_defined) {
+        printf("ERROR: Strides of filters in X direction are not defined\n");
+        exit(1);
+    }
+    if (! filter_height_defined) {
+        printf("ERROR: Heights of filters are not defined\n");
+        exit(1);
+    }
+    if (! filter_width_defined) {
+        printf("ERROR: Widths of filters are not defined\n");
+        exit(1);
+    }
+    if (! filter_number_defined) {
+        printf("ERROR: Numbers of filters in each convolutional layer are not defined\n");
+        exit(1);
+    }
+    if (! enable_maxpooling_defined) {
+        printf("ERROR: No info provided to enable max pooling in each convolutional layer\n");
+        exit(1);
+    }
+    if (! pooling_height_defined) {
+        printf("ERROR: Heights of pooling windows are not defined\n");
+        exit(1);
+    }
+    if (! pooling_width_defined) {
+        printf("ERROR: Widths of pooling windows not defined\n");
+        exit(1);
+    }
+    if (! pooling_stride_y_defined) {
+        printf("ERROR: Strides of pooling windows in Y direction are not defined\n");
+        exit(1);
+    }
+    if (! pooling_stride_x_defined) {
+        printf("ERROR: Strides of pooling windows in Y direction are not defined\n");
+        exit(1);
+    }
+    if (! padding_height_defined) {
+        printf("ERROR: Heights of zero padding in each layers are not defined\n");
+        exit(1);
+    }
+    if (! padding_width_defined) {
+        printf("ERROR: Widths of zero padding in each layers are not defined\n");
+        exit(1);
+    }
+    convnet_params->fcnet_param->hidden_layer_sizes[convnet_params->fcnet_param->network_depth-1] = convnet_params->fcnet_param->labels;
+    convnet_params->fcnet_param->use_rmsprop = convnet_params->use_rmsprop;
+    convnet_params->fcnet_param->decay_rate = convnet_params->rmsprop_decay_rate;
+    convnet_params->fcnet_param->eps = convnet_params->rmsprop_eps;
+    convnet_params->fcnet_param->learning_rate = convnet_params->learning_rate;
+    convnet_params->fcnet_param->enable_learning_rate_step_decay = convnet_params->enable_learning_rate_step_decay;
+    convnet_params->fcnet_param->enable_learning_rate_exponential_decay = convnet_params->enable_learning_rate_exponential_decay;
+    convnet_params->fcnet_param->enable_learning_rate_invert_t_decay = convnet_params->enable_learning_rate_invert_t_decay;
+    convnet_params->fcnet_param->learning_rate_decay_unit = convnet_params->learning_rate_decay_unit;
+    convnet_params->fcnet_param->learning_rate_decay_a0 = convnet_params->learning_rate_decay_a0;
+    convnet_params->fcnet_param->learning_rate_decay_k = convnet_params->learning_rate_decay_k;
     return convnet_params;
 }

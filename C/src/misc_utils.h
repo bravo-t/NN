@@ -21,6 +21,7 @@ FCParameters* readNetworkConfigFile(char* filename);
 char determineMemoryUnit(unsigned int n);
 float memoryUsageReadable(unsigned long long int n, char unit);
 ThreeDMatrix* load3DMatrixFromFile(char* filename);
+ThreeDMatrix** load3DMatricesFromFile(char* filename, int number_of_matrices);
 float matrixError3D(ThreeDMatrix* a, ThreeDMatrix* b);
 void print3DMatrix(ThreeDMatrix *M);
 void check3DMatrixDiff(ThreeDMatrix* a, ThreeDMatrix* b, float thres);
@@ -55,5 +56,8 @@ int loadConvnetConfig(int* M,int* N,
     ThreeDMatrix***** F,ThreeDMatrix***** b,
     TwoDMatrix*** Ws,TwoDMatrix*** bs,
     char* dir);
+
+int CSS2Array(char* str, int* array);
+ConvnetParameters* readConvnetConfigFile(char* filename);
 
 #endif
