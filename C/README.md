@@ -1,6 +1,10 @@
-## A neurual network framework written in C
+# A neural network framework written in C
+### Table of contents
+1. [Fully connected network](#fully-connected-network)
+2. [Convolutional neural network](#convolutional-neural-network)
+## Fully connected network
 * What is this?
-  * This is a fully connected neural network "engine" I wrote to figure out how a neural network works.
+  * This is a fully connected neural network engine I wrote to figure out how a neural network works.
   * The activation function used in this network is leaky ReLU, and the classifier is softmax.
   * It uses SGD as the default update strategy, and it also has momentum update, NAG update and RMSProp built in.
   * In "train" mode, this program takes in a configuration file, trians itself, and dumps out the learned weights.
@@ -61,5 +65,12 @@
 ```
   * And as specified, you will get all learned weights dumped out in [network.params](network.params), which can be loaded later for testing
 
-* Note  
-The convolutional neurual network part of this project is also completed, however it doesn't have a UI for you to run it like the fully connected network above. I will implement it in a few days, before that happens, you can check [mnist.c](mnist.c), which is the main function to run CNN on MNIST dataset, if you want to take a peek at the network. Also currently `make` is made to compile mnist.c.
+## Convolutional neural network
+* What is this?
+  
+* How to compile
+  
+* How to use
+  
+* Example
+
