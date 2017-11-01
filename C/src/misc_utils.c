@@ -268,6 +268,7 @@ void write3DMatrix(FILE* fp, ThreeDMatrix* M) {
 
 void getKeyValueFromFile(FILE* fp, char** retval) {
     char* line = malloc(sizeof(char)*200);
+    memset(line,0,sizeof(char)*200);
     char* line_start = line;
     char delim[] = " =";
     fgets(line, 200, fp);
@@ -285,17 +286,13 @@ void getKeyValueFromFile(FILE* fp, char** retval) {
         }
     }
     char* token=strsep(&line,delim);
-    //printf("DEBUG: token=%s,line=%s\n",token,line);
     while ((token[0] == '\0' || token[0] == ' ' || token[0] == '=') && line != NULL) {
         token=strsep(&line,delim);
-        //printf("DEBUG: token=%s,line=%s\n",token,line);
     }
     strcpy(retval[0],token);
     token=strsep(&line,delim);
-    //printf("DEBUG: token=%s,line=%s\n",token,line);
     while ((token[0] == '\0' || token[0] == ' ' || token[0] == '=') && line != NULL) {
         token=strsep(&line,delim);
-        //printf("DEBUG: token=%s,line=%s\n",token,line);
     }
     if (line != NULL) {
         strcpy(retval[1],strcat(token,line));
@@ -529,6 +526,8 @@ FCParameters* readNetworkConfigFile(char* filename) {
             network_params->shuffle_training_samples = strtof(key_values[1],NULL);
         } else if (! strcmp(key_values[0],"batchnorm_eps")) {
             network_params->batchnorm_eps = strtof(key_values[1],NULL);
+        } else if (! strcmp(key_values[0],"regulization_strength")) {
+            network_params->reg_strength = strtof(key_values[1],NULL);
         } else if (! strcmp(key_values[0],"mode")) {
             network_params->mode = (char*) malloc(sizeof(char)*strlen(key_values[1]));
             strcpy(network_params->mode,key_values[1]);
@@ -1054,7 +1053,7 @@ int loadConvnetConfig(int* M,int* N,
     return 0;
 }
 
-int CSS2Array(char* str, int* array) {
+int CSS2Array(char* str, int** array) {
     int data[8192];
     int counter = 0;
     char* n = malloc(sizeof(char)*8192);
@@ -1067,10 +1066,10 @@ int CSS2Array(char* str, int* array) {
         }
     }
     
-    array = (int*) malloc(sizeof(int)*counter);
+    *array = (int*) malloc(sizeof(int)*counter);
     for(int i=0;i<counter;i++) {
         
-        array[i] = data[i];
+        (*array)[i] = data[i];
     }
     free(n);
     return counter;
@@ -1259,33 +1258,33 @@ ConvnetParameters* readConvnetConfigFile(char* filename) {
             convnet_params->number_of_samples = strtol(key_values[1],NULL,10);
             number_of_samples_defined = true;
         } else if (! strcmp(key_values[0],"filter_number")) { 
-            CSS2Array(key_values[1],convnet_params->filter_number);
+            CSS2Array(key_values[1],&(convnet_params->filter_number));
             filter_number_defined = true;
         } else if (! strcmp(key_values[0],"filter_stride_x")) { 
-            CSS2Array(key_values[1],convnet_params->filter_stride_x);
+            CSS2Array(key_values[1],&(convnet_params->filter_stride_x));
             filter_stride_x_defined = true;
         } else if (! strcmp(key_values[0],"filter_stride_y")) { 
-            CSS2Array(key_values[1],convnet_params->filter_stride_y);
+            CSS2Array(key_values[1],&(convnet_params->filter_stride_y));
             filter_stride_y_defined = true;
         } else if (! strcmp(key_values[0],"filter_stride")) { 
-            CSS2Array(key_values[1],convnet_params->filter_stride_x);
+            CSS2Array(key_values[1],&(convnet_params->filter_stride_x));
             filter_stride_x_defined = true;
-            CSS2Array(key_values[1],convnet_params->filter_stride_y);
+            CSS2Array(key_values[1],&(convnet_params->filter_stride_y));
             filter_stride_y_defined = true;
         } else if (! strcmp(key_values[0],"filter_height")) { 
-            CSS2Array(key_values[1],convnet_params->filter_height);
+            CSS2Array(key_values[1],&(convnet_params->filter_height));
             filter_height_defined = true;
         } else if (! strcmp(key_values[0],"filter_width")) { 
-            CSS2Array(key_values[1],convnet_params->filter_width);
+            CSS2Array(key_values[1],&(convnet_params->filter_width));
             filter_width_defined = true;
         } else if (! strcmp(key_values[0],"filter_size")) { 
-            CSS2Array(key_values[1],convnet_params->filter_height);
+            CSS2Array(key_values[1],&(convnet_params->filter_height));
             filter_height_defined = true;
-            CSS2Array(key_values[1],convnet_params->filter_width);
+            CSS2Array(key_values[1],&(convnet_params->filter_width));
             filter_width_defined = true;
         } else if (! strcmp(key_values[0],"enable_maxpooling")) { 
             int* tmp = NULL;
-            CSS2Array(key_values[1],tmp);
+            CSS2Array(key_values[1],&(tmp));
             convnet_params->enable_maxpooling = malloc(sizeof(bool)*convnet_params->M);
             for(int i=0;i<convnet_params->M;i++) {
                 convnet_params->enable_maxpooling[i] = (bool) tmp[i];
@@ -1293,37 +1292,37 @@ ConvnetParameters* readConvnetConfigFile(char* filename) {
             free(tmp);
             enable_maxpooling_defined = true;
         } else if (! strcmp(key_values[0],"pooling_stride_x")) { 
-            CSS2Array(key_values[1],convnet_params->pooling_stride_x);
+            CSS2Array(key_values[1],&(convnet_params->pooling_stride_x));
             pooling_stride_x_defined = true;
         } else if (! strcmp(key_values[0],"pooling_stride_y")) { 
-            CSS2Array(key_values[1],convnet_params->pooling_stride_y);
+            CSS2Array(key_values[1],&(convnet_params->pooling_stride_y));
             pooling_stride_y_defined = true;
         } else if (! strcmp(key_values[0],"pooling_stride")) { 
-            CSS2Array(key_values[1],convnet_params->pooling_stride_x);
+            CSS2Array(key_values[1],&(convnet_params->pooling_stride_x));
             pooling_stride_x_defined = true;
-            CSS2Array(key_values[1],convnet_params->pooling_stride_y);
+            CSS2Array(key_values[1],&(convnet_params->pooling_stride_y));
             pooling_stride_y_defined = true;
         } else if (! strcmp(key_values[0],"pooling_width")) { 
-            CSS2Array(key_values[1],convnet_params->pooling_width);
+            CSS2Array(key_values[1],&(convnet_params->pooling_width));
             pooling_width_defined = true;
         } else if (! strcmp(key_values[0],"pooling_height")) { 
-            CSS2Array(key_values[1],convnet_params->pooling_height);
+            CSS2Array(key_values[1],&(convnet_params->pooling_height));
             pooling_height_defined = true;
         } else if (! strcmp(key_values[0],"pooling_size")) { 
-            CSS2Array(key_values[1],convnet_params->pooling_width);
+            CSS2Array(key_values[1],&(convnet_params->pooling_width));
             pooling_width_defined = true;
-            CSS2Array(key_values[1],convnet_params->pooling_height);
+            CSS2Array(key_values[1],&(convnet_params->pooling_height));
             pooling_height_defined = true;
         } else if (! strcmp(key_values[0],"padding_width")) { 
-            CSS2Array(key_values[1],convnet_params->padding_width);
+            CSS2Array(key_values[1],&(convnet_params->padding_width));
             padding_width_defined = true;
         } else if (! strcmp(key_values[0],"padding_height")) { 
-            CSS2Array(key_values[1],convnet_params->padding_height);
+            CSS2Array(key_values[1],&(convnet_params->padding_height));
             padding_height_defined = true;
         } else if (! strcmp(key_values[0],"padding_size")) { 
-            CSS2Array(key_values[1],convnet_params->padding_width);
+            CSS2Array(key_values[1],&(convnet_params->padding_width));
             padding_width_defined = true;
-            CSS2Array(key_values[1],convnet_params->padding_height);
+            CSS2Array(key_values[1],&(convnet_params->padding_height));
             padding_height_defined = true;
         } else if (! strcmp(key_values[0],"M")) {
             convnet_params->M = strtol(key_values[1],NULL,10);
@@ -1339,7 +1338,7 @@ ConvnetParameters* readConvnetConfigFile(char* filename) {
             minibatch_defined = true;
         } else if (! strcmp(key_values[0],"alpha")) {
             convnet_params->alpha = strtof(key_values[1],NULL);
-        } else if (! strcmp(key_values[0],"learing_rate")) {
+        } else if (! strcmp(key_values[0],"learning_rate")) {
             convnet_params->learning_rate = strtof(key_values[1],NULL);
         } else if (! strcmp(key_values[0],"epochs")) {
             convnet_params->epochs = strtol(key_values[1],NULL,10);
@@ -1356,6 +1355,10 @@ ConvnetParameters* readConvnetConfigFile(char* filename) {
             convnet_params->normalize_data_per_channel= strtol(key_values[1],NULL,10);
         } else if (! strcmp(key_values[0],"enable_learning_rate_step_decay")) {
             convnet_params->enable_learning_rate_step_decay = strtol(key_values[1],NULL,10);
+        } else if (! strcmp(key_values[0],"enable_learning_rate_exponential_decay")) {
+            convnet_params->enable_learning_rate_exponential_decay = strtol(key_values[1],NULL,10);
+        } else if (! strcmp(key_values[0],"enable_learning_rate_invert_t_decay")) {
+            convnet_params->enable_learning_rate_invert_t_decay = strtol(key_values[1],NULL,10);
         } else if (! strcmp(key_values[0],"learning_rate_decay_unit")) {
             convnet_params->learning_rate_decay_unit = strtol(key_values[1],NULL,10);
         } else if (! strcmp(key_values[0],"learning_rate_decay_a0")) {
@@ -1366,7 +1369,9 @@ ConvnetParameters* readConvnetConfigFile(char* filename) {
             convnet_params->verbose = strtol(key_values[1],NULL,10);
         } else if (! strcmp(key_values[0],"use_rmsprop")) {
             convnet_params->use_rmsprop = strtol(key_values[1],NULL,10);
-        } else if (! strcmp(key_values[0],"shuffle_training_samples")) {
+        } else if (! strcmp(key_values[0],"regulization_strength")) {
+            convnet_params->fcnet_param->reg_strength = strtof(key_values[1],NULL);
+        }  else if (! strcmp(key_values[0],"shuffle_training_samples")) {
             convnet_params->shuffle_training_samples = strtof(key_values[1],NULL);
         } else if (! strcmp(key_values[0],"mode")) {
             convnet_params->mode = (char*) malloc(sizeof(char)*strlen(key_values[1]));

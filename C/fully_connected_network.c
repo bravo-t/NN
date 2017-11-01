@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
     FCParameters* network_params = readNetworkConfigFile(argv[1]);
     if (strcmp(network_params->mode,"train")) {
         TwoDMatrix* scores = NULL;
-        test(network_params,socres);
+        test(network_params,scores);
     } else {
         train(network_params);
     }

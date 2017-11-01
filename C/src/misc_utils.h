@@ -57,7 +57,7 @@ int loadConvnetConfig(int* M,int* N,
     TwoDMatrix*** Ws,TwoDMatrix*** bs,
     char* dir);
 
-int CSS2Array(char* str, int* array);
+int CSS2Array(char* str, int** array);
 ConvnetParameters* readConvnetConfigFile(char* filename);
 
 #endif

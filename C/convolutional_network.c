@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <malloc.h>
 #include <math.h>
+#include <string.h>
 #include "src/network_type.h"
 #include "src/matrix_operations.h"
 #include "src/layers.h"
