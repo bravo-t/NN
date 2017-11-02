@@ -67,10 +67,53 @@
 
 ## Convolutional neural network
 * What is this?
-  
+  * This is the convolutional neural network engine that I wrote to take a peek at CNNs
+  * The network has RMSProp built in to speed up the learning process, as vanilla update isn't going to get something meaningful in reasonable time
+  * As the fully connected network, the CNN engine also takes a configuration file, and dumps out the learned weights after several epochs in train mode
+  * And it will also load the learned weights and perform test on new data
 * How to compile
-  
+  * Clone, or download all the source files.
+  * Compile with `make`.
 * How to use
-  
+  * A configuration file is needed to tell the engine how will be network look like. The syntax is the same as the fully connected network config fule, the example can be found at [cnn.config](cnn.config).
+    * `data_set` is the data that will go through training, or testing. The value points to a ASCII file like it did before, but now the file contains 3D matrices.
+    * `number_of_samples` is the number of matrices you have in the file pointed by `data_set`.
+    * `correct_labels` is the same meaning and the contents it points to is also the same as before.
+    * `M`, `N` and `hidden_layer_sizes` are the parameters the determine how are conv layers, pooling layers and fully connected layers organized. The style was taken from CS231n, which is `INPUT -> [[CONV -> RELU]*N -> POOL?]*M -> [FC -> RELU]*K -> FC`, where `K` is the number of elements in `hidden_layer_sizes`. You can refer to [ConvNet Architectures part of CS231n](http://cs231n.github.io/convolutional-networks/#architectures) for detailed explanation.
+    * `filter_number` is the numbers of filters in each conv layer. There should be `M*N` elements for this keyword.
+      * For example in [cnn.config](cnn.config), `filter_number = 16,16` means each conv layer will have 16 filters.
+    * `filter_stride` is the stride for filters in each conv layer. There should also be `M*N` elements for it.
+      * I know it may look strange as nobody did this, but you can actually specify different stride for X and Y direction with `filter_stride_x` and `filter_stride_y`
+    * `filter_size` is the sizes the filters in each conv layer. Again, `M*N` elements for it.
+      * You can use `filter_height` and `filter_width`, if filters are not square.
+    * `enable_maxpooling` specifies if the `?` in `[[CONV -> RELU]*N -> POOL?]*M` stands true. There should be `M` elements.
+    * `pooling_stride` tells the network the strides it will use for each pooling layer. `M` elements in it.
+      * There're also `pooling_stride_x` and `pooling_stride_y` for you
+    * `pooling_size` is the sizes of the pooling window. There should be `M` elements.
+      * Use `pooling_width` and `pooling_height` is pooling window is rectangular.
+    * `padding_size` is the sizes for zero padding before each conv layer, so there should be `M*N` elements in it.
+      * Again, `padding_width` and `padding_height` are there for you.
+    * `enable_learning_rate_step_decay`, `enable_learning_rate_exponential_decay` and `enable_learning_rate_invert_t_decay` are parameters that enable learning rate decay. `learning_rate_decay_a0` and `learning_rate_decay_k` are parameters that tune the delay step. You can check [Annealing the learning rate from CS231n](http://cs231n.github.io/neural-networks-3/#anneal). A learning rate decay will be performed every `learning_rate_decay_unit` epochs.
+    * `shuffle_training_samples` specified for every certain epochs, the input data set will be shuffled. `vertically_flip_training_samples` and `horizontally_flip_training_samples` tells the network if random horizontally flip and/or vertically flip input data will be performed during each shuffling.
+  * Format for the 3D matrices file
+    * Basically it's the same like 2D matrix file, only there might be more than one matrix, and each matrix will a depth dimension added.
+    * This is an example, of 2 3D matrices, and each matrix is 2 unit deep, 3 unit high, and 4 unit wide:
+```
+      X1 2 3 4
+      x000 x001 x002 x003
+      x010 x011 x012 x013
+      x020 x021 x022 x023
+      x100 x101 x102 x103
+      x110 x111 x112 x113
+      x120 x121 x122 x123
+      X2 2 3 4
+      x000 x001 x002 x003
+      x010 x011 x012 x013
+      x020 x021 x022 x023
+      x100 x101 x102 x103
+      x110 x111 x112 x113
+      x120 x121 x122 x123
+```
 * Example
+  * I will add it later
 
