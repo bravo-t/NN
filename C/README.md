@@ -97,6 +97,7 @@
     * `shuffle_training_samples` specified for every certain epochs, the input data set will be shuffled. `vertically_flip_training_samples` and `horizontally_flip_training_samples` tells the network if random horizontally flip and/or vertically flip input data will be performed during each shuffling.
   * Format for the 3D matrices file
     * Basically it's the same like 2D matrix file, only there might be more than one matrix, and each matrix will a depth dimension added.
+    * [This file](test_data/mnist.txt) is the ASCII format of the first 10 samples from MNIST data set.
     * This is an example, of 2 3D matrices, and each matrix is 2 unit deep, 3 unit high, and 4 unit wide:
 ```
       X1 2 3 4
