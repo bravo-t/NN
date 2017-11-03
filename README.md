@@ -1,3 +1,8 @@
-# A framework for neural network written in C
-* Please check [README](C/README.md) for the C version
-* I have the plan to implement this with Verilog, but wait for me to finish the C version.
+# A framework for neural network
+* Fully connected neural network and convolutional neural network written in C has finished.
+  * [Readme for fully connected network](C/README.md#fully-connected-network)
+  * [Readme for convolutional network](C/README.md#convolutional-neural-network)
+* Two objectives:
+  1. Enhance the C programs to make them multi-threaded, especially for the CNN.
+  2. Implement the verilog version of the two networks.
+  

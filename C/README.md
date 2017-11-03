@@ -32,6 +32,7 @@
       * The first line contains 3 parts: a name (pick one whatever you like, cannot has spaces in it), height of the dataset, width of the dataset.
       * The rest of the lines are just data.
       * Correct labels are matrixes with a width of 1, and a same height as the dataset, represents the correct index of the scores, which contains `labels` elements.
+      * Run it using `./fully_connected_network fc.config`.
       * Below is an example:
 ```
       W 3 6
@@ -69,7 +70,7 @@
 * What is this?
   * This is the convolutional neural network engine that I wrote to take a peek at CNNs
   * The network has RMSProp built in to speed up the learning process, as vanilla update isn't going to get something meaningful in reasonable time
-  * As the fully connected network, the CNN engine also takes a configuration file, and dumps out the learned weights after several epochs in train mode
+  * Like the fully connected network, the CNN engine also takes a configuration file, and dumps out the learned weights after several epochs in train mode
   * And it will also load the learned weights and perform test on new data
 * How to compile
   * Clone, or download all the source files.
@@ -116,5 +117,10 @@
       x120 x121 x122 x123
 ```
 * Example
-  * I will add it later
+  * I created a simple CNN with MNIST data set, the network configuration file is [cnn.config](cnn.config).
+  * As mentioned, the input data is [mnist.txt](test_data/mnist.txt), and the correct labels for these input data is [cnn_labels.txt](test_data/cnn_labels.txt). To make the data size smaller, the input data only contains first 10 images from MNIST.
+  * Run the example with `./convolutional_network cnn.config` and you will see the results come out in a while.
+* Note
+  * The program is single-threaded, so it runs very slowly. I will try to add multi-threading to it, maybe.
+
 
