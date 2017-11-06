@@ -45,6 +45,7 @@ typedef struct {
     bool use_batchnorm;
     float batchnorm_momentum;
     float batchnorm_eps;
+    int save_checkpoint;
     char* params_save_dir;
     char* mode;
 } FCParameters;
@@ -93,6 +94,7 @@ typedef struct {
     float rmsprop_decay_rate;
     float rmsprop_eps;
     bool write_filters_as_images;
+    int save_checkpoint;
     char* filter_image_dir;
     char* params_save_dir;
     FCParameters* fcnet_param;

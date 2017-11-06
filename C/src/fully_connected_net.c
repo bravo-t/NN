@@ -43,6 +43,7 @@ int train(FCParameters* network_params) {
     float learning_rate_decay_a0 = network_params->learning_rate_decay_a0;
     float learning_rate_decay_k = network_params->learning_rate_decay_k;
     int shuffle_training_samples = network_params->shuffle_training_samples;
+    int save_checkpoint = network_params->save_checkpoint;
 
     bool verbose = network_params->verbose;
     // Below are control variables for optimizers

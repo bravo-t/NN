@@ -57,6 +57,7 @@ int trainConvnet(ConvnetParameters* network_params) {
     float learning_rate_decay_a0 = network_params->learning_rate_decay_a0;
     float learning_rate_decay_k = network_params->learning_rate_decay_k;
     char* param_dir = network_params->params_save_dir;
+    int save_checkpoint = network_params->save_checkpoint;
     // Turn these features off to reduce the complexity for now
     network_params->fcnet_param->use_momentum_update = false;
     network_params->fcnet_param->use_batchnorm = false;
