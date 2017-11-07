@@ -595,6 +595,24 @@ int trainConvnet(ConvnetParameters* network_params) {
                 training_data,
                 network_params->fcnet_param->correct_labels);
         }
+        if (save_checkpoint != 0 && && e != 0 && e % save_checkpoint == 0) {
+            // Save checkpoints
+            char checkpoint_counter[1000];
+            sprintf(checkpoint_counter,"%d",e/save_checkpoint);
+            int checkpoint_length = 20 + strlen(checkpoint_counter);
+            char* checkpoint_filename = malloc(sizeof(char)*checkpoint_length);
+            strcpy(checkpoint_filename,"checkpoint_");
+            strcat(checkpoint_filename,checkpoint_counter);
+            strcat(checkpoint_filename,.params);
+            dumpConvnetConfig(M,N,
+                filter_number,filter_stride_x, filter_stride_y, filter_width, filter_height, 
+                enable_maxpooling,pooling_stride_x,pooling_stride_y,pooling_width,pooling_height,
+                padding_width, padding_height,
+                alpha, normalize_data_per_channel, K,
+                F, b,
+                Ws,bs,
+                param_dir, checkpoint_filename);
+        }
     }
     
     dumpConvnetConfig(M,N,
@@ -604,7 +622,7 @@ int trainConvnet(ConvnetParameters* network_params) {
     alpha, normalize_data_per_channel, K,
     F, b,
     Ws,bs,
-    param_dir);
+    param_dir, convnet_params->params_filename);
 
     // For fun
     if (write_filters_as_images) {
@@ -718,14 +736,14 @@ int testConvnet(ConvnetParameters* convnet_params, TwoDMatrix* scores) {
     int K = 0;
     ThreeDMatrix** test_data = convnet_params->X;
     init2DMatrix(scores,convnet_params->number_of_samples,1);
-    loadConvnetConfig(&M,&N,
+    loadConvnetConfig(convnet_params->params_save_dir, convnet_params->params_filename,
+        &M,&N,
         &filter_number,&filter_stride_x, &filter_stride_y, &filter_width, &filter_height, 
         &enable_maxpooling, &pooling_stride_x, &pooling_stride_y, &pooling_width, &pooling_height,
         &padding_width, &padding_height,
         &alpha, &normalize_data_per_channel, &K,
         &F,&b,
-        &Ws,&bs,
-        convnet_params->params_save_dir);
+        &Ws,&bs);
     testConvnetCore( test_data, M, N, convnet_params->number_of_samples,
         filter_number, filter_stride_x,  filter_stride_y,  filter_width,  filter_height, 
         enable_maxpooling, pooling_stride_x, pooling_stride_y, pooling_width, pooling_height,

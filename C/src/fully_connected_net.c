@@ -439,6 +439,7 @@ int train(FCParameters* network_params) {
     free(network_params->hidden_layer_sizes);
     free(network_params->mode);
     free(network_params->params_save_dir);
+    free(network_params->params_filename);
     network_params->hidden_layer_sizes = NULL;
     network_params->params_save_dir = NULL;
     network_params->mode = NULL;

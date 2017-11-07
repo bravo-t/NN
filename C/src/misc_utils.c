@@ -449,6 +449,8 @@ FCParameters* readNetworkConfigFile(char* filename) {
     network_params->enable_learning_rate_exponential_decay = false;
     network_params->enable_learning_rate_invert_t_decay = false;
 
+    network_params->params_filename = (char*) malloc(sizeof(char)*strlen("network.params"));
+    strcpy(network_params->params_filename, "network.params");
 
     char** key_values = malloc(sizeof(char*)*2);
     key_values[0] = (char*) malloc(sizeof(char)*8192);
@@ -538,6 +540,10 @@ FCParameters* readNetworkConfigFile(char* filename) {
             network_params->params_save_dir = (char*) malloc(sizeof(char)*strlen(key_values[1]));
             strcpy(network_params->params_save_dir,key_values[1]);
             params_dir_defined = true;
+        } else if (! strcmp(key_values[0],"params_filename")) {
+            free(network_params->params_filename);
+            network_params->params_filename = (char*) malloc(sizeof(char)*strlen(key_values[1]));
+            strcpy(network_params->params_filename,key_values[1]);
         } else {
             printf("ERROR: Unrecognized keyword %s, ignored\n",key_values[0]);
         }
@@ -1110,6 +1116,9 @@ ConvnetParameters* readConvnetConfigFile(char* filename) {
     convnet_params->learning_rate_decay_k = 0.9;
     convnet_params->fcnet_param->learning_rate = convnet_params->learning_rate;
 
+    convnet_params->params_filename = (char*) malloc(sizeof(char)*strlen("network.params"));
+    strcpy(convnet_params->params_filename, "network.params");
+
     char** key_values = malloc(sizeof(char*)*2);
     key_values[0] = (char*) malloc(sizeof(char)*8192);
     key_values[1] = (char*) malloc(sizeof(char)*8192);
@@ -1385,6 +1394,10 @@ ConvnetParameters* readConvnetConfigFile(char* filename) {
             convnet_params->params_save_dir = (char*) malloc(sizeof(char)*strlen(key_values[1]));
             strcpy(convnet_params->params_save_dir,key_values[1]);
             params_dir_defined = true;
+        } else if (! strcmp(key_values[0],"params_filename")) {
+            free(convnet_params->params_filename);
+            convnet_params->params_filename = (char*) malloc(sizeof(char)*strlen(key_values[1]));
+            strcpy(convnet_params->params_filename,key_values[1]);
         } else {
             printf("ERROR: Unrecognized keyword %s, ignored\n",key_values[0]);
         }
