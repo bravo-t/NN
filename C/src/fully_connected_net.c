@@ -376,7 +376,7 @@ int train(FCParameters* network_params) {
     printf("INFO: %f%% correct on training data\n",correctness);
 
     // Dump the whole network configuration for testing
-    dumpNetworkConfig(network_depth, alpha, Ws, bs, use_batchnorm, mean_caches, var_caches, gammas, betas, batchnorm_eps, network_params->params_save_dir);
+    dumpNetworkConfig(network_depth, alpha, Ws, bs, use_batchnorm, mean_caches, var_caches, gammas, betas, batchnorm_eps, network_params->params_save_dir,"network.params");
 
     // Shutdown
     destroy2DMatrix(X);
@@ -511,7 +511,7 @@ int test(FCParameters* network_params, TwoDMatrix* scores) {
     TwoDMatrix** betas = NULL;
     TwoDMatrix** mean_caches = NULL;
     TwoDMatrix** var_caches = NULL;
-    loadNetworkConfig(network_params->params_save_dir, &network_depth, &alpha, &Ws, &bs, &use_batchnorm, &mean_caches, &var_caches, &gammas, &betas, &batchnorm_eps);
+    loadNetworkConfig(network_params->params_save_dir,network_params->params_filename, &network_depth, &alpha, &Ws, &bs, &use_batchnorm, &mean_caches, &var_caches, &gammas, &betas, &batchnorm_eps);
     selftest(test_data,Ws,bs, alpha, network_depth, use_batchnorm, mean_caches, var_caches, batchnorm_eps, gammas, betas, scores);
     //printf("Scores are calculated as:\n");
     //printMatrix(scores);

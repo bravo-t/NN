@@ -47,6 +47,7 @@ typedef struct {
     float batchnorm_eps;
     int save_checkpoint;
     char* params_save_dir;
+    char* params_filename;
     char* mode;
 } FCParameters;
 
@@ -97,6 +98,7 @@ typedef struct {
     int save_checkpoint;
     char* filter_image_dir;
     char* params_save_dir;
+    char* params_filename;
     FCParameters* fcnet_param;
 } ConvnetParameters;
 

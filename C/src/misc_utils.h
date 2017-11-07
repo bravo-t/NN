@@ -9,8 +9,8 @@
 
 void write2DMatrix(FILE* fp, TwoDMatrix* M);
 void getKeyValueFromFile(FILE* fp, char** retval);
-int dumpNetworkConfig(int network_depth, float alpha, TwoDMatrix** Ws, TwoDMatrix** bs, bool use_batchnorm, TwoDMatrix** mean_caches, TwoDMatrix** var_caches, TwoDMatrix** gammas, TwoDMatrix** betas, float eps, char* output_dir);
-int loadNetworkConfig(char* dir, int* network_depth, float* alpha, TwoDMatrix*** Ws, TwoDMatrix*** bs, bool* use_batchnorm, TwoDMatrix*** mean_caches, TwoDMatrix*** var_caches, TwoDMatrix*** gammas, TwoDMatrix*** betas, float* batchnorm_eps);
+int dumpNetworkConfig(int network_depth, float alpha, TwoDMatrix** Ws, TwoDMatrix** bs, bool use_batchnorm, TwoDMatrix** mean_caches, TwoDMatrix** var_caches, TwoDMatrix** gammas, TwoDMatrix** betas, float eps, char* output_dir, char* out_name);
+int loadNetworkConfig(char* dir, char* in_name, int* network_depth, float* alpha, TwoDMatrix*** Ws, TwoDMatrix*** bs, bool* use_batchnorm, TwoDMatrix*** mean_caches, TwoDMatrix*** var_caches, TwoDMatrix*** gammas, TwoDMatrix*** betas, float* batchnorm_eps);
 float matrixError(TwoDMatrix* a, TwoDMatrix* b); 
 void printMatrix(TwoDMatrix *M);
 void __debugPrintMatrix(TwoDMatrix *M, char* name);
@@ -47,15 +47,15 @@ int dumpConvnetConfig(int M,int N,
     float alpha, bool normalize_data_per_channel, int K,
     ThreeDMatrix**** F,ThreeDMatrix**** b,
     TwoDMatrix** Ws,TwoDMatrix** bs,
-    char* output_dir);
-int loadConvnetConfig(int* M,int* N,
+    char* output_dir, char* out_name);
+int loadConvnetConfig(char* dir, char* in_name,
+    int* M,int* N,
     int** filter_number,int** filter_stride_x, int** filter_stride_y, int** filter_width, int** filter_height, 
     bool** enable_maxpooling,int** pooling_stride_x,int** pooling_stride_y,int** pooling_width,int** pooling_height,
     int** padding_width, int** padding_height,
     float* alpha, bool* normalize_data_per_channel, int* K,
     ThreeDMatrix***** F,ThreeDMatrix***** b,
-    TwoDMatrix*** Ws,TwoDMatrix*** bs,
-    char* dir);
+    TwoDMatrix*** Ws,TwoDMatrix*** bs);
 
 int CSS2Array(char* str, int** array);
 ConvnetParameters* readConvnetConfigFile(char* filename);

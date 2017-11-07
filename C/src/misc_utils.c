@@ -304,12 +304,13 @@ void getKeyValueFromFile(FILE* fp, char** retval) {
 
 
 
-int dumpNetworkConfig(int network_depth, float alpha, TwoDMatrix** Ws, TwoDMatrix** bs, bool use_batchnorm, TwoDMatrix** mean_caches, TwoDMatrix** var_caches, TwoDMatrix** gammas, TwoDMatrix** betas, float eps, char* output_dir) {
-    int file_name_length = strlen(output_dir) + strlen("/network.params") + 10;
+int dumpNetworkConfig(int network_depth, float alpha, TwoDMatrix** Ws, TwoDMatrix** bs, bool use_batchnorm, TwoDMatrix** mean_caches, TwoDMatrix** var_caches, TwoDMatrix** gammas, TwoDMatrix** betas, float eps, char* output_dir, char* out_name) {
+    int file_name_length = strlen(output_dir) + strlen(out_name) + 10;
     char* out_file = malloc(sizeof(char)*file_name_length);
     strcpy(out_file,output_dir);
-    strcat(out_file,"/network.params");
-    printf("INFO: Network parameters dumped to %s\n",out_file);
+    strcat(out_file,"/");
+    strcat(out_file,out_name);
+    //printf("INFO: Network parameters dumped to %s\n",out_file);
     
     FILE* out = fopen(out_file,"w");
     if (out == NULL) {
@@ -353,11 +354,12 @@ int dumpNetworkConfig(int network_depth, float alpha, TwoDMatrix** Ws, TwoDMatri
     return 0;
 }
 
-int loadNetworkConfig(char* dir, int* network_depth, float* alpha, TwoDMatrix*** Ws, TwoDMatrix*** bs, bool* use_batchnorm, TwoDMatrix*** mean_caches, TwoDMatrix*** var_caches, TwoDMatrix*** gammas, TwoDMatrix*** betas, float* batchnorm_eps) {
-    int file_name_length = strlen(dir) + strlen("/network.params") + 10;
+int loadNetworkConfig(char* dir, char* in_name, int* network_depth, float* alpha, TwoDMatrix*** Ws, TwoDMatrix*** bs, bool* use_batchnorm, TwoDMatrix*** mean_caches, TwoDMatrix*** var_caches, TwoDMatrix*** gammas, TwoDMatrix*** betas, float* batchnorm_eps) {
+    int file_name_length = strlen(dir) + strlen(in_name) + 10;
     char* filename = malloc(sizeof(char)*file_name_length);
     strcpy(filename,dir);
-    strcat(filename,"/network.params");
+    strcat(filename,"/");
+    strcat(filename,in_name);
     printf("INFO: Loading network parameters from %s\n",filename);
     FILE* fp = fopen(filename,"r");
     if (fp == NULL) {
@@ -788,11 +790,12 @@ int dumpConvnetConfig(int M,int N,
     float alpha, bool normalize_data_per_channel, int K,
     ThreeDMatrix**** F,ThreeDMatrix**** b,
     TwoDMatrix** Ws,TwoDMatrix** bs,
-    char* output_dir) {
-    int file_name_length = strlen(output_dir) + strlen("/convnet.params") + 10;
+    char* output_dir, char* out_name) {
+    int file_name_length = strlen(output_dir) + strlen(out_name) + 10;
     char* out_file = malloc(sizeof(char)*file_name_length);
     strcpy(out_file,output_dir);
-    strcat(out_file,"/convnet.params");
+    strcat(out_file,"/");
+    strcat(out_file,out_name);
     
     FILE* out = fopen(out_file,"w");
     if (out == NULL) {
@@ -920,18 +923,19 @@ int dumpConvnetConfig(int M,int N,
     return 0;
 }
 
-int loadConvnetConfig(int* M,int* N,
+int loadConvnetConfig(char* dir, char* in_name,
+    int* M,int* N,
     int** filter_number,int** filter_stride_x, int** filter_stride_y, int** filter_width, int** filter_height, 
     bool** enable_maxpooling,int** pooling_stride_x,int** pooling_stride_y,int** pooling_width,int** pooling_height,
     int** padding_width, int** padding_height,
     float* alpha, bool* normalize_data_per_channel, int* K,
     ThreeDMatrix***** F,ThreeDMatrix***** b,
-    TwoDMatrix*** Ws,TwoDMatrix*** bs,
-    char* dir) {
-    int file_name_length = strlen(dir) + strlen("/convnet.params") + 10;
+    TwoDMatrix*** Ws,TwoDMatrix*** bs) {
+    int file_name_length = strlen(dir) + strlen(in_name) + 10;
     char* filename = malloc(sizeof(char)*file_name_length);
     strcpy(filename,dir);
-    strcat(filename,"/convnet.params");
+    strcat(filename,"/");
+    strcat(filename,in_name);
     printf("INFO: Loading network parameters from %s\n",filename);
     FILE* fp = fopen(filename,"r");
     if (fp == NULL) {
