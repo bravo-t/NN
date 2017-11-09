@@ -15,8 +15,8 @@ int dotProduct_MT(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* OUT, int number_of_t
     }
     init2DMatrix(OUT,X->height,W->width);
     for(int i=0;i<X->height;i++) {
-    	for(;i%number_of_threads!=number_of_threads&&i<X->height;i++) {
-    		printf("DEBUG: thread = %d, i = %d\n", i%number_of_threads, i);
+    	for(int n=i%number_of_threads;n!=number_of_threads&&i<X->height;i++) {
+    		printf("DEBUG: thread = %d, i = %d\n", n, i);
     	}
     }
 
