@@ -34,12 +34,35 @@ int dotProduct_MT(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* OUT, int number_of_t
         return 1;
     }
     init2DMatrix(OUT,X->height,W->width);
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
     for(int i=0;i<X->height;i++) {
+        pthread_t* thread = malloc(sizeof(pthread_t)*number_of_threads);
+        int t;
         for(;i%number_of_threads!=number_of_threads&&i<X->height;i++) {
-            printf("DEBUG: thread = %d, i = %d\n", i%number_of_threads, i);
+            t = i%number_of_threads;
+            printf("DEBUG: thread = %d, i = %d\n", t, i);
+            struct DotProductRowArgs* thread_arg = malloc(sizeof(DotProductRowArgs));
+            thread_arg->X = X;
+            thread_arg->W = W;
+            thread_arg->OUT = OUT;
+            thread_arg->h = i;
+            int create_error = pthread_create(&thread[t],&attr,dotProductRow,(void*) thread_arg);
+            if (create_error) {
+                printf("ERROR: Create thread failed.\n");
+                exit(-1);
+            }
+        }
+        void* status;
+        for(int n=0;n<t;n++) {
+            int join_error = pthread_join(thread[n],&status);
+            if (join_error) {
+                printf("ERROR: Join thread failed.\n");
+                exit(-1);
+            }
         }
     }
-
     return 0;
 }
 
@@ -55,4 +78,5 @@ int* dotProductRow(void* args) {
         OUT->d[i][j] = sum;
     }
     free(args);
+    pthread_exit(NULL);
 }
