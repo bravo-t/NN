@@ -5,27 +5,43 @@
 #include <stdbool.h>
 #include <string.h>
 #include <pthread.h>
+#include <sys/time.h>
 #include "src/network_type.h"
 #include "src/matrix_operations.h"
 #include "src/matrix_operations_multithread.h"
 
 struct DotProductRowArgs {
-    TwoDMatrix* X,
-    TwoDMatrix* W,
-    TwoDMatrix* OUT,
-    int h
+    TwoDMatrix* X;
+    TwoDMatrix* W;
+    TwoDMatrix* OUT;
+    int h;
 };
 int dotProduct_MT(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* OUT, int number_of_threads);
+void* dotProductRow(void* args);
 
 int main(int argc, char const *argv[])
 {
 	TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
 	TwoDMatrix* M = matrixMalloc(sizeof(TwoDMatrix));
-	init2DMatrixNormRand(X,55,10000,0.0,1.0,2);
-	init2DMatrixNormRand(M,10000,30,0.0,1.0,2);
+	init2DMatrixNormRand(X,10000,1000,0.0,1.0,2);
+	init2DMatrixNormRand(M,1000,300,0.0,1.0,2);
 	TwoDMatrix* OUT = matrixMalloc(sizeof(TwoDMatrix));
-    dotProduct_MT(X,M,OUT,8);
-	dotProduct_MT(X,M,OUT,64);
+
+    struct timeval t1,t2;
+    double mt_time,st_time;
+    gettimeofday(&t1,NULL);
+    for(int i=0;i<10;i++) dotProduct_MT(X,M,OUT,4);
+    gettimeofday(&t2,NULL);
+    mt_time = (t2.tv_sec - t1.tv_sec) * 1000.0;
+    mt_time += (t2.tv_usec - t1.tv_usec) / 1000.0;
+    
+    gettimeofday(&t1,NULL);
+    for(int i=0;i<10;i++) dotProduct(X,M,OUT);
+    gettimeofday(&t2,NULL);
+    st_time = (t2.tv_sec - t1.tv_sec) * 1000.0;
+    st_time += (t2.tv_usec - t1.tv_usec) / 1000.0;
+    printf("Multithreaded dot took %f ms, singlethreaded dot took %f ms\n",mt_time,st_time );
+	//dotProduct_MT(X,M,OUT,64);
 	return 0;
 }
 
@@ -42,8 +58,8 @@ int dotProduct_MT(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* OUT, int number_of_t
         int t;
         for(;i%number_of_threads!=number_of_threads&&i<X->height;i++) {
             t = i%number_of_threads;
-            printf("DEBUG: thread = %d, i = %d\n", t, i);
-            struct DotProductRowArgs* thread_arg = malloc(sizeof(DotProductRowArgs));
+            //printf("DEBUG: thread = %d, i = %d\n", t, i);
+            struct DotProductRowArgs* thread_arg = malloc(sizeof(struct DotProductRowArgs));
             thread_arg->X = X;
             thread_arg->W = W;
             thread_arg->OUT = OUT;
@@ -66,7 +82,7 @@ int dotProduct_MT(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* OUT, int number_of_t
     return 0;
 }
 
-int* dotProductRow(void* args) {
+void* dotProductRow(void* args) {
     struct DotProductRowArgs* a = (struct DotProductRowArgs*) args;
     TwoDMatrix* X = a->X;
     TwoDMatrix* W = a->W;
