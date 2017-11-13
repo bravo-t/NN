@@ -33,8 +33,8 @@ int main(int argc, char const *argv[])
 {
 	TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
 	TwoDMatrix* M = matrixMalloc(sizeof(TwoDMatrix));
-	init2DMatrixNormRand(X,10,5,0.0,1.0,2);
-	init2DMatrixNormRand(M,5,3,0.0,1.0,2);
+	init2DMatrixNormRand(X,10000,1000,0.0,1.0,2);
+	init2DMatrixNormRand(M,1000,300,0.0,1.0,2);
 	TwoDMatrix* OUT_MT = matrixMalloc(sizeof(TwoDMatrix));
     TwoDMatrix* OUT_ST = matrixMalloc(sizeof(TwoDMatrix)); 
 
@@ -54,9 +54,6 @@ int main(int argc, char const *argv[])
     printf("Multithreaded dot took %f ms, optmized multithreaded dot took %f ms\n",mt_time,st_time );
 	//dotProduct_MT(X,M,OUT,64);
     checkMatrixDiff(OUT_MT,OUT_ST,1e-3);
-    printMatrix(X);
-    printMatrix(M);
-    printMatrix(OUT_MT);
 	return 0;
 }
 
@@ -121,13 +118,15 @@ int dotProduct_MT_faster(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* OUT, int numb
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
     pthread_t* thread = malloc(sizeof(pthread_t)*number_of_threads);
-    int H = X->height / number_of_threads;
-    for(int t=0;t<number_of_threads;t++) {
+    int H = X->height / number_of_threads + 1;
+    int t = 0;
+    for(;t<number_of_threads;t++) {
         struct DotProductRowArgs_faster* thread_arg = malloc(sizeof(struct DotProductRowArgs_faster));
         thread_arg->X = X;
         thread_arg->W = W;
         thread_arg->OUT = OUT;
         thread_arg->h_start = t*H;
+        if (thread_arg->h_start >= X->height) break;
         thread_arg->h_end = (t+1)*H-1;
         if (thread_arg->h_end >= X->height) thread_arg->h_end = X->height - 1;
         int create_error = pthread_create(&thread[t],&attr,dotProductRow_faster,(void*) thread_arg);
@@ -137,7 +136,7 @@ int dotProduct_MT_faster(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* OUT, int numb
         }
     }
     void* status;
-    for(int n=0;n<number_of_threads;n++) {
+    for(int n=0;n<t;n++) {
         int join_error = pthread_join(thread[n],&status);
         if (join_error) {
             printf("ERROR: Join thread failed.\n");
