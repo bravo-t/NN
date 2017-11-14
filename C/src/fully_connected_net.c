@@ -356,15 +356,15 @@ int train(FCParameters* network_params) {
         if (shuffle_training_samples != 0 && epoch % shuffle_training_samples == 0) {
             shuffleTrainingSamplesFCNet(training_data, correct_labels, training_data, correct_labels);
         }
-        if (save_checkpoint != 0 && && e != 0 && e % save_checkpoint == 0) {
+        if (save_checkpoint != 0 && epoch != 0 && epoch % save_checkpoint == 0) {
             // Save checkpoints
             char checkpoint_counter[1000];
-            sprintf(checkpoint_counter,"%d",e/save_checkpoint);
+            sprintf(checkpoint_counter,"%d",epoch/save_checkpoint);
             int checkpoint_length = 20 + strlen(checkpoint_counter);
             char* checkpoint_filename = malloc(sizeof(char)*checkpoint_length);
             strcpy(checkpoint_filename,"checkpoint_");
             strcat(checkpoint_filename,checkpoint_counter);
-            strcat(checkpoint_filename,.params);
+            strcat(checkpoint_filename,".params");
             dumpNetworkConfig(network_depth, alpha, Ws, bs, use_batchnorm, mean_caches, var_caches, gammas, betas, batchnorm_eps, network_params->params_save_dir,checkpoint_filename);
         }
     }
@@ -627,7 +627,7 @@ int FCTrainCore(FCParameters* network_params,
             learning_rate_decay_unit,
             learning_rate_decay_k,
             learning_rate_decay_a0,
-            e,
+            epoch,
             base_learning_rate,
             *learning_rate);
         // find number of minibatch_size example to go into the network as 1 iteration

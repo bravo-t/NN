@@ -9,7 +9,6 @@
 #include "src/network_type.h"
 #include "src/matrix_operations.h"
 #include "src/misc_utils.h"
-#include "src/matrix_operations_multithread.h"
 
 struct DotProductRowArgs {
     TwoDMatrix* X;
@@ -34,26 +33,26 @@ int main(int argc, char const *argv[])
 	TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
 	TwoDMatrix* M = matrixMalloc(sizeof(TwoDMatrix));
 	init2DMatrixNormRand(X,10000,1000,0.0,1.0,2);
-	init2DMatrixNormRand(M,1000,300,0.0,1.0,2);
+	init2DMatrixNormRand(M,1000,10000,0.0,1.0,2);
 	TwoDMatrix* OUT_MT = matrixMalloc(sizeof(TwoDMatrix));
     TwoDMatrix* OUT_ST = matrixMalloc(sizeof(TwoDMatrix)); 
 
     struct timeval t1,t2;
     double mt_time,st_time;
     gettimeofday(&t1,NULL);
-    for(int i=0;i<1;i++) dotProduct_MT(X,M,OUT_MT,4);
+    for(int i=0;i<1;i++) dotProduct_MT(X,M,OUT_MT,16);
     gettimeofday(&t2,NULL);
     mt_time = (t2.tv_sec - t1.tv_sec) * 1000.0;
     mt_time += (t2.tv_usec - t1.tv_usec) / 1000.0;
     
     gettimeofday(&t1,NULL);
-    for(int i=0;i<1;i++) dotProduct_MT_faster(X,M,OUT_ST,4);
+    for(int i=0;i<1;i++) dotProduct_MT_faster(X,M,OUT_ST,16);
     gettimeofday(&t2,NULL);
     st_time = (t2.tv_sec - t1.tv_sec) * 1000.0;
     st_time += (t2.tv_usec - t1.tv_usec) / 1000.0;
     printf("Multithreaded dot took %f ms, optmized multithreaded dot took %f ms\n",mt_time,st_time );
 	//dotProduct_MT(X,M,OUT,64);
-    checkMatrixDiff(OUT_MT,OUT_ST,1e-3);
+    //checkMatrixDiff(OUT_MT,OUT_ST,1e-3);
 	return 0;
 }
 
@@ -68,9 +67,8 @@ int dotProduct_MT(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* OUT, int number_of_t
     for(int i=0;i<X->height;i++) {
         pthread_t* thread = malloc(sizeof(pthread_t)*number_of_threads);
         int t;
-        for(;i%number_of_threads!=number_of_threads&&i<X->height;i++) {
+        for(;i%number_of_threads!=number_of_threads-1&&i<X->height;i++) {
             t = i%number_of_threads;
-            //printf("DEBUG: thread = %d, i = %d\n", t, i);
             struct DotProductRowArgs* thread_arg = malloc(sizeof(struct DotProductRowArgs));
             thread_arg->X = X;
             thread_arg->W = W;
@@ -119,6 +117,7 @@ int dotProduct_MT_faster(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* OUT, int numb
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
     pthread_t* thread = malloc(sizeof(pthread_t)*number_of_threads);
     int H = X->height / number_of_threads + 1;
+    if (number_of_threads > X->height) number_of_threads = X->height;
     int t = 0;
     for(;t<number_of_threads;t++) {
         struct DotProductRowArgs_faster* thread_arg = malloc(sizeof(struct DotProductRowArgs_faster));
@@ -126,7 +125,6 @@ int dotProduct_MT_faster(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* OUT, int numb
         thread_arg->W = W;
         thread_arg->OUT = OUT;
         thread_arg->h_start = t*H;
-        if (thread_arg->h_start >= X->height) break;
         thread_arg->h_end = (t+1)*H-1;
         if (thread_arg->h_end >= X->height) thread_arg->h_end = X->height - 1;
         int create_error = pthread_create(&thread[t],&attr,dotProductRow_faster,(void*) thread_arg);

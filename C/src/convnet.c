@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <malloc.h>
 #include <math.h>
+#include <string.h>
 #include "network_type.h"
 #include "matrix_operations.h"
 #include "layers.h"
@@ -595,7 +596,7 @@ int trainConvnet(ConvnetParameters* network_params) {
                 training_data,
                 network_params->fcnet_param->correct_labels);
         }
-        if (save_checkpoint != 0 && && e != 0 && e % save_checkpoint == 0) {
+        if (save_checkpoint != 0 && e != 0 && e % save_checkpoint == 0) {
             // Save checkpoints
             char checkpoint_counter[1000];
             sprintf(checkpoint_counter,"%d",e/save_checkpoint);
@@ -603,7 +604,7 @@ int trainConvnet(ConvnetParameters* network_params) {
             char* checkpoint_filename = malloc(sizeof(char)*checkpoint_length);
             strcpy(checkpoint_filename,"checkpoint_");
             strcat(checkpoint_filename,checkpoint_counter);
-            strcat(checkpoint_filename,.params);
+            strcat(checkpoint_filename,".params");
             dumpConvnetConfig(M,N,
                 filter_number,filter_stride_x, filter_stride_y, filter_width, filter_height, 
                 enable_maxpooling,pooling_stride_x,pooling_stride_y,pooling_width,pooling_height,
@@ -622,7 +623,7 @@ int trainConvnet(ConvnetParameters* network_params) {
     alpha, normalize_data_per_channel, K,
     F, b,
     Ws,bs,
-    param_dir, convnet_params->params_filename);
+    param_dir, network_params->params_filename);
 
     // For fun
     if (write_filters_as_images) {
