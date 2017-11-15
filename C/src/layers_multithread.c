@@ -94,7 +94,7 @@ int leakyReLUBackward_MT(TwoDMatrix* dM, TwoDMatrix* M, float alpha, TwoDMatrix*
     return 0;
 }
 
-float softmaxLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dscore, int number_of_threads) {
+float softmaxLoss_MT(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dscore, int number_of_threads) {
     init2DMatrix_MT(dscore,score->height,score->width,number_of_threads);
     TwoDMatrix* max_scores = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix_MT(max_scores,score->height,1,number_of_threads);
