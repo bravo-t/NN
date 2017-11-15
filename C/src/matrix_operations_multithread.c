@@ -305,22 +305,21 @@ void* transpose2DMatrixRow(void* args) {
     pthread_exit(NULL);
 }
 
-int twoDMatrixOperationMultithreadWrapperMOUT(TwoDMatrix* M, TwoDMatrix* OUT, void* (*func)(void *), int number_of_threads) {
-    init2DMatrix_MT(OUT, M->width,M->height,number_of_threads);
+int twoDMatrixOperationMultithreadWrapper((struct TwoMatrixOperationsRowArgs*) args, int height, int out_height, int out_width, void* (*func)(void *), int number_of_threads) {
+    init2DMatrix_MT(OUT, out_height,out_width,number_of_threads);
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
     pthread_t* thread = malloc(sizeof(pthread_t)*number_of_threads);
-    int H = M->height / number_of_threads + 1;
+    int H = height / number_of_threads + 1;
     int t = 0;
     for(;t<number_of_threads;t++) {
         struct TwoMatrixOperationsRowArgs* thread_arg = malloc(sizeof(struct TwoMatrixOperationsRowArgs));
-        thread_arg->M = M;
-        thread_arg->OUT = OUT;
+        memcpy(thread_arg, args);
         thread_arg->h_start = t*H;
-        if (thread_arg->h_start >= X->height) break;
+        if (thread_arg->h_start >= height) break;
         thread_arg->h_end = (t+1)*H-1;
-        if (thread_arg->h_end >= X->height) thread_arg->h_end = X->height - 1;
+        if (thread_arg->h_end >= height) thread_arg->h_end = height - 1;
         int create_error = pthread_create(&thread[t],&attr,func,(void*) thread_arg);
         if (create_error) {
             printf("ERROR: Create thread failed.\n");
