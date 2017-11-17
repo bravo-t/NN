@@ -49,6 +49,7 @@ typedef struct {
     char* params_save_dir;
     char* params_filename;
     char* mode;
+    int number_of_threads;
 } FCParameters;
 
 typedef struct {
@@ -99,6 +100,7 @@ typedef struct {
     char* filter_image_dir;
     char* params_save_dir;
     char* params_filename;
+    int number_of_threads;
     FCParameters* fcnet_param;
 } ConvnetParameters;
 
