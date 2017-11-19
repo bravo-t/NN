@@ -9,7 +9,7 @@ void* leakyReLUBackwardRow(void* args);
 int leakyReLUBackward_MT(TwoDMatrix* dM, TwoDMatrix* M, float alpha, TwoDMatrix* OUT, int number_of_threads);
 float softmaxLoss_MT(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dscore, int number_of_threads);
 float L2RegLoss_MT(TwoDMatrix** Ms,int network_depth, float reg_strength, int number_of_threads);
-int L2RegLossBackward_MT(TwoDMatrix* dM, TwoDMatrix* M, float reg_strength, TwoDMatrix* OUT);
+int L2RegLossBackward_MT(TwoDMatrix* dM, TwoDMatrix* M, float reg_strength, TwoDMatrix* OUT, int number_of_threads);
 int momentumUpdate_MT(TwoDMatrix* X, TwoDMatrix* dX, TwoDMatrix* v, float mu, float learning_rate,  TwoDMatrix* OUT, int number_of_threads);
 int NAGUpdate_MT(TwoDMatrix* X, TwoDMatrix* dX, TwoDMatrix* v, TwoDMatrix* v_prev, float mu, float learning_rate,  TwoDMatrix* OUT, int number_of_threads);
 int RMSProp_MT(TwoDMatrix* X, TwoDMatrix* dX, TwoDMatrix* cache, float learning_rate, float decay_rate, float eps, TwoDMatrix* OUT, int number_of_threads);

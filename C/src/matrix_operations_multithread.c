@@ -743,17 +743,86 @@ int elementSqrt_MT(TwoDMatrix* M, TwoDMatrix* OUT, int number_of_threads) {
     return 0;
 }
 
-int destroy2DMatrix(TwoDMatrix* M) {
-    for(int i=0;i<M->height;i++) {
-        free(M->d[i]);
-        M->d[i] = NULL;
+int broadcastAdd_MT(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int number_of_threads) {
+    TwoDMatrix *broadcasted = matrixMalloc(sizeof(TwoDMatrix));
+    int n;
+    if (direction == 0) {
+        n = M->width;
+    } else {
+        n = M->height;
     }
-    free(M->d);
-    M->d = NULL;
-    free(M);
-    M = NULL;
+    if (broadcastMatrix_MT(b,n,direction,broadcasted,number_of_threads)) {
+        destroy2DMatrix_MT(broadcasted, number_of_threads);
+        return 1;
+    }
+    if (elementwiseAdd2DMatrix_MT(M,broadcasted,OUT,number_of_threads)) {
+        destroy2DMatrix_MT(broadcasted,number_of_threads);
+        return 1;
+    }
+    destroy2DMatrix_MT(broadcasted,number_of_threads);
     return 0;
 }
+
+int broadcastSub_MT(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int number_of_threads) {
+    TwoDMatrix *broadcasted = matrixMalloc(sizeof(TwoDMatrix));
+    int n;
+    if (direction == 0) {
+        n = M->width;
+    } else {
+        n = M->height;
+    }
+    if (broadcastMatrix_MT(b,n,direction,broadcasted,number_of_threads)) {
+        destroy2DMatrix_MT(broadcasted, number_of_threads);
+        return 1;
+    }
+    if (elementwiseSub2DMatrix_MT(M,broadcasted,OUT,number_of_threads)) {
+        destroy2DMatrix_MT(broadcasted,number_of_threads);
+        return 1;
+    }
+    destroy2DMatrix_MT(broadcasted,number_of_threads);
+    return 0;
+}
+
+int broadcastMul_MT(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int number_of_threads) {
+    TwoDMatrix *broadcasted = matrixMalloc(sizeof(TwoDMatrix));
+    int n;
+    if (direction == 0) {
+        n = M->width;
+    } else {
+        n = M->height;
+    }
+    if (broadcastMatrix_MT(b,n,direction,broadcasted,number_of_threads)) {
+        destroy2DMatrix_MT(broadcasted, number_of_threads);
+        return 1;
+    }
+    if (elementwiseMul2DMatrix_MT(M,broadcasted,OUT,number_of_threads)) {
+        destroy2DMatrix_MT(broadcasted,number_of_threads);
+        return 1;
+    }
+    destroy2DMatrix_MT(broadcasted,number_of_threads);
+    return 0;
+}
+
+int broadcastDiv_MT(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int number_of_threads) {
+    TwoDMatrix *broadcasted = matrixMalloc(sizeof(TwoDMatrix));
+    int n;
+    if (direction == 0) {
+        n = M->width;
+    } else {
+        n = M->height;
+    }
+    if (broadcastMatrix_MT(b,n,direction,broadcasted,number_of_threads)) {
+        destroy2DMatrix_MT(broadcasted, number_of_threads);
+        return 1;
+    }
+    if (elementwiseDiv2DMatrix_MT(M,broadcasted,OUT,number_of_threads)) {
+        destroy2DMatrix_MT(broadcasted,number_of_threads);
+        return 1;
+    }
+    destroy2DMatrix_MT(broadcasted,number_of_threads);
+    return 0;
+}
+
 
 void* destroy2DMatrixRow(void* args) {
     TwoDMatrixOperationsRowArgs* a = (TwoDMatrixOperationsRowArgs*) args;
@@ -766,7 +835,7 @@ void* destroy2DMatrixRow(void* args) {
     pthread_exit(NULL);
 }
 
-int destroy2DMatrix_MT(TwoDMatrix* M, TwoDMatrix* OUT, int number_of_threads) {
+int destroy2DMatrix_MT(TwoDMatrix* M, int number_of_threads) {
     TwoDMatrixOperationsRowArgs* thread_arg = malloc(sizeof(TwoDMatrixOperationsRowArgs));
     thread_arg->M = M;
     twoDMatrixOperationMultithreadWrapper(thread_arg,

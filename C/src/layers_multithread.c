@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <pthread.h>
 #include "network_type.h"
 #include "matrix_operations.h"
 #include "matrix_operations_multithread.h"
@@ -56,7 +57,7 @@ int vanillaUpdate_MT(TwoDMatrix* M, TwoDMatrix* dM, float learning_rate, TwoDMat
     elementMul_MT(dM,learning_rate,dM_scaled,number_of_threads);
     int retval = elementwiseSub2DMatrix_MT(M, dM_scaled, OUT,number_of_threads);
     destroy2DMatrix_MT(dM_scaled,number_of_threads);
-    return 0;
+    return retval;
 }
 
 void* leakyReLUBackwardRow(void* args) {
@@ -98,7 +99,7 @@ float softmaxLoss_MT(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* d
     init2DMatrix_MT(dscore,score->height,score->width,number_of_threads);
     TwoDMatrix* max_scores = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix_MT(max_scores,score->height,1,number_of_threads);
-    maxX2DMatrix_MT(score,max_scores,number_of_threads);
+    maxX2DMatrix(score,max_scores);
     //printf("score = \n");
     //printMatrix(score);
     //printf("max_scores = \n");
@@ -115,7 +116,7 @@ float softmaxLoss_MT(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* d
     //printMatrix(exp_score);
     TwoDMatrix* exp_sum = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix_MT(exp_sum,score->height,1,number_of_threads);
-    sumX2DMatrix_MT(exp_score,exp_sum,number_of_threads);
+    sumX2DMatrix(exp_score,exp_sum);
     //printf("exp_sum = \n");
     //printMatrix(exp_sum);
     TwoDMatrix* probs = matrixMalloc(sizeof(TwoDMatrix));
@@ -165,7 +166,7 @@ float L2RegLoss_MT(TwoDMatrix** Ms,int network_depth, float reg_strength, int nu
     return reg_loss;
 }
 
-int L2RegLossBackward_MT(TwoDMatrix* dM, TwoDMatrix* M, float reg_strength, TwoDMatrix* OUT) {
+int L2RegLossBackward_MT(TwoDMatrix* dM, TwoDMatrix* M, float reg_strength, TwoDMatrix* OUT, int number_of_threads) {
     init2DMatrix_MT(OUT, M->height, M->width,number_of_threads);
     TwoDMatrix* M_scaled = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix_MT(M_scaled, M->height, M->width,number_of_threads);
@@ -310,7 +311,7 @@ int batchnorm_test_forward_MT(TwoDMatrix* M, TwoDMatrix* mean_cache, TwoDMatrix*
 
 int batchnorm_backward_MT(TwoDMatrix* dOUT, TwoDMatrix* M, TwoDMatrix* M_normalized, TwoDMatrix* gamma, TwoDMatrix* beta, TwoDMatrix* mean, TwoDMatrix* var, float eps, TwoDMatrix* dM, TwoDMatrix* dgamma, TwoDMatrix* dbeta, int number_of_threads) {
     init2DMatrix_MT(dbeta,beta->height,beta->width, number_of_threads);
-    sumY2DMatrix_MT(dOUT,dbeta, number_of_threads);
+    sumY2DMatrix(dOUT,dbeta);
     init2DMatrix_MT(dgamma,gamma->height,gamma->width, number_of_threads);
     TwoDMatrix* dOUT_M_normalized = matrixMalloc(sizeof(TwoDMatrix));
     elementwiseMul2DMatrix_MT(dOUT, M_normalized,dOUT_M_normalized, number_of_threads);
@@ -341,12 +342,12 @@ int batchnorm_backward_MT(TwoDMatrix* dOUT, TwoDMatrix* M, TwoDMatrix* M_normali
     elementwiseMul2DMatrix_MT(dM_normalized,M_mu,M_tmp, number_of_threads);
     TwoDMatrix* dvar = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix_MT(dvar, var->height, var->width, number_of_threads);
-    sumY2DMatrix_MT(M_tmp,dvar, number_of_threads);
+    sumY2DMatrix(M_tmp,dvar);
     elementMul_MT(dvar,-0.5,dvar, number_of_threads);
     elementwiseMul2DMatrix_MT(dvar,std_var_inv_cube,dvar, number_of_threads);
     TwoDMatrix* M_mu_mean = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix_MT(M_mu_mean,mean->height,mean->width, number_of_threads);
-    matrixYMeanVar_MT(M_mu, M_mu_mean, NULL, number_of_threads);
+    matrixYMeanVar(M_mu, M_mu_mean, NULL);
     TwoDMatrix* var_tmp = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix_MT(var_tmp,var->height,var->width, number_of_threads);
     elementwiseMul2DMatrix_MT(dvar,M_mu_mean,var_tmp, number_of_threads);
@@ -358,7 +359,7 @@ int batchnorm_backward_MT(TwoDMatrix* dOUT, TwoDMatrix* M, TwoDMatrix* M_normali
     broadcastMul_MT(dM_normalized,std_var_inv,1,M_tmp2, number_of_threads);
     TwoDMatrix* mean_tmp = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix_MT(mean_tmp,mean->height,mean->width, number_of_threads);
-    sumY2DMatrix_MT(M_tmp2,mean_tmp, number_of_threads);
+    sumY2DMatrix(M_tmp2,mean_tmp);
     elementMul_MT(M_tmp2,-1.0,M_tmp2, number_of_threads);
     elementwiseSub2DMatrix_MT(M_tmp2,var_tmp,dmean, number_of_threads);
     TwoDMatrix* dM1 = matrixMalloc(sizeof(TwoDMatrix));

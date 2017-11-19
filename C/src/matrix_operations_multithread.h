@@ -25,8 +25,6 @@ typedef struct {
     int h_end;
 } ThreeDMatrixOperationsRowArgs;
 
-int dotProduct_MT(TwoDMatrix* X, TwoDMatrix* M, TwoDMatrix* OUT, int number_of_threads);
-void* dotProductRow(void* args);
 int init2DMatrix_MT(TwoDMatrix* M, int height, int width, int number_of_threads);
 void* init2DMatrixRow(void* args);
 int init2DMatrixZero_MT(TwoDMatrix* M, int height, int width, int number_of_threads);
@@ -35,6 +33,8 @@ int init2DMatrixOne_MT(TwoDMatrix* M, int height, int width, int number_of_threa
 void* init2DMatrixOneRow(void* args);
 int init2DMatrixNormRand_MT(TwoDMatrix* M, int height, int width, float mean, float std, int n, int number_of_threads);
 void* init2DMatrixNormRandRow(void* args);
+int dotProduct_MT(TwoDMatrix* X, TwoDMatrix* M, TwoDMatrix* OUT, int number_of_threads);
+void* dotProductRow(void* args);
 int transpose2DMatrix_MT(TwoDMatrix* M,TwoDMatrix* OUT, int number_of_threads);
 void* transpose2DMatrixRow(void* args);
 int twoDMatrixOperationMultithreadWrapper(TwoDMatrixOperationsRowArgs* args, int height, int out_height, int out_width, void* (*func)(void *), int number_of_threads);
@@ -65,9 +65,12 @@ int elementMul_MT(TwoDMatrix* M, float a, TwoDMatrix* OUT, int number_of_threads
 int elementDiv_MT(TwoDMatrix* M, float a, TwoDMatrix* OUT, int number_of_threads);
 void* elementSqrtRow(void* args);
 int elementSqrt_MT(TwoDMatrix* M, TwoDMatrix* OUT, int number_of_threads);
-int destroy2DMatrix(TwoDMatrix* M);
+int broadcastAdd_MT(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int number_of_threads);
+int broadcastSub_MT(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int number_of_threads);
+int broadcastMul_MT(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int number_of_threads);
+int broadcastDiv_MT(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int number_of_threads);
 void* destroy2DMatrixRow(void* args);
-int destroy2DMatrix_MT(TwoDMatrix* M, TwoDMatrix* OUT, int number_of_threads);
+int destroy2DMatrix_MT(TwoDMatrix* M, int number_of_threads);
 int init3DMatrix_MT(ThreeDMatrix* M, int depth, int height, int width, int number_of_threads);
 void* init3DMatrixRow(void* args);
 void* init3DMatrixZeroRow(void* args);
@@ -76,6 +79,7 @@ void* init3DMatrixRandNormRow(void* args);
 int init3DMatrixZero_MT(ThreeDMatrix* M, int depth, int height, int width, int number_of_threads);
 int init3DMatrixOne_MT(ThreeDMatrix* M, int depth, int height, int width, int number_of_threads);
 int init3DMatrixNormRand_MT(ThreeDMatrix* M, int depth, int height, int width, float mean, float std, int n, int number_of_threads);
+
 
 
 #endif

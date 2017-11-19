@@ -49,7 +49,7 @@ int train_multithread(FCParameters* network_params) {
     float batchnorm_momentum =  network_params->batchnorm_momentum;
     float batchnorm_eps =  network_params->batchnorm_eps;
 
-    int number_threads = network_params->number_threads;
+    int number_of_threads = network_params->number_of_threads;
     printf("INFO: This network consists of %d hidden layers, and their sizes are configured to be ", network_depth);
     for(int i=0;i<network_depth;i++) {
         printf("%d ",hidden_layer_sizes[i]);
@@ -158,9 +158,9 @@ int train_multithread(FCParameters* network_params) {
             printf("INFO: Initializing b%d to be a %dx%d matrix\n",i,1,hidden_layer_sizes[i]);
             printf("INFO: Initializing H%d to be a %dx%d matrix\n",i,minibatch_size,hidden_layer_sizes[i]);
         }
-        init2DMatrixNormRand_MT(Ws[i],former_width,hidden_layer_sizes[i],0.0,1.0,former_width, number_of_theads);
-        init2DMatrixZero_MT(bs[i],1,hidden_layer_sizes[i], number_of_theads);
-        init2DMatrix_MT(Hs[i],minibatch_size,hidden_layer_sizes[i], number_of_theads);
+        init2DMatrixNormRand_MT(Ws[i],former_width,hidden_layer_sizes[i],0.0,1.0,former_width, number_of_threads);
+        init2DMatrixZero_MT(bs[i],1,hidden_layer_sizes[i], number_of_threads);
+        init2DMatrix_MT(Hs[i],minibatch_size,hidden_layer_sizes[i], number_of_threads);
         // Statistic data
         number_of_weights += former_width*hidden_layer_sizes[i];
         number_of_biases += hidden_layer_sizes[i];
@@ -173,66 +173,66 @@ int train_multithread(FCParameters* network_params) {
         // Initialize variables for optimization
         if (use_momentum_update) {
             vWs[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero_MT(vWs[i],former_width,hidden_layer_sizes[i], number_of_theads);
+            init2DMatrixZero_MT(vWs[i],former_width,hidden_layer_sizes[i], number_of_threads);
             vbs[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero_MT(vbs[i],1,hidden_layer_sizes[i], number_of_theads);
+            init2DMatrixZero_MT(vbs[i],1,hidden_layer_sizes[i], number_of_threads);
         }
         if (use_nag_update) {
             vWs[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero_MT(vWs[i],former_width,hidden_layer_sizes[i], number_of_theads);
+            init2DMatrixZero_MT(vWs[i],former_width,hidden_layer_sizes[i], number_of_threads);
             vbs[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero_MT(vbs[i],1,hidden_layer_sizes[i], number_of_theads);
+            init2DMatrixZero_MT(vbs[i],1,hidden_layer_sizes[i], number_of_threads);
             vW_prevs[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero_MT(vW_prevs[i],former_width,hidden_layer_sizes[i], number_of_theads);
+            init2DMatrixZero_MT(vW_prevs[i],former_width,hidden_layer_sizes[i], number_of_threads);
             vb_prevs[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero_MT(vb_prevs[i],1,hidden_layer_sizes[i], number_of_theads);
+            init2DMatrixZero_MT(vb_prevs[i],1,hidden_layer_sizes[i], number_of_threads);
         }
         if (use_rmsprop) {
             Wcaches[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero_MT(Wcaches[i],former_width,hidden_layer_sizes[i], number_of_theads);
+            init2DMatrixZero_MT(Wcaches[i],former_width,hidden_layer_sizes[i], number_of_threads);
             bcaches[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero_MT(bcaches[i],1,hidden_layer_sizes[i], number_of_theads);
+            init2DMatrixZero_MT(bcaches[i],1,hidden_layer_sizes[i], number_of_threads);
         }
         if (use_batchnorm) {
             gammas[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixOne_MT(gammas[i],1,hidden_layer_sizes[i], number_of_theads);
+            init2DMatrixOne_MT(gammas[i],1,hidden_layer_sizes[i], number_of_threads);
             betas[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero_MT(betas[i],1,hidden_layer_sizes[i], number_of_theads);
+            init2DMatrixZero_MT(betas[i],1,hidden_layer_sizes[i], number_of_threads);
             dgammas[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrix_MT(dgammas[i],1,hidden_layer_sizes[i], number_of_theads);
+            init2DMatrix_MT(dgammas[i],1,hidden_layer_sizes[i], number_of_threads);
             dbetas[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrix_MT(dbetas[i],1,hidden_layer_sizes[i], number_of_theads);
+            init2DMatrix_MT(dbetas[i],1,hidden_layer_sizes[i], number_of_threads);
             means[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrix_MT(means[i],1,hidden_layer_sizes[i], number_of_theads);
+            init2DMatrix_MT(means[i],1,hidden_layer_sizes[i], number_of_threads);
             vars[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrix_MT(vars[i],1,hidden_layer_sizes[i], number_of_theads);
+            init2DMatrix_MT(vars[i],1,hidden_layer_sizes[i], number_of_threads);
             mean_caches[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero_MT(mean_caches[i],1,hidden_layer_sizes[i], number_of_theads);
+            init2DMatrixZero_MT(mean_caches[i],1,hidden_layer_sizes[i], number_of_threads);
             var_caches[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero_MT(var_caches[i],1,hidden_layer_sizes[i], number_of_theads);
+            init2DMatrixZero_MT(var_caches[i],1,hidden_layer_sizes[i], number_of_threads);
             Hs_normalized[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero_MT(Hs_normalized[i],minibatch_size,hidden_layer_sizes[i], number_of_theads);
+            init2DMatrixZero_MT(Hs_normalized[i],minibatch_size,hidden_layer_sizes[i], number_of_threads);
             if (use_momentum_update) {
                 vgammas[i] = matrixMalloc(sizeof(TwoDMatrix));
-                init2DMatrixZero_MT(vgammas[i],1,hidden_layer_sizes[i], number_of_theads);
+                init2DMatrixZero_MT(vgammas[i],1,hidden_layer_sizes[i], number_of_threads);
                 vbetas[i] = matrixMalloc(sizeof(TwoDMatrix));
-                init2DMatrixZero_MT(vbetas[i],1,hidden_layer_sizes[i], number_of_theads);
+                init2DMatrixZero_MT(vbetas[i],1,hidden_layer_sizes[i], number_of_threads);
             }
             if (use_nag_update) {
                 vgamma_prevs[i] = matrixMalloc(sizeof(TwoDMatrix));
-                init2DMatrixZero_MT(vgamma_prevs[i],1,hidden_layer_sizes[i], number_of_theads);
+                init2DMatrixZero_MT(vgamma_prevs[i],1,hidden_layer_sizes[i], number_of_threads);
                 vbeta_prevs[i] = matrixMalloc(sizeof(TwoDMatrix));
-                init2DMatrixZero_MT(vbeta_prevs[i],1,hidden_layer_sizes[i], number_of_theads);
+                init2DMatrixZero_MT(vbeta_prevs[i],1,hidden_layer_sizes[i], number_of_threads);
                 vgammas[i] = matrixMalloc(sizeof(TwoDMatrix));
-                init2DMatrixZero_MT(vgammas[i],1,hidden_layer_sizes[i], number_of_theads);
+                init2DMatrixZero_MT(vgammas[i],1,hidden_layer_sizes[i], number_of_threads);
                 vbetas[i] = matrixMalloc(sizeof(TwoDMatrix));
-                init2DMatrixZero_MT(vbetas[i],1,hidden_layer_sizes[i], number_of_theads);
+                init2DMatrixZero_MT(vbetas[i],1,hidden_layer_sizes[i], number_of_threads);
             }
             if (use_rmsprop) {
                 gamma_caches[i] = matrixMalloc(sizeof(TwoDMatrix));
-                init2DMatrixZero_MT(gamma_caches[i],1,hidden_layer_sizes[i], number_of_theads);
+                init2DMatrixZero_MT(gamma_caches[i],1,hidden_layer_sizes[i], number_of_threads);
                 beta_caches[i] = matrixMalloc(sizeof(TwoDMatrix));
-                init2DMatrixZero_MT(beta_caches[i],1,hidden_layer_sizes[i], number_of_theads);
+                init2DMatrixZero_MT(beta_caches[i],1,hidden_layer_sizes[i], number_of_threads);
             }
         }
         former_width = hidden_layer_sizes[i];
@@ -266,14 +266,14 @@ int train_multithread(FCParameters* network_params) {
             TwoDMatrix* layer_X = NULL;
             layer_X = X;
             for(int i=0;i<network_depth;i++) {
-                affineLayerForward_MT(layer_X,Ws[i],bs[i],Hs[i], number_of_theads);
+                affineLayerForward_MT(layer_X,Ws[i],bs[i],Hs[i], number_of_threads);
                 // The last layer in the network will calculate the scores
                 // So there will not be a activation function put to it
                 if (i != network_depth - 1) {
                     if (use_batchnorm) {
-                        batchnorm_training_forward_MT(Hs[i], batchnorm_momentum, batchnorm_eps, gammas[i], betas[i], Hs[i], mean_caches[i], var_caches[i], means[i], vars[i], Hs_normalized[i], number_of_theads);
+                        batchnorm_training_forward_MT(Hs[i], batchnorm_momentum, batchnorm_eps, gammas[i], betas[i], Hs[i], mean_caches[i], var_caches[i], means[i], vars[i], Hs_normalized[i], number_of_threads);
                     }
-                    leakyReLUForward_MT(Hs[i],alpha,Hs[i], number_of_theads);
+                    leakyReLUForward_MT(Hs[i],alpha,Hs[i], number_of_threads);
                 }
                 //debugPrintMatrix(layer_X);
                 //debugPrintMatrix(Ws[i]);
@@ -283,9 +283,9 @@ int train_multithread(FCParameters* network_params) {
             }
             
             
-            float data_loss = softmaxLoss_MT(Hs[network_depth-1], correct_labels, dHs[network_depth-1], number_of_theads);
+            float data_loss = softmaxLoss_MT(Hs[network_depth-1], correct_labels, dHs[network_depth-1], number_of_threads);
             //debugPrintMatrix(dHs[network_depth-1]);
-            float reg_loss = L2RegLoss_MT(Ws, network_depth, reg_strength, number_of_theads);
+            float reg_loss = L2RegLoss_MT(Ws, network_depth, reg_strength, number_of_threads);
             float loss = data_loss + reg_loss;
             float accu = training_accuracy(Hs[network_depth-1], correct_labels);
             if ((epoch % 1000 == 0 && iteration == 0) || verbose) {
@@ -299,24 +299,24 @@ int train_multithread(FCParameters* network_params) {
                 //debugPrintMatrix(dHs[i]);
                 //debugPrintMatrix(Hs[i]);
                 if (i != network_depth-1) {
-                    leakyReLUBackward_MT(dHs[i],Hs[i],alpha,dHs[i], number_of_theads);
+                    leakyReLUBackward_MT(dHs[i],Hs[i],alpha,dHs[i], number_of_threads);
                     if (use_batchnorm) {
-                        batchnorm_backward_MT(dHs[i], Hs[i], Hs_normalized[i], gammas[i], betas[i], means[i], vars[i], batchnorm_eps, dHs[i],  dgammas[i], dbetas[i], number_of_theads);
+                        batchnorm_backward_MT(dHs[i], Hs[i], Hs_normalized[i], gammas[i], betas[i], means[i], vars[i], batchnorm_eps, dHs[i],  dgammas[i], dbetas[i], number_of_threads);
                     }
                 }
                 //debugPrintMatrix(dHs[i]);
                 if (i != 0) {
-                    affineLayerBackword_MT(dHs[i],Hs[i-1],Ws[i],bs[i],dHs[i-1],dWs[i],dbs[i], number_of_theads);
+                    affineLayerBackword_MT(dHs[i],Hs[i-1],Ws[i],bs[i],dHs[i-1],dWs[i],dbs[i], number_of_threads);
                 } else {
-                    affineLayerBackword_MT(dHs[i],X,Ws[i],bs[i],dX,dWs[i],dbs[i], number_of_theads);
+                    affineLayerBackword_MT(dHs[i],X,Ws[i],bs[i],dX,dWs[i],dbs[i], number_of_threads);
                 }
                 //debugPrintMatrix(dWs[i]);
                 //debugPrintMatrix(Ws[i]);
                 // Weight changes contributed by L2 regulization
-                L2RegLossBackward_MT(dWs[i],Ws[i],reg_strength,dWs[i], number_of_theads);
+                L2RegLossBackward_MT(dWs[i],Ws[i],reg_strength,dWs[i], number_of_threads);
                 //debugPrintMatrix(dWs[i]);
             }
-            destroy2DMatrix_MT(dX, number_of_theads);
+            destroy2DMatrix_MT(dX, number_of_threads);
             // Update weights
             if (0) {
                 printf("INFO: Epoch %d, updating weights with learning rate %f\n",
@@ -324,25 +324,25 @@ int train_multithread(FCParameters* network_params) {
             }
             for (int i=0;i<network_depth;i++) {
                 if (use_momentum_update) {
-                    momentumUpdate_MT(Ws[i], dWs[i], vWs[i], mu, learning_rate, Ws[i], number_of_theads);
-                    momentumUpdate_MT(bs[i], dbs[i], vbs[i], mu, learning_rate, bs[i], number_of_theads);
+                    momentumUpdate_MT(Ws[i], dWs[i], vWs[i], mu, learning_rate, Ws[i], number_of_threads);
+                    momentumUpdate_MT(bs[i], dbs[i], vbs[i], mu, learning_rate, bs[i], number_of_threads);
                     //if (use_batchnorm) {
                     //    momentumUpdate(gammas[i],dgammas[i],)
                     //}
                 } else if (use_nag_update) {
-                    NAGUpdate_MT(Ws[i], dWs[i], vWs[i], vW_prevs[i], mu, learning_rate, Ws[i], number_of_theads);
-                    NAGUpdate_MT(bs[i], dbs[i], vbs[i], vb_prevs[i], mu, learning_rate, bs[i], number_of_theads);
+                    NAGUpdate_MT(Ws[i], dWs[i], vWs[i], vW_prevs[i], mu, learning_rate, Ws[i], number_of_threads);
+                    NAGUpdate_MT(bs[i], dbs[i], vbs[i], vb_prevs[i], mu, learning_rate, bs[i], number_of_threads);
                 } else if (use_rmsprop) {
-                    RMSProp_MT(Ws[i], dWs[i], Wcaches[i], learning_rate, decay_rate, eps, Ws[i], number_of_theads);
-                    RMSProp_MT(bs[i], dbs[i], bcaches[i], learning_rate, decay_rate, eps, bs[i], number_of_theads);
+                    RMSProp_MT(Ws[i], dWs[i], Wcaches[i], learning_rate, decay_rate, eps, Ws[i], number_of_threads);
+                    RMSProp_MT(bs[i], dbs[i], bcaches[i], learning_rate, decay_rate, eps, bs[i], number_of_threads);
                 } else {
-                    vanillaUpdate_MT(Ws[i],dWs[i],learning_rate,Ws[i], number_of_theads);
-                    vanillaUpdate_MT(bs[i],dbs[i],learning_rate,bs[i], number_of_theads);
+                    vanillaUpdate_MT(Ws[i],dWs[i],learning_rate,Ws[i], number_of_threads);
+                    vanillaUpdate_MT(bs[i],dbs[i],learning_rate,bs[i], number_of_threads);
                 }
                 // Let's just use normal SGD update for batchnorm parameters to make it simpler
                 if (use_batchnorm) {
-                    vanillaUpdate_MT(gammas[i],dgammas[i],learning_rate,gammas[i], number_of_theads);
-                    vanillaUpdate_MT(betas[i],dbetas[i],learning_rate,betas[i], number_of_theads);
+                    vanillaUpdate_MT(gammas[i],dgammas[i],learning_rate,gammas[i], number_of_threads);
+                    vanillaUpdate_MT(betas[i],dbetas[i],learning_rate,betas[i], number_of_threads);
                 }
             }
         }
@@ -383,38 +383,38 @@ int train_multithread(FCParameters* network_params) {
     dumpNetworkConfig(network_depth, alpha, Ws, bs, use_batchnorm, mean_caches, var_caches, gammas, betas, batchnorm_eps, network_params->params_save_dir,"network.params");
 
     // Shutdown
-    destroy2DMatrix_MT(X, number_of_theads);
+    destroy2DMatrix_MT(X, number_of_threads);
     for(int i=0;i<network_depth;i++) {
-        destroy2DMatrix_MT(Ws[i], number_of_theads);
-        destroy2DMatrix_MT(dWs[i], number_of_theads);
-        destroy2DMatrix_MT(bs[i], number_of_theads);
-        destroy2DMatrix_MT(dbs[i], number_of_theads);
-        destroy2DMatrix_MT(Hs[i], number_of_theads);
-        destroy2DMatrix_MT(dHs[i], number_of_theads);
+        destroy2DMatrix_MT(Ws[i], number_of_threads);
+        destroy2DMatrix_MT(dWs[i], number_of_threads);
+        destroy2DMatrix_MT(bs[i], number_of_threads);
+        destroy2DMatrix_MT(dbs[i], number_of_threads);
+        destroy2DMatrix_MT(Hs[i], number_of_threads);
+        destroy2DMatrix_MT(dHs[i], number_of_threads);
         if (use_momentum_update) {
-            destroy2DMatrix_MT(vWs[i], number_of_theads);
-            destroy2DMatrix_MT(vbs[i], number_of_theads);
+            destroy2DMatrix_MT(vWs[i], number_of_threads);
+            destroy2DMatrix_MT(vbs[i], number_of_threads);
         }
         if (use_nag_update) {
-            destroy2DMatrix_MT(vWs[i], number_of_theads);
-            destroy2DMatrix_MT(vbs[i], number_of_theads);
-            destroy2DMatrix_MT(vW_prevs[i], number_of_theads);
-            destroy2DMatrix_MT(vb_prevs[i], number_of_theads);
+            destroy2DMatrix_MT(vWs[i], number_of_threads);
+            destroy2DMatrix_MT(vbs[i], number_of_threads);
+            destroy2DMatrix_MT(vW_prevs[i], number_of_threads);
+            destroy2DMatrix_MT(vb_prevs[i], number_of_threads);
         }
         if (use_rmsprop) {
-            destroy2DMatrix_MT(Wcaches[i], number_of_theads);
-            destroy2DMatrix_MT(bcaches[i], number_of_theads);
+            destroy2DMatrix_MT(Wcaches[i], number_of_threads);
+            destroy2DMatrix_MT(bcaches[i], number_of_threads);
         }
         if (use_batchnorm) {
-            destroy2DMatrix_MT(gammas[i], number_of_theads);
-            destroy2DMatrix_MT(betas[i], number_of_theads);
-            destroy2DMatrix_MT(dgammas[i], number_of_theads);
-            destroy2DMatrix_MT(dbetas[i], number_of_theads);
-            destroy2DMatrix_MT(mean_caches[i], number_of_theads);
-            destroy2DMatrix_MT(var_caches[i], number_of_theads);
-            destroy2DMatrix_MT(means[i], number_of_theads);
-            destroy2DMatrix_MT(vars[i], number_of_theads);
-            destroy2DMatrix_MT(Hs_normalized[i], number_of_theads);
+            destroy2DMatrix_MT(gammas[i], number_of_threads);
+            destroy2DMatrix_MT(betas[i], number_of_threads);
+            destroy2DMatrix_MT(dgammas[i], number_of_threads);
+            destroy2DMatrix_MT(dbetas[i], number_of_threads);
+            destroy2DMatrix_MT(mean_caches[i], number_of_threads);
+            destroy2DMatrix_MT(var_caches[i], number_of_threads);
+            destroy2DMatrix_MT(means[i], number_of_threads);
+            destroy2DMatrix_MT(vars[i], number_of_threads);
+            destroy2DMatrix_MT(Hs_normalized[i], number_of_threads);
         }
     }
     free(Ws);
@@ -438,8 +438,8 @@ int train_multithread(FCParameters* network_params) {
         free(bcaches);
     }
     // Remeber to free struct parameter
-    destroy2DMatrix_MT(network_params->X, number_of_theads);
-    destroy2DMatrix_MT(network_params->correct_labels, number_of_theads);
+    destroy2DMatrix_MT(network_params->X, number_of_threads);
+    destroy2DMatrix_MT(network_params->correct_labels, number_of_threads);
     free(network_params->hidden_layer_sizes);
     free(network_params->mode);
     free(network_params->params_save_dir);
@@ -452,30 +452,30 @@ int train_multithread(FCParameters* network_params) {
     return 0;
 }
 
-int selftest_MT(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, float alpha, int network_depth, bool use_batchnorm, TwoDMatrix** mean_caches, TwoDMatrix** var_caches, float eps, TwoDMatrix** gammas, TwoDMatrix** betas, TwoDMatrix* scores, int number_of_theads) {
+int selftest_MT(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, float alpha, int network_depth, bool use_batchnorm, TwoDMatrix** mean_caches, TwoDMatrix** var_caches, float eps, TwoDMatrix** gammas, TwoDMatrix** betas, TwoDMatrix* scores, int number_of_threads) {
     TwoDMatrix** Hs = malloc(sizeof(TwoDMatrix*)*network_depth);
     for(int i=0;i<network_depth;i++) Hs[i] = matrixMalloc(sizeof(TwoDMatrix));
     TwoDMatrix* layer_X = NULL;
     layer_X = X;
     for(int i=0;i<network_depth;i++) {
-        affineLayerForward_MT(layer_X,Ws[i],bs[i],Hs[i], number_of_theads);
+        affineLayerForward_MT(layer_X,Ws[i],bs[i],Hs[i], number_of_threads);
         if (i != network_depth - 1) {
             if (use_batchnorm) {
-                batchnorm_test_forward_MT(Hs[i], mean_caches[i], var_caches[i], eps, gammas[i], betas[i], Hs[i], number_of_theads);
+                batchnorm_test_forward_MT(Hs[i], mean_caches[i], var_caches[i], eps, gammas[i], betas[i], Hs[i], number_of_threads);
             }
-            leakyReLUForward_MT(Hs[i],alpha,Hs[i], number_of_theads);
+            leakyReLUForward_MT(Hs[i],alpha,Hs[i], number_of_threads);
         }
         layer_X = Hs[i];
     }
-    init2DMatrix_MT(scores,Hs[network_depth-1]->height,Hs[network_depth-1]->width, number_of_theads);
+    init2DMatrix_MT(scores,Hs[network_depth-1]->height,Hs[network_depth-1]->width, number_of_threads);
     copyTwoDMatrix(Hs[network_depth-1],scores);
-    for(int i=0;i<network_depth;i++) destroy2DMatrix_MT(Hs[i], number_of_theads);
+    for(int i=0;i<network_depth;i++) destroy2DMatrix_MT(Hs[i], number_of_threads);
     free(Hs);
     Hs = NULL;
     return 0;
 }
 
-float verifyWithTrainingData_MT(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoDMatrix** bs, int network_depth, int minibatch_size, float alpha, int labels, bool use_batchnorm, TwoDMatrix** mean_caches, TwoDMatrix** var_caches, float eps, TwoDMatrix** gammas, TwoDMatrix** betas, TwoDMatrix* correct_labels, int number_of_theads) {
+float verifyWithTrainingData_MT(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoDMatrix** bs, int network_depth, int minibatch_size, float alpha, int labels, bool use_batchnorm, TwoDMatrix** mean_caches, TwoDMatrix** var_caches, float eps, TwoDMatrix** gammas, TwoDMatrix** betas, TwoDMatrix* correct_labels, int number_of_threads) {
     int correct_count = 0;
     int iterations = training_data->height / minibatch_size;
     TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
@@ -484,7 +484,7 @@ float verifyWithTrainingData_MT(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoD
         int data_start = i*minibatch_size;
         int data_end = (i+1)*minibatch_size-1;
         chop2DMatrix(training_data,data_start,data_end,X);
-        selftest_MT(X,Ws,bs, alpha, network_depth, use_batchnorm, mean_caches, var_caches, eps, gammas, betas, scores, number_of_theads);
+        selftest_MT(X,Ws,bs, alpha, network_depth, use_batchnorm, mean_caches, var_caches, eps, gammas, betas, scores, number_of_threads);
         for(int j=data_start;j<=data_end;j++) {
             int correct_label = correct_labels->d[j][0];
             int predicted = 0;
@@ -504,7 +504,7 @@ float verifyWithTrainingData_MT(TwoDMatrix* training_data, TwoDMatrix** Ws, TwoD
     return 100.0f*correct_count/(iterations*minibatch_size);
 }
 
-int test_multithread(FCParameters* network_params, TwoDMatrix* scores) {
+int test_multithread(FCParameters* network_params, TwoDMatrix* scores, int number_of_threads) {
     TwoDMatrix** Ws = NULL;
     TwoDMatrix** bs = NULL;
     TwoDMatrix* test_data = network_params->X;
@@ -517,7 +517,7 @@ int test_multithread(FCParameters* network_params, TwoDMatrix* scores) {
     TwoDMatrix** mean_caches = NULL;
     TwoDMatrix** var_caches = NULL;
     loadNetworkConfig(network_params->params_save_dir,network_params->params_filename, &network_depth, &alpha, &Ws, &bs, &use_batchnorm, &mean_caches, &var_caches, &gammas, &betas, &batchnorm_eps);
-    selftest_MT(test_data,Ws,bs, alpha, network_depth, use_batchnorm, mean_caches, var_caches, batchnorm_eps, gammas, betas, scores, number_of_theads);
+    selftest_MT(test_data,Ws,bs, alpha, network_depth, use_batchnorm, mean_caches, var_caches, batchnorm_eps, gammas, betas, scores, number_of_threads);
     //printf("Scores are calculated as:\n");
     //printMatrix(scores);
     return 0;
@@ -528,7 +528,7 @@ int FCTrainCore_multithread(FCParameters* network_params,
     TwoDMatrix** vWs, TwoDMatrix** vbs, TwoDMatrix** vW_prevs, TwoDMatrix** vb_prevs,
     TwoDMatrix** Wcaches, TwoDMatrix** bcaches,
     TwoDMatrix** mean_caches, TwoDMatrix** var_caches, TwoDMatrix** gammas, TwoDMatrix** betas,
-    TwoDMatrix* dX, int e, float* learning_rate, float* losses, int number_threads) {
+    TwoDMatrix* dX, int e, float* learning_rate, float* losses, int number_of_threads) {
     TwoDMatrix* training_data = network_params->X;
     TwoDMatrix* correct_labels = network_params->correct_labels;
     int minibatch_size = network_params->minibatch_size;
@@ -591,20 +591,20 @@ int FCTrainCore_multithread(FCParameters* network_params,
         dWs[i] = matrixMalloc(sizeof(TwoDMatrix));
         dbs[i] = matrixMalloc(sizeof(TwoDMatrix));
         dHs[i] = matrixMalloc(sizeof(TwoDMatrix));
-        init2DMatrix_MT(Hs[i],minibatch_size,hidden_layer_sizes[i], number_of_theads);
+        init2DMatrix_MT(Hs[i],minibatch_size,hidden_layer_sizes[i], number_of_threads);
 
         // Initialize variables for optimization
         if (use_batchnorm) {
             dgammas[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrix_MT(dgammas[i],1,hidden_layer_sizes[i], number_of_theads);
+            init2DMatrix_MT(dgammas[i],1,hidden_layer_sizes[i], number_of_threads);
             dbetas[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrix_MT(dbetas[i],1,hidden_layer_sizes[i], number_of_theads);
+            init2DMatrix_MT(dbetas[i],1,hidden_layer_sizes[i], number_of_threads);
             means[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrix_MT(means[i],1,hidden_layer_sizes[i], number_of_theads);
+            init2DMatrix_MT(means[i],1,hidden_layer_sizes[i], number_of_threads);
             vars[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrix_MT(vars[i],1,hidden_layer_sizes[i], number_of_theads);
+            init2DMatrix_MT(vars[i],1,hidden_layer_sizes[i], number_of_threads);
             Hs_normalized[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero_MT(Hs_normalized[i],minibatch_size,hidden_layer_sizes[i], number_of_theads);
+            init2DMatrixZero_MT(Hs_normalized[i],minibatch_size,hidden_layer_sizes[i], number_of_threads);
         }
         //former_width = hidden_layer_sizes[i];
     }
@@ -632,14 +632,14 @@ int FCTrainCore_multithread(FCParameters* network_params,
             TwoDMatrix* layer_X = NULL;
             layer_X = X;
             for(int i=0;i<network_depth;i++) {
-                affineLayerForward_MT(layer_X,Ws[i],bs[i],Hs[i], number_of_theads);
+                affineLayerForward_MT(layer_X,Ws[i],bs[i],Hs[i], number_of_threads);
                 // The last layer in the network will calculate the scores
                 // So there will not be a activation function put to it
                 if (i != network_depth - 1) {
                     if (use_batchnorm) {
-                        batchnorm_training_forward_MT(Hs[i], batchnorm_momentum, batchnorm_eps, gammas[i], betas[i], Hs[i], mean_caches[i], var_caches[i], means[i], vars[i], Hs_normalized[i], number_of_theads);
+                        batchnorm_training_forward_MT(Hs[i], batchnorm_momentum, batchnorm_eps, gammas[i], betas[i], Hs[i], mean_caches[i], var_caches[i], means[i], vars[i], Hs_normalized[i], number_of_threads);
                     }
-                    leakyReLUForward_MT(Hs[i],alpha,Hs[i], number_of_theads);
+                    leakyReLUForward_MT(Hs[i],alpha,Hs[i], number_of_threads);
                 }
                 //printf("%dth Hidden input, X\n",i);
                 //printMatrix(layer_X);
@@ -663,11 +663,11 @@ int FCTrainCore_multithread(FCParameters* network_params,
             }
             
             
-            losses[0] = softmaxLoss_MT(Hs[network_depth-1], correct_labels, dHs[network_depth-1], number_of_theads);
+            losses[0] = softmaxLoss_MT(Hs[network_depth-1], correct_labels, dHs[network_depth-1], number_of_threads);
             //losses[0] = SVMLoss(Hs[network_depth-1], correct_labels, dHs[network_depth-1]);
             //printf("dscores\n");
             //printMatrix(dHs[network_depth-1]);
-            losses[1] = L2RegLoss_MT(Ws, network_depth, reg_strength, number_of_theads);
+            losses[1] = L2RegLoss_MT(Ws, network_depth, reg_strength, number_of_threads);
             losses[2] = training_accuracy(Hs[network_depth-1], correct_labels);
             //if ((epoch % 1000 == 0 && iteration == 0) || verbose) {
             //    printf("%s: Epoch %d, data loss: %f, regulization loss: %f, total loss: %f\n",TAG,
@@ -681,16 +681,16 @@ int FCTrainCore_multithread(FCParameters* network_params,
                 //printf("Hs[%d]\n",i);
                 //printMatrix(Hs[i]);
                 if (i != network_depth-1) {
-                    leakyReLUBackward_MT(dHs[i],Hs[i],alpha,dHs[i], number_of_theads);
+                    leakyReLUBackward_MT(dHs[i],Hs[i],alpha,dHs[i], number_of_threads);
                     if (use_batchnorm) {
-                        batchnorm_backward_MT(dHs[i], Hs[i], Hs_normalized[i], gammas[i], betas[i], means[i], vars[i], batchnorm_eps, dHs[i],  dgammas[i], dbetas[i], number_of_theads);
+                        batchnorm_backward_MT(dHs[i], Hs[i], Hs_normalized[i], gammas[i], betas[i], means[i], vars[i], batchnorm_eps, dHs[i],  dgammas[i], dbetas[i], number_of_threads);
                     }
                 }
                 //debugPrintMatrix(dHs[i]);
                 if (i != 0) {
-                    affineLayerBackword_MT(dHs[i],Hs[i-1],Ws[i],bs[i],dHs[i-1],dWs[i],dbs[i], number_of_theads);
+                    affineLayerBackword_MT(dHs[i],Hs[i-1],Ws[i],bs[i],dHs[i-1],dWs[i],dbs[i], number_of_threads);
                 } else {
-                    affineLayerBackword_MT(dHs[i],X,Ws[i],bs[i],dX,dWs[i],dbs[i], number_of_theads);
+                    affineLayerBackword_MT(dHs[i],X,Ws[i],bs[i],dX,dWs[i],dbs[i], number_of_threads);
                 }
                 //printf("before reg, dbs[%d]\n",i);
                 //printMatrix(dbs[i]);
@@ -699,7 +699,7 @@ int FCTrainCore_multithread(FCParameters* network_params,
                 //printf("Ws[%d]\n",i);
                 //printMatrix(Ws[i]);
                 // Weight changes contributed by L2 regulization
-                L2RegLossBackward_MT(dWs[i],Ws[i],reg_strength,dWs[i], number_of_theads);
+                L2RegLossBackward_MT(dWs[i],Ws[i],reg_strength,dWs[i], number_of_threads);
                 //printf("after reg, dWs[%d]\n",i);
                 //printMatrix(dWs[i]);
 #if defined(DEBUG) && DEBUG > 1
@@ -714,41 +714,41 @@ int FCTrainCore_multithread(FCParameters* network_params,
             // Update weights
             for (int i=0;i<network_depth;i++) {
                 if (use_momentum_update) {
-                    momentumUpdate_MT(Ws[i], dWs[i], vWs[i], mu, *learning_rate, Ws[i], number_of_theads);
-                    momentumUpdate_MT(bs[i], dbs[i], vbs[i], mu, *learning_rate, bs[i], number_of_theads);
+                    momentumUpdate_MT(Ws[i], dWs[i], vWs[i], mu, *learning_rate, Ws[i], number_of_threads);
+                    momentumUpdate_MT(bs[i], dbs[i], vbs[i], mu, *learning_rate, bs[i], number_of_threads);
                     //if (use_batchnorm) {
                     //    momentumUpdate(gammas[i],dgammas[i],)
                     //}
                 } else if (use_nag_update) {
-                    NAGUpdate_MT(Ws[i], dWs[i], vWs[i], vW_prevs[i], mu, *learning_rate, Ws[i], number_of_theads);
-                    NAGUpdate_MT(bs[i], dbs[i], vbs[i], vb_prevs[i], mu, *learning_rate, bs[i], number_of_theads);
+                    NAGUpdate_MT(Ws[i], dWs[i], vWs[i], vW_prevs[i], mu, *learning_rate, Ws[i], number_of_threads);
+                    NAGUpdate_MT(bs[i], dbs[i], vbs[i], vb_prevs[i], mu, *learning_rate, bs[i], number_of_threads);
                 } else if (use_rmsprop) {
-                    RMSProp_MT(Ws[i], dWs[i], Wcaches[i], *learning_rate, decay_rate, eps, Ws[i], number_of_theads);
-                    RMSProp_MT(bs[i], dbs[i], bcaches[i], *learning_rate, decay_rate, eps, bs[i], number_of_theads);
+                    RMSProp_MT(Ws[i], dWs[i], Wcaches[i], *learning_rate, decay_rate, eps, Ws[i], number_of_threads);
+                    RMSProp_MT(bs[i], dbs[i], bcaches[i], *learning_rate, decay_rate, eps, bs[i], number_of_threads);
                 } else {
-                    vanillaUpdate_MT(Ws[i],dWs[i],*learning_rate,Ws[i], number_of_theads, number_of_theads);
-                    vanillaUpdate_MT(bs[i],dbs[i],*learning_rate,bs[i], number_of_theads, number_of_theads);
+                    vanillaUpdate_MT(Ws[i],dWs[i],*learning_rate,Ws[i], number_of_threads);
+                    vanillaUpdate_MT(bs[i],dbs[i],*learning_rate,bs[i], number_of_threads);
                 }
                 // Let's just use normal SGD update for batchnorm parameters to make it simpler
                 if (use_batchnorm) {
-                    vanillaUpdate_MT(gammas[i],dgammas[i],*learning_rate,gammas[i], number_of_theads);
-                    vanillaUpdate_MT(betas[i],dbetas[i],*learning_rate,betas[i], number_of_theads);
+                    vanillaUpdate_MT(gammas[i],dgammas[i],*learning_rate,gammas[i], number_of_threads);
+                    vanillaUpdate_MT(betas[i],dbetas[i],*learning_rate,betas[i], number_of_threads);
                 }
             }
         }
     }
-    destroy2DMatrix_MT(X, number_of_theads);
+    destroy2DMatrix_MT(X, number_of_threads);
     for(int i=0;i<network_depth;i++) {
-        destroy2DMatrix_MT(dWs[i], number_of_theads);
-        destroy2DMatrix_MT(dbs[i], number_of_theads);
-        destroy2DMatrix_MT(Hs[i], number_of_theads);
-        destroy2DMatrix_MT(dHs[i], number_of_theads);
+        destroy2DMatrix_MT(dWs[i], number_of_threads);
+        destroy2DMatrix_MT(dbs[i], number_of_threads);
+        destroy2DMatrix_MT(Hs[i], number_of_threads);
+        destroy2DMatrix_MT(dHs[i], number_of_threads);
         if (use_batchnorm) {
-            destroy2DMatrix_MT(dgammas[i], number_of_theads);
-            destroy2DMatrix_MT(dbetas[i], number_of_theads);
-            destroy2DMatrix_MT(means[i], number_of_theads);
-            destroy2DMatrix_MT(vars[i], number_of_theads);
-            destroy2DMatrix_MT(Hs_normalized[i], number_of_theads);
+            destroy2DMatrix_MT(dgammas[i], number_of_threads);
+            destroy2DMatrix_MT(dbetas[i], number_of_threads);
+            destroy2DMatrix_MT(means[i], number_of_threads);
+            destroy2DMatrix_MT(vars[i], number_of_threads);
+            destroy2DMatrix_MT(Hs_normalized[i], number_of_threads);
         }
     }
     free(dWs);
