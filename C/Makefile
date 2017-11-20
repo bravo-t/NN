@@ -12,6 +12,9 @@ default: fully_connected_network convolutional_network
 fully_connected_network: fully_connected_network.c misc_utils.o matrix_operations.o layers.o fully_connected_net.o
 	$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
 
+fully_connected_network_multithread: fully_connected_network_multithread.c misc_utils.o matrix_operations.o layers.o fully_connected_net.o matrix_operations_multithread.o layers_multithread.o fully_connected_net_multithread.o
+	$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
+
 misc_utils.o: src/misc_utils.c src/misc_utils.h src/network_type.h
 	$(CC) -c -o $@ $< $(LIBS) $(CFLAGS)
 
