@@ -1,5 +1,5 @@
-#ifndef __FULLY_CONNECTED_HEADER__
-#define __FULLY_CONNECTED_HEADER__
+#ifndef __FULLY_CONNECTED_MT_HEADER__
+#define __FULLY_CONNECTED_MT_HEADER__
 
 int train_multithread(FCParameters* network_params);
 int selftest_MT(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, float alpha, int network_depth, bool use_batchnorm, TwoDMatrix** mean_caches, TwoDMatrix** var_caches, float eps, TwoDMatrix** gammas, TwoDMatrix** betas, TwoDMatrix* scores, int number_of_threads);

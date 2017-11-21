@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
         exit(0);
     }
     FCParameters* network_params = readNetworkConfigFile(argv[1]);
-    int number_of_threads = strtool(argv[2],NULL,10);
+    int number_of_threads = strtol(argv[2],NULL,10);
     if (strcmp(network_params->mode,"train")) {
         TwoDMatrix* scores = NULL;
         test_multithread(network_params,scores,number_of_threads);
