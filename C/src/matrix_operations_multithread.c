@@ -520,7 +520,7 @@ void* broadcastMatrixYRow(void* args) {
     TwoDMatrix* OUT = a->OUT;
     for(int i=a->h_start;i<=a->h_end;i++) {
         for(int j=0;j<M->width;j++) {
-                OUT->d[i][j] = M->d[i][0];
+                OUT->d[i][j] = M->d[0][j];
         }
     }
     free(args);
