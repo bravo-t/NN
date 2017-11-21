@@ -649,7 +649,7 @@ void* elementDivRow(void* args) {
     float z = a->f;
     for(int i=a->h_start;i<=a->h_end;i++) {
         for(int j=0;j<M->width;j++) {
-                OUT->d[i][j] = M->d[i][j] + z;
+                OUT->d[i][j] = M->d[i][j] / z;
         }
     }
     free(args);
