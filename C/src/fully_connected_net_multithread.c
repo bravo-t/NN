@@ -158,7 +158,7 @@ int train_multithread(FCParameters* network_params) {
             printf("INFO: Initializing b%d to be a %dx%d matrix\n",i,1,hidden_layer_sizes[i]);
             printf("INFO: Initializing H%d to be a %dx%d matrix\n",i,minibatch_size,hidden_layer_sizes[i]);
         }
-        init2DMatrixNormRand_MT(Ws[i],former_width,hidden_layer_sizes[i],0.0,1.0,former_width, number_of_threads);
+        init2DMatrixNormRand_MT(Ws[i],former_width,hidden_layer_sizes[i],0.0,1.0,former_width,number_of_threads);
         init2DMatrixZero_MT(bs[i],1,hidden_layer_sizes[i], number_of_threads);
         init2DMatrix_MT(Hs[i],minibatch_size,hidden_layer_sizes[i], number_of_threads);
         // Statistic data
@@ -195,7 +195,7 @@ int train_multithread(FCParameters* network_params) {
         }
         if (use_batchnorm) {
             gammas[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixOne_MT(gammas[i],1,hidden_layer_sizes[i], number_of_threads);
+            init2DMatrixOne(gammas[i],1,hidden_layer_sizes[i]);
             betas[i] = matrixMalloc(sizeof(TwoDMatrix));
             init2DMatrixZero_MT(betas[i],1,hidden_layer_sizes[i], number_of_threads);
             dgammas[i] = matrixMalloc(sizeof(TwoDMatrix));

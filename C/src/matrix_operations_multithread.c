@@ -178,7 +178,7 @@ int init2DMatrixNormRand_MT(TwoDMatrix* M, int height, int width, float mean, fl
         if (thread_arg->h_start >= height) break;
         thread_arg->h_end = (t+1)*H-1;
         if (thread_arg->h_end >= height) thread_arg->h_end = height - 1;
-        int create_error = pthread_create(&thread[t],&attr,init2DMatrixRow,(void*) thread_arg);
+        int create_error = pthread_create(&thread[t],&attr,init2DMatrixNormRandRow,(void*) thread_arg);
         if (create_error) {
             printf("ERROR: Create thread failed.\n");
             exit(-1);
