@@ -78,24 +78,33 @@ int main() {
 
 void* testPartial(void* args) {
     char* shared_memory_name = "/ipc_test";
+    TwoDMatrix* ptr;
     TwoDMatrixOperationsArgs* a = (TwoDMatrixOperationsArgs*) args;
-    if (a->h_start != 0) sleep(10);
     if (a->h_start == 0) {
         pthread_mutex_lock(&mutex);
         printf("Thread %d: allocating memory for output 2D matrix\n", a->t);
         a->OUT = matrixMalloc(sizeof(TwoDMatrix));
-        int shm_fd = shm_open(shared_memory_name,O_CREAT|O_RDWR);
+        init2DMatrix(a->OUT,a->height,a->width);
+        int shm_fd = shm_open(shared_memory_name,O_CREAT|O_RDWR,0666);
         if (shm_fd == -1) {
             printf("ERROR: Cannot create shared memory\n");
             exit(1);
         }
         ftruncate(shm_fd,sizeof(TwoDMatrix*));
-        int* shm_base = mmap(0,sizeof(TwoDMatrix*),PROT_READ|PROT_WRITE,MAP_SHARED,shm_fd,0);
+        TwoDMatrix** shm_base = mmap(0,sizeof(TwoDMatrix*),PROT_READ|PROT_WRITE,MAP_SHARED,shm_fd,0);
         if (shm_base == MAP_FAILED) {
             printf("ERROR: mmap failed\n");
             exit(1);
         }
         *shm_base = a->OUT;
+        if (munmap(shm_base,sizeof(TwoDMatrix))) {
+            printf("Unmap failed\n");
+            exit(1);
+        }
+        if (close(shm_fd) == -1) {
+            printf("Close failed\n");
+            exit(1);
+        }
         printf("Wrote 0x%x to shared memory\n",a->OUT);
         //init2DMatrix(a->OUT,a->height,a->width);
         *(a->memory_allocated) = true;
@@ -122,8 +131,33 @@ void* testPartial(void* args) {
         pthread_mutex_unlock(&mutex);
     }
     pthread_mutex_lock(&mutex);
+    int shm_fd = shm_open(shared_memory_name,O_RDONLY,0666);
+    if (shm_fd == -1) {
+        printf("ERROR: Cannot read shared memory\n");
+        exit(1);
+    }
+    TwoDMatrix** shm_base = mmap(0,sizeof(TwoDMatrix*),PROT_READ,MAP_SHARED,shm_fd,0);
+    if (shm_base == MAP_FAILED) {
+        printf("Thread %d: mmap failed\n", a->t);
+        exit(1);
+    }
+    ptr = (TwoDMatrix*) *shm_base;
+    if (munmap(shm_base,sizeof(TwoDMatrix))) {
+        printf("Unmap failed\n");
+        exit(1);
+    }
+    if (close(shm_fd) == -1) {
+        printf("Close failed\n");
+        exit(1);
+    }
+    printf("Thread %d: Got 0x%x from shared memory\n", a->t, ptr);
     printf("Thread %d: assigning values from %d to %d\n",a->t ,a->h_start,a->h_end);
     pthread_mutex_unlock(&mutex);
+    for(int i=a->h_start;i<=a->h_end;i++) {
+        for(int j=0;j<a->width;j++) {
+            ptr->d[i][j] = a->t;
+        }
+    }
     free(args);
     pthread_exit(NULL);
 }
