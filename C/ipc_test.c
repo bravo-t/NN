@@ -8,6 +8,8 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
+#include <semaphore.h>
 #include <sys/shm.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -25,13 +27,16 @@ typedef struct {
     int h_end;
     int t;
     bool* memory_allocated;
+    sem_t* sem;
 } TwoDMatrixOperationsArgs;
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
-bool memory_allocated = false;
+//bool memory_allocated = false;
 
 void* testPartial(void* args);
+void wait_until_everyone_is_finished(sem_t *sem);
+void microsec_sleep (long ms);
 
 int main() {
     int number_of_threads = 8;
@@ -43,17 +48,24 @@ int main() {
     pthread_t* thread = malloc(sizeof(pthread_t)*number_of_threads);
     int H = height / number_of_threads + 1;
     int t = 0;
+    int number_of_threads_to_dispatch = height / H;
     bool memory_allocated = false;
-    for(;t<number_of_threads;t++) {
+    sem_t sem;
+    if (sem_init(&sem,0,number_of_threads_to_dispatch) == -1) {
+        printf("ERROR: semaphore init failed\n");
+        exit(1);
+    }
+    for(;t<number_of_threads_to_dispatch;t++) {
         TwoDMatrixOperationsArgs* thread_arg = malloc(sizeof(TwoDMatrixOperationsArgs));
         thread_arg->h_start = t*H;
-        if (thread_arg->h_start >= height) break;
+        //if (thread_arg->h_start >= height) break;
         thread_arg->h_end = (t+1)*H-1;
-        if (thread_arg->h_end >= height) thread_arg->h_end = height - 1;
+        //if (thread_arg->h_end >= height) thread_arg->h_end = height - 1;
         thread_arg->height = height;
         thread_arg->width = width;
         thread_arg->t = t;
         thread_arg->memory_allocated = &memory_allocated;
+        thread_arg->sem = &sem;
         pthread_mutex_lock(&mutex);
         printf("Main: dispatching thread %d for %d to %d\n",t,thread_arg->h_start,thread_arg->h_end);
         pthread_mutex_unlock(&mutex);
@@ -105,7 +117,7 @@ void* testPartial(void* args) {
             printf("Close failed\n");
             exit(1);
         }
-        printf("Wrote 0x%x to shared memory\n",a->OUT);
+        printf("Wrote %p to shared memory\n",a->OUT);
         //init2DMatrix(a->OUT,a->height,a->width);
         *(a->memory_allocated) = true;
         pthread_mutex_unlock(&mutex);
@@ -150,7 +162,7 @@ void* testPartial(void* args) {
         printf("Close failed\n");
         exit(1);
     }
-    printf("Thread %d: Got 0x%x from shared memory\n", a->t, ptr);
+    printf("Thread %d: Got %p from shared memory\n", a->t, ptr);
     printf("Thread %d: assigning values from %d to %d\n",a->t ,a->h_start,a->h_end);
     pthread_mutex_unlock(&mutex);
     for(int i=a->h_start;i<=a->h_end;i++) {
@@ -158,6 +170,40 @@ void* testPartial(void* args) {
             ptr->d[i][j] = a->t;
         }
     }
+    pthread_mutex_lock(&mutex);
+    printf("Thread %d: work completed\n",a->t );
+    pthread_mutex_unlock(&mutex);
+    sem_wait(a->sem);
+    if (a->t == 0) {
+        pthread_mutex_lock(&mutex);
+        printf("Thread %d: wait for others to complete their job\n",a->t);
+        pthread_mutex_unlock(&mutex);
+        wait_until_everyone_is_finished(a->sem);
+        pthread_mutex_lock(&mutex);
+        printf("Thread %d: All threads completed, remove the shared memory file\n",a->t);
+        pthread_mutex_unlock(&mutex);
+        if (shm_unlink(shared_memory_name) == -1) {
+            printf("Thread %d: Error occured when removing shared memory file\n",a->t);
+            exit(1);
+        }
+        pthread_mutex_lock(&mutex);
+        printMatrix(a->OUT);
+        pthread_mutex_unlock(&mutex);
+    }
     free(args);
     pthread_exit(NULL);
+}
+
+void microsec_sleep (long ms) {
+    struct timeval delay;
+    delay.tv_sec = ms * 1e-6;
+    delay.tv_usec = ms - 1e6*delay.tv_sec;
+    select(0,NULL,NULL,NULL,&delay);
+}
+
+void wait_until_everyone_is_finished(sem_t *sem) {
+    while (sem_trywait(sem) != -1 && errno != EAGAIN) {
+        sem_post(sem);
+        microsec_sleep(1);
+    }
 }
