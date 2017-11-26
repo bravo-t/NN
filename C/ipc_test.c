@@ -204,6 +204,6 @@ void microsec_sleep (long ms) {
 void wait_until_everyone_is_finished(sem_t *sem) {
     while (sem_trywait(sem) != -1 && errno != EAGAIN) {
         sem_post(sem);
-        microsec_sleep(1);
+        //microsec_sleep(1);
     }
 }
