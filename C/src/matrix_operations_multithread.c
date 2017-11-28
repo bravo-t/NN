@@ -16,6 +16,28 @@ extern sem_t semaphore;
 extern pthread_barrier_t barrier;
 extern int number_of_threads;
 
+int h_start(int id, int height) {
+    return(id*height/number_of_threads);
+}
+
+int h_end(int id, int height) {
+    return(((id+1)*height/number_of_threads)-1);
+}
+
+void resetMemAllocated(int id, bool* mem_allocated) {
+    if (h_start == 0) {
+        pthread_mutex_lock(&mutex);
+        pthread_barrier_init(&barrier,NULL,number_of_threads);
+        *mem_allocated = false;
+        pthread_mutex_unlock(&mutex);
+    } else {
+        pthread_mutex_lock(&mutex);
+        while((*mem_allocated)) pthread_cond_wait(&cond);
+        pthread_mutex_unlock(&mutex);
+    }
+    pthead_barrier_wait(&barrier);
+}
+
 int init2DMatrix_MT(TwoDMatrix* M, int height, int width, int h_start, int h_end, bool* mem_allocated) {
     if (M->initialized) return 0;
     if (h_start == 0) {
