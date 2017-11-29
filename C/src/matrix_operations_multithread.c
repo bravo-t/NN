@@ -16,11 +16,11 @@ extern sem_t semaphore;
 extern pthread_barrier_t barrier;
 extern int number_of_threads;
 
-int h_start(int id, int height) {
+int calc_h_start(int id, int height) {
     return(id*height/number_of_threads);
 }
 
-int h_end(int id, int height) {
+int calc_h_end(int id, int height) {
     return(((id+1)*height/number_of_threads)-1);
 }
 
@@ -138,7 +138,10 @@ int init2DMatrixOne_MT(TwoDMatrix* M, int height, int width,int h_start, int h_e
     return 0;
 }
 
-int copyTwoDMatrix_MT(TwoDMatrix* M, TwoDMatrix* OUT,int h_start, int h_end, bool* mem_allocated) {
+int copyTwoDMatrix_MT(TwoDMatrix* M, TwoDMatrix* OUT, int id, bool* mem_allocated) {
+    int h_start = calc_h_start(id,M->height);
+    int h_end = calc_h_end(id,M->height);
+    reset_mem_allocated(mem_allocated);
     int retval = init2DMatrix_MT(OUT, M->height, M->width,h_start,h_end,mem_allocated);
     for(int i=h_start;i<=h_end;i++) {
         for(int j=0;j<M->width;j++) {
@@ -148,7 +151,10 @@ int copyTwoDMatrix_MT(TwoDMatrix* M, TwoDMatrix* OUT,int h_start, int h_end, boo
     return retval;
 }
 
-int transpose2DMatrix_MT(TwoDMatrix* M,TwoDMatrix* OUT,int h_start, int h_end, bool* mem_allocated) {
+int transpose2DMatrix_MT(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated) {
+    int h_start = calc_h_start(id,M->height);
+    int h_end = calc_h_end(id,M->height);
+    reset_mem_allocated(mem_allocated);
     init2DMatrix_MT(OUT, M->width,M->height,h_start,h_end,mem_allocated);
     for(int i=h_start;i<=h_end;i++) {
         for(int j=0;j<M->width;j++) OUT->d[j][i] = M->d[i][j];
@@ -156,10 +162,13 @@ int transpose2DMatrix_MT(TwoDMatrix* M,TwoDMatrix* OUT,int h_start, int h_end, b
     return 0;
 }
 
-int dotProduct_MT(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* OUT,int h_start, int h_end, bool* mem_allocated) {
+int dotProduct_MT(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* OUT,int id, bool* mem_allocated) {
     if (X->width != W->height) {
         return 1;
     }
+    int h_start = calc_h_start(id,X->height);
+    int h_end = calc_h_end(id,X->height);
+    reset_mem_allocated(mem_allocated);
     init2DMatrix_MT(OUT,X->height,W->width,h_start,h_end,mem_allocated);
     for(int i=h_start;i<=h_end;i++) {
         for(int j=0;j<W->width;j++) {
@@ -171,9 +180,12 @@ int dotProduct_MT(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* OUT,int h_start, int
     return 0;
 }
 
-int elementwiseAdd2DMatrix_MT(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,int h_start, int h_end, bool* mem_allocated) {
+int elementwiseAdd2DMatrix_MT(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,int id, bool* mem_allocated) {
     if (A->height != B->height) return 1;
     if (A->width != B->width) return 1;
+    int h_start = calc_h_start(id,A->height);
+    int h_end = calc_h_end(id,A->height);
+    reset_mem_allocated(mem_allocated);
     init2DMatrix_MT(OUT,A->height,A->width,h_start,h_end,mem_allocated);
     for(int i=h_start;i<=h_end;i++) {
         for(int j=0;j<A->width;j++) {
@@ -183,9 +195,12 @@ int elementwiseAdd2DMatrix_MT(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,int 
     return 0;
 }
 
-int elementwiseSub2DMatrix_MT(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,int h_start, int h_end, bool* mem_allocated) {
+int elementwiseSub2DMatrix_MT(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,int id, bool* mem_allocated) {
     if (A->height != B->height) return 1;
     if (A->width != B->width) return 1;
+    int h_start = calc_h_start(id,A->height);
+    int h_end = calc_h_end(id,A->height);
+    reset_mem_allocated(mem_allocated);
     init2DMatrix_MT(OUT,A->height,A->width,h_start,h_end,mem_allocated);
     for(int i=h_start;i<=h_end;i++) {
         for(int j=0;j<A->width;j++) {
@@ -195,9 +210,12 @@ int elementwiseSub2DMatrix_MT(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,int 
     return 0;
 }
 
-int elementwiseMul2DMatrix_MT(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,int h_start, int h_end, bool* mem_allocated) {
+int elementwiseMul2DMatrix_MT(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,int id, bool* mem_allocated) {
     if (A->height != B->height) return 1;
     if (A->width != B->width) return 1;
+    int h_start = calc_h_start(id,A->height);
+    int h_end = calc_h_end(id,A->height);
+    reset_mem_allocated(mem_allocated);
     init2DMatrix_MT(OUT,A->height,A->width,h_start,h_end,mem_allocated);
     for(int i=h_start;i<=h_end;i++) {
         for(int j=0;j<A->width;j++) {
@@ -207,9 +225,12 @@ int elementwiseMul2DMatrix_MT(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,int 
     return 0;
 }
 
-int elementwiseDiv2DMatrix_MT(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,int h_start, int h_end, bool* mem_allocated) {
+int elementwiseDiv2DMatrix_MT(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,int id, bool* mem_allocated) {
     if (A->height != B->height) return 1;
     if (A->width != B->width) return 1;
+    int h_start = calc_h_start(id,A->height);
+    int h_end = calc_h_end(id,A->height);
+    reset_mem_allocated(mem_allocated);
     init2DMatrix_MT(OUT,A->height,A->width,h_start,h_end,mem_allocated);
     for(int i=h_start;i<=h_end;i++) {
         for(int j=0;j<A->width;j++) {
@@ -219,7 +240,10 @@ int elementwiseDiv2DMatrix_MT(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,int 
     return 0;
 }
 
-int elementExp_MT(TwoDMatrix* M,TwoDMatrix* OUT,int h_start, int h_end, bool* mem_allocated) {
+int elementExp_MT(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated) {
+    int h_start = calc_h_start(id,M->height);
+    int h_end = calc_h_end(id,M->height);
+    reset_mem_allocated(mem_allocated);
     init2DMatrix_MT(OUT,M->height,M->width,h_start,h_end,mem_allocated);
     for(int i=h_start;i<=h_end;i++) {
         for(int j=0;j<M->width;j++) {
@@ -229,7 +253,10 @@ int elementExp_MT(TwoDMatrix* M,TwoDMatrix* OUT,int h_start, int h_end, bool* me
     return 0;
 }
 
-int elementAdd_MT(TwoDMatrix* M, float a,TwoDMatrix* OUT,int h_start, int h_end, bool* mem_allocated) {
+int elementAdd_MT(TwoDMatrix* M, float a,TwoDMatrix* OUT,int id, bool* mem_allocated) {
+    int h_start = calc_h_start(id,M->height);
+    int h_end = calc_h_end(id,M->height);
+    reset_mem_allocated(mem_allocated);
     init2DMatrix_MT(OUT,M->height,M->width,h_start,h_end,mem_allocated);
     for(int i=h_start;i<=h_end;i++) {
         for(int j=0;j<M->width;j++) {
@@ -239,7 +266,10 @@ int elementAdd_MT(TwoDMatrix* M, float a,TwoDMatrix* OUT,int h_start, int h_end,
     return 0;
 }
 
-int elementMul_MT(TwoDMatrix* M, float a,TwoDMatrix* OUT,int h_start, int h_end, bool* mem_allocated) {
+int elementMul_MT(TwoDMatrix* M, float a,TwoDMatrix* OUT,int id, bool* mem_allocated) {
+    int h_start = calc_h_start(id,M->height);
+    int h_end = calc_h_end(id,M->height);
+    reset_mem_allocated(mem_allocated);
     init2DMatrix_MT(OUT,M->height,M->width,h_start,h_end,mem_allocated);
     for(int i=h_start;i<=h_end;i++) {
         for(int j=0;j<M->width;j++) {
@@ -249,18 +279,21 @@ int elementMul_MT(TwoDMatrix* M, float a,TwoDMatrix* OUT,int h_start, int h_end,
     return 0;
 }
 
-int elementDiv_MT(TwoDMatrix* M, float a,TwoDMatrix* OUT,int h_start, int h_end, bool* mem_allocated) {
+int elementDiv_MT(TwoDMatrix* M, float a,TwoDMatrix* OUT,int id, bool* mem_allocated) {
     float n;
     if (a < 1e-6) {
         n = 1/(a+1e-6);
     } else {
         n = 1/a;
     }
-    return elementMul_MT(M, n, OUT,h_start,h_end,mem_allocated);
+    return elementMul_MT(M, n, OUT,id,mem_allocated);
     return 0;
 }
 
-int broadcastAdd_MT(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int h_start, int h_end, bool* mem_allocated) {
+int broadcastAdd_MT(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int id, bool* mem_allocated) {
+    int h_start = calc_h_start(id,M->height);
+    int h_end = calc_h_end(id,M->height);
+    reset_mem_allocated(mem_allocated);
     init2DMatrix_MT(OUT,M->height,M->width,h_start,h_end,mem_allocated);
     if (direction == 0) {
         // Add the column vector b horizontally
@@ -280,7 +313,10 @@ int broadcastAdd_MT(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT
     return 0;
 }
 
-int broadcastSub_MT(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int h_start, int h_end, bool* mem_allocated) {
+int broadcastSub_MT(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int id, bool* mem_allocated) {
+    int h_start = calc_h_start(id,M->height);
+    int h_end = calc_h_end(id,M->height);
+    reset_mem_allocated(mem_allocated);
     init2DMatrix_MT(OUT,M->height,M->width,h_start,h_end,mem_allocated);
     if (direction == 0) {
         // Add the column vector b horizontally
@@ -300,7 +336,10 @@ int broadcastSub_MT(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT
     return 0;
 }
 
-int broadcastMul_MT(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int h_start, int h_end, bool* mem_allocated) {
+int broadcastMul_MT(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int id, bool* mem_allocated) {
+    int h_start = calc_h_start(id,M->height);
+    int h_end = calc_h_end(id,M->height);
+    reset_mem_allocated(mem_allocated);
     init2DMatrix_MT(OUT,M->height,M->width,h_start,h_end,mem_allocated);
     if (direction == 0) {
         // Add the column vector b horizontally
@@ -320,7 +359,10 @@ int broadcastMul_MT(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT
     return 0;
 }
 
-int broadcastDiv_MT(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int h_start, int h_end, bool* mem_allocated) {
+int broadcastDiv_MT(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int id, bool* mem_allocated) {
+    int h_start = calc_h_start(id,M->height);
+    int h_end = calc_h_end(id,M->height);
+    reset_mem_allocated(mem_allocated);
     init2DMatrix_MT(OUT,M->height,M->width,h_start,h_end,mem_allocated);
     if (direction == 0) {
         // Add the column vector b horizontally
