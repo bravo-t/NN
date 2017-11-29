@@ -24,8 +24,8 @@ int h_end(int id, int height) {
     return(((id+1)*height/number_of_threads)-1);
 }
 
-void resetMemAllocated(int id, bool* mem_allocated) {
-    if (h_start == 0) {
+void reset_mem_allocated(int id, bool* mem_allocated) {
+    if (id == 0) {
         pthread_mutex_lock(&mutex);
         pthread_barrier_init(&barrier,NULL,number_of_threads);
         *mem_allocated = false;
@@ -33,6 +33,11 @@ void resetMemAllocated(int id, bool* mem_allocated) {
     } else {
         pthread_mutex_lock(&mutex);
         while((*mem_allocated)) pthread_cond_wait(&cond);
+        pthread_mutex_unlock(&mutex);
+    }
+    if(id == 0) {
+        pthread_mutex_lock(&mutex);
+        pthread_cond_broadcast(&cond);
         pthread_mutex_unlock(&mutex);
     }
     pthead_barrier_wait(&barrier);
