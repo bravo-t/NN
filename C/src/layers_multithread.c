@@ -25,9 +25,6 @@ int affineLayerForward_thread(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* b, TwoDM
     return 0;
 }
 
-/////////////////////////////////////////////
-// To be implemented
-/////////////////////////////////////////////
 int affineLayerBackword_thread(TwoDMatrix* dOUT, TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* b, TwoDMatrix* dX, TwoDMatrix* dW, TwoDMatrix* db,int id, bool* mem_allocated) {
     //init2DMatrix(dX, X->height, X->width);
     //init2DMatrix(dW, W->height, W->width);
@@ -38,33 +35,37 @@ int affineLayerBackword_thread(TwoDMatrix* dOUT, TwoDMatrix* X, TwoDMatrix* W, T
     //init2DMatrix(WT, W->width, W->height);
     transpose2DMatrix_thread(X, XT, id, mem_allocated);
     transpose2DMatrix_thread(W, WT, id, mem_allocated);
-    if (dotProduct(dOUT,WT,dX)) {
+    if (dotProduct_thread(dOUT,WT,dX,id,mem_allocated)) {
         printf("ERROR: Input matrix size mismatch: dOUT->width = %d, W.T->height = %d\n", dOUT->width,WT->height);
         exit(1);
     }
-    if (dotProduct(XT,dOUT,dW)) {
+    if (dotProduct_thread(XT,dOUT,dW,id,mem_allocated)) {
         printf("ERROR: Input matrix size mismatch: X.T->width = %d, dOUT->height = %d\n", XT->width,dOUT->height);
         exit(1);
     }
     if (db->height == 1) {
-        sumY2DMatrix(dOUT,db);
+        sumY2DMatrix_thread(dOUT,db,id,mem_allocated);
     } else {
-        sumX2DMatrix(dOUT,db);
+        sumX2DMatrix_thread(dOUT,db,id,mem_allocated);
     }
-    destroy2DMatrix(XT);
-    destroy2DMatrix(WT);
+    destroy2DMatrix_thread(XT,calc_h_start(id,XT->height),calc_h_end(id,XT->height),mem_allocated);
+    destroy2DMatrix_thread(WT,calc_h_start(id,WT->height),calc_h_end(id,WT->height),mem_allocated);
     return 0;
 }
 
-int leakyReLUForward(TwoDMatrix* M, float alpha, TwoDMatrix* OUT) {
-    return elementLeakyReLU(M, alpha, OUT);
+int leakyReLUForward(TwoDMatrix* M, float alpha, TwoDMatrix* OUT,int id, bool* mem_allocated) {
+    return elementLeakyReLU_thread(M, alpha, OUT, id, mem_allocated);
 }
 
-int vanillaUpdate(TwoDMatrix* M, TwoDMatrix* dM, float learning_rate, TwoDMatrix* OUT) {
-    init2DMatrix(OUT, M->height, M->width);
-    for(int i=0;i<M->height;i++) {
+int vanillaUpdate(TwoDMatrix* M, TwoDMatrix* dM, float learning_rate, TwoDMatrix* OUT, int id, bool* mem_allocated) {
+    int h_start = calc_h_start(id,M->height);
+    int h_end = calc_h_end(id,M->height);
+    reset_mem_allocated(mem_allocated);
+    init2DMatrix_thread(OUT,M->height,M->width,h_start,h_end,mem_allocated);
+    for(int i=h_start;i<=h_end;i++) {
         for(int j=0;j<M->width;j++) {
             OUT->d[i][j] = M->d[i][j] - dM->d[i][j]*learning_rate;
+/*
 #if defined(DEBUG) && DEBUG > 3
             if (isnan(OUT->d[i][j])) {
                 printf("DEBUG: vanillaUpdate produced a nan: %f - %f * %f = %f\n",
@@ -74,6 +75,7 @@ int vanillaUpdate(TwoDMatrix* M, TwoDMatrix* dM, float learning_rate, TwoDMatrix
                     OUT->d[i][j]);
             }
 #endif
+*/
         }
     }
     /*
@@ -87,10 +89,12 @@ int vanillaUpdate(TwoDMatrix* M, TwoDMatrix* dM, float learning_rate, TwoDMatrix
     return 0;
 }
 
-int leakyReLUBackward(TwoDMatrix* dM, TwoDMatrix* M, float alpha, TwoDMatrix* OUT) {
-    init2DMatrix(OUT,dM->height,dM->width);
-
-    for(int i=0;i<dM->height;i++) {
+int leakyReLUBackward_thread(TwoDMatrix* dM, TwoDMatrix* M, float alpha, TwoDMatrix* OUT) {
+    int h_start = calc_h_start(id,dM->height);
+    int h_end = calc_h_end(id,dM->height);
+    reset_mem_allocated(mem_allocated);
+    init2DMatrix_thread(OUT,dM->height,dM->width,h_start,h_end,mem_allocated);
+    for(int i=h_start;i<=h_end;i++) {
         for(int j=0;j<dM->width;j++) {
             if (M->d[i][j] > 0) {
                 OUT->d[i][j] = dM->d[i][j];
@@ -102,43 +106,9 @@ int leakyReLUBackward(TwoDMatrix* dM, TwoDMatrix* M, float alpha, TwoDMatrix* OU
     return 0;
 }
 
-/*
-score is a N*M 2D matrix, N is the height, and M is the width. N is the number of examples for 
-a mini-batch, and M is the number of labels. The layout of score is like the following;
-
-            score for label1    score for label2    score for label3    ...     score for labelM
-         -----------------------------------------------------------------------------------------
-Example1 |              ****                ****                ****    ...                 ****
-Example2 |              ****                ****                ****    ...                 ****
-    .    |                                            .
-    .    |                                            .
-    .    |                                            .
-ExampleN |              ****                ****                ****    ...                 ****
-
-correct_label is a 2D matrix with the height of N, and width of 1. Layout as follows:
-
-            label for the correct class
-         ------------------------------
-Example1 |                         [0,M)
-Example2 |                         [0,M)
-   .     |                           .
-   .     |                           .
-   .     |                           .
-ExampleN |                         [0,M)
-
- *
- * Below is an example with real digits, there's only 1 training sample in the mini-batch for simplicity:
- * score = [[-1, 5, 4, 7, 3, 2]]
- * correct_label = [[2]], means the 3rd score in score is the correct one
- * margins = [[0, 2, 0, 4, 0, 0]], after the max(0, wrong - correct + 1) operation
- * number of positive ones in margins number_of_pos = 2 
- * dscore = [[0, 1, 0, 1, 0, 0]], element is 1 if margins > 0
- * then
- * dscore = [[0, 1, 0 - 2, 1, 0, 0]] = [[0, 1, -2, 1, 0, 0]] 
- * this can be expressed as the willing to reduce the results of the 2nd and 4th score, 
- * further increase the 3rd score, which is the correct one, while leaving others unhurt, 
- * because they are smaller than the delta
- */
+/////////////////////////////////////////////
+// To be implemented
+/////////////////////////////////////////////
 float SVMLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dscore) {
     TwoDMatrix* margins = matrixMalloc(sizeof(TwoDMatrix));
     init2DMatrix(margins, score->height, score->width);

@@ -338,6 +338,23 @@ int elementExp_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated)
     return 0;
 }
 
+int elementLeakyReLU_thread(TwoDMatrix* M, float alpha,TwoDMatrix* OUT,int id, bool* mem_allocated) {
+    int h_start = calc_h_start(id,M->height);
+    int h_end = calc_h_end(id,M->height);
+    reset_mem_allocated(mem_allocated);
+    init2DMatrix_thread(OUT,M->height,M->width,h_start,h_end,mem_allocated);
+    for(int i=h_start;i<=h_end;i++) {
+        for(int j=0;j<M->width;j++) {
+            if (M->d[i][j] >= 0) {
+                OUT->d[i][j] = M->d[i][j];
+            } else {
+                OUT->d[i][j] = alpha * M->d[i][j];
+            }
+        }
+    }
+    return 0;
+}
+
 int elementAdd_thread(TwoDMatrix* M, float a,TwoDMatrix* OUT,int id, bool* mem_allocated) {
     int h_start = calc_h_start(id,M->height);
     int h_end = calc_h_end(id,M->height);
@@ -537,4 +554,8 @@ int maxY2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocate
     pthead_barrier_wait(&barrier);
     return 0;
     return 0;
+}
+
+float sumAll_thread(TwoDMatrix* M,int id, bool* mem_allocated) {
+    
 }
