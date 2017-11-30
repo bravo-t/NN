@@ -28,7 +28,7 @@ int affineLayerForward_thread(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* b, TwoDM
 /////////////////////////////////////////////
 // To be implemented
 /////////////////////////////////////////////
-int affineLayerBackword(TwoDMatrix* dOUT, TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* b, TwoDMatrix* dX, TwoDMatrix* dW, TwoDMatrix* db) {
+int affineLayerBackword_thread(TwoDMatrix* dOUT, TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* b, TwoDMatrix* dX, TwoDMatrix* dW, TwoDMatrix* db,int id, bool* mem_allocated) {
     init2DMatrix(dX, X->height, X->width);
     init2DMatrix(dW, W->height, W->width);
     init2DMatrix(db, b->height, b->width);

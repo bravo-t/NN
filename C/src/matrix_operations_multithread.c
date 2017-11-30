@@ -111,6 +111,8 @@ int init2DMatrix_thread(TwoDMatrix* M, int height, int width, int h_start, int h
         pthread_cond_broadcast(&cond);
         pthread_mutex_unlock(&mutex);
     }
+    // TODO
+    // for(int i=h_start;i<=h_end && i<M->height;i++)
     for(int i=h_start;i<=h_end;i++) {
         M->d[i] = (float*) calloc(width,sizeof(float));
     }
@@ -229,11 +231,11 @@ int copyTwoDMatrix_thread(TwoDMatrix* M, TwoDMatrix* OUT, int id, bool* mem_allo
 }
 
 int transpose2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated) {
-    int h_start = calc_h_start(id,M->height);
-    int h_end = calc_h_end(id,M->height);
+    int w_start = calc_h_start(id,M->width);
+    int w_end = calc_h_end(id,M->width);
     reset_mem_allocated(mem_allocated);
-    init2DMatrix_thread(OUT, M->width,M->height,h_start,h_end,mem_allocated);
-    for(int i=h_start;i<=h_end;i++) {
+    init2DMatrix_thread(OUT, M->width,M->height,w_start,w_end,mem_allocated);
+    for(int i=w_start;i<=w_end;i++) {
         for(int j=0;j<M->width;j++) OUT->d[j][i] = M->d[i][j];
     }
     return 0;
