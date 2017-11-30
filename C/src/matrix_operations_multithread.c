@@ -21,7 +21,13 @@ int calc_h_start(int id, int height) {
 }
 
 int calc_h_end(int id, int height) {
-    return(((id+1)*height/number_of_threads)-1);
+    int h_end = ((id+1)*height/number_of_threads)-1;
+    if (h_end < height) {
+        return h_end;
+    } else {
+        // Return a value that makes no sense to prevent functions from over-writing
+        return -1;
+    }
 }
 
 void reset_mem_allocated(int id, bool* mem_allocated) {
@@ -486,10 +492,10 @@ int maxX2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocate
     return 0;
 }
 
-/********/
-/* sumY2DMatrix_thread is only a single-threaded function 
-/* only thread 0 does the work, while other threads sit and watch
-/********/
+///////////////////////////////////
+// sumY2DMatrix_thread is only a single-threaded function 
+// only thread 0 does the work, while other threads sit and watch
+//////////////////////////////////
 int sumY2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated) {
     if (id == 0) {
         pthread_mutex_lock(&mutex);

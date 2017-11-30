@@ -528,6 +528,18 @@ FCParameters* readNetworkConfigFile(char* filename) {
             network_params->batchnorm_momentum = strtof(key_values[1],NULL);
         } else if (! strcmp(key_values[0],"shuffle_training_samples")) {
             network_params->shuffle_training_samples = strtof(key_values[1],NULL);
+        } else if (! strcmp(key_values[0],"enable_learning_rate_step_decay")) {
+            network_params->enable_learning_rate_step_decay = strtol(key_values[1],NULL,10);
+        } else if (! strcmp(key_values[0],"enable_learning_rate_exponential_decay")) {
+            network_params->enable_learning_rate_exponential_decay = strtol(key_values[1],NULL,10);
+        } else if (! strcmp(key_values[0],"enable_learning_rate_invert_t_decay")) {
+            network_params->enable_learning_rate_invert_t_decay = strtol(key_values[1],NULL,10);
+        } else if (! strcmp(key_values[0],"learning_rate_decay_unit")) {
+            network_params->learning_rate_decay_unit = strtol(key_values[1],NULL,10);
+        } else if (! strcmp(key_values[0],"learning_rate_decay_a0")) {
+            network_params->learning_rate_decay_a0 = strtof(key_values[1],NULL);
+        } else if (! strcmp(key_values[0],"learning_rate_decay_k")) {
+            network_params->learning_rate_decay_k = strtof(key_values[1],NULL);
         } else if (! strcmp(key_values[0],"batchnorm_eps")) {
             network_params->batchnorm_eps = strtof(key_values[1],NULL);
         } else if (! strcmp(key_values[0],"regulization_strength")) {

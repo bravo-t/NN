@@ -29,15 +29,15 @@ int affineLayerForward_thread(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* b, TwoDM
 // To be implemented
 /////////////////////////////////////////////
 int affineLayerBackword_thread(TwoDMatrix* dOUT, TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* b, TwoDMatrix* dX, TwoDMatrix* dW, TwoDMatrix* db,int id, bool* mem_allocated) {
-    init2DMatrix(dX, X->height, X->width);
-    init2DMatrix(dW, W->height, W->width);
-    init2DMatrix(db, b->height, b->width);
-    TwoDMatrix* XT = matrixMalloc(sizeof(TwoDMatrix));
-    TwoDMatrix* WT = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(XT, X->width, X->height);
-    init2DMatrix(WT, W->width, W->height);
-    transpose2DMatrix(X, XT);
-    transpose2DMatrix(W, WT);
+    //init2DMatrix(dX, X->height, X->width);
+    //init2DMatrix(dW, W->height, W->width);
+    //init2DMatrix(db, b->height, b->width);
+    TwoDMatrix* XT = matrixMalloc_thread("/affineLayerBackword_thread_XT", id, sizeof(TwoDMatrix));
+    TwoDMatrix* WT = matrixMalloc_thread("/affineLayerBackword_thread_XT", id, sizeof(TwoDMatrix));
+    //init2DMatrix(XT, X->width, X->height);
+    //init2DMatrix(WT, W->width, W->height);
+    transpose2DMatrix_thread(X, XT, id, mem_allocated);
+    transpose2DMatrix_thread(W, WT, id, mem_allocated);
     if (dotProduct(dOUT,WT,dX)) {
         printf("ERROR: Input matrix size mismatch: dOUT->width = %d, W.T->height = %d\n", dOUT->width,WT->height);
         exit(1);
