@@ -66,7 +66,7 @@ int IPCReadFromSharedMem(char* shared_memory_name, void* data, int data_length) 
     }
     TwoDMatrix** shm_base = mmap(0,data_length,PROT_READ,MAP_SHARED,shm_fd,0);
     if (shm_base == MAP_FAILED) {
-        printf("Thread %d: mmap failed\n", a->t);
+        printf("mmap failed\n");
         return(1);
     }
     memcpy(data, *shm_base, data_length);
@@ -83,7 +83,7 @@ int IPCReadFromSharedMem(char* shared_memory_name, void* data, int data_length) 
 
 int IPCRemoveSharedMemFile(char* shared_memory_name) {
 	if (shm_unlink(shared_memory_name) == -1) {
-        printf("Thread %d: Error occured when removing shared memory file\n",a->t);
+        printf("Error occured when removing shared memory file\n");
         return 1;
     }
     return 0;

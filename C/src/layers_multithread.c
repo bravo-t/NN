@@ -16,7 +16,7 @@ int affineLayerForward_thread(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* b, TwoDM
     //int h_start = calc_h_start(id,X->height);
     //int h_end = calc_h_end(id,X->height);
     //reset_mem_allocated(mem_allocated);
-    //init2DMatrix_thread(OUT, X->height, W->width, h_start, h_end, mem_allocated);
+    //init2DMatrix_thread(OUT, X->height, W->width, id, mem_allocated);
     if (dotProduct_thread(X,W,OUT,id,mem_allocated)) {
         printf("ERROR: Input matrix size mismatch: X->width = %d, W->height = %d\n", X->width,W->height);
         exit(1);
@@ -53,15 +53,15 @@ int affineLayerBackword_thread(TwoDMatrix* dOUT, TwoDMatrix* X, TwoDMatrix* W, T
     return 0;
 }
 
-int leakyReLUForward(TwoDMatrix* M, float alpha, TwoDMatrix* OUT,int id, bool* mem_allocated) {
+int leakyReLUForward_thread(TwoDMatrix* M, float alpha, TwoDMatrix* OUT,int id, bool* mem_allocated) {
     return elementLeakyReLU_thread(M, alpha, OUT, id, mem_allocated);
 }
 
-int vanillaUpdate(TwoDMatrix* M, TwoDMatrix* dM, float learning_rate, TwoDMatrix* OUT, int id, bool* mem_allocated) {
+int vanillaUpdate_thread(TwoDMatrix* M, TwoDMatrix* dM, float learning_rate, TwoDMatrix* OUT, int id, bool* mem_allocated) {
     int h_start = calc_h_start(id,M->height);
     int h_end = calc_h_end(id,M->height);
-    reset_mem_allocated(mem_allocated);
-    init2DMatrix_thread(OUT,M->height,M->width,h_start,h_end,mem_allocated);
+    reset_mem_allocated(id,mem_allocated);
+    init2DMatrix_thread(OUT,M->height,M->width,id,mem_allocated);
     for(int i=h_start;i<=h_end;i++) {
         for(int j=0;j<M->width;j++) {
             OUT->d[i][j] = M->d[i][j] - dM->d[i][j]*learning_rate;
@@ -92,8 +92,8 @@ int vanillaUpdate(TwoDMatrix* M, TwoDMatrix* dM, float learning_rate, TwoDMatrix
 int leakyReLUBackward_thread(TwoDMatrix* dM, TwoDMatrix* M, float alpha, TwoDMatrix* OUT) {
     int h_start = calc_h_start(id,dM->height);
     int h_end = calc_h_end(id,dM->height);
-    reset_mem_allocated(mem_allocated);
-    init2DMatrix_thread(OUT,dM->height,dM->width,h_start,h_end,mem_allocated);
+    reset_mem_allocated(id,mem_allocated);
+    init2DMatrix_thread(OUT,dM->height,dM->width,id,mem_allocated);
     for(int i=h_start;i<=h_end;i++) {
         for(int j=0;j<dM->width;j++) {
             if (M->d[i][j] > 0) {
@@ -109,24 +109,23 @@ int leakyReLUBackward_thread(TwoDMatrix* dM, TwoDMatrix* M, float alpha, TwoDMat
 /////////////////////////////////////////////
 // To be implemented
 /////////////////////////////////////////////
-float SVMLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dscore) {
-    TwoDMatrix* margins = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(margins, score->height, score->width);
-    init2DMatrix(dscore, score->height, score->width);
+float SVMLoss_thread(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dscore, int id, bool* mem_allocated) {
+    TwoDMatrix* margins = matrixMalloc_thread("/SVMLoss_thread_margins",sizeof(TwoDMatrix),id);
     int number_of_examples = score->height;
-    int* number_of_pos = calloc(number_of_examples, sizeof(int));
-    // Matrix margins contains the values of score undergone the process of max(0, wrong - correct + 1) operation in hinge loss
-    for(int i=0;i<score->height;i++) {
+    int h_start = calc_h_start(number_of_examples, id);
+    int h_end = calc_h_end(number_of_examples, id);
+    reset_mem_allocated(id,mem_allocated);
+    init2DMatrix_thread(margins, score->height, score->width, id, mem_allocated);
+    reset_mem_allocated(id,mem_allocated);
+    init2DMatrix_thread(dscore, score->height, score->width, id, mem_allocated);
+    int* number_of_pos = calloc_thread("/SVMLoss_thread_number_of_examples", number_of_examples, sizeof(int), id);
+    for(int i=h_start;i<=h_end;i++) {
         int correct_index = correct_label->d[i][0];
         float correct_score = score->d[i][correct_index];
         for(int j=0;j!=correct_index&&j<score->width;j++) {
             margins->d[i][j] = fmaxf(0,score->d[i][j] - correct_score + 1);
             if (margins->d[i][j] > 0) {
                 number_of_pos[i]++;
-                /*
-                 *  Why can't I just use "dscore->d[i][j] = margins->d[i][j]"?
-                 *  Because this seems to be decreasing the larger wrong scores more strongly
-                 */
                 dscore->d[i][j] = 1;
             } else {
                 dscore->d[i][j] = 0;
@@ -134,49 +133,41 @@ float SVMLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dscore) 
         }
         margins->d[i][correct_index] = 0;
     }
-    float data_loss = sumAll(margins) / number_of_examples;
+    float data_loss = sumAll_thread(margins,id,mem_allocated) / number_of_examples;
     for(int i=0;i<score->height;i++) {
         int correct_index = correct_label->d[i][0];
         dscore->d[i][correct_index] -= number_of_pos[i];
     }
-    elementDiv(dscore,number_of_examples,dscore);
-    destroy2DMatrix(margins);
-    free(number_of_pos);
+    elementDiv_thread(dscore,number_of_examples,dscore,id,mem_allocated);
+    destroy2DMatrix_thread(margins,id,mem_allocated);
+    if(id == 0) free(number_of_pos);
+    // Here the reset_mem_allocated function is used as a thread barrier
+    reset_mem_allocated(mem_allocated);
     return data_loss;
 }
 
-float softmaxLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dscore) {
-    init2DMatrix(dscore,score->height,score->width);
-    TwoDMatrix* max_scores = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(max_scores,score->height,1);
-    maxX2DMatrix(score,max_scores);
-    //printf("score = \n");
-    //printMatrix(score);
-    //printf("max_scores = \n");
-    //printMatrix(max_scores);
-    TwoDMatrix* shifted = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(shifted,score->height,score->width);
-    broadcastSub(score,max_scores,0,shifted);
-    //printf("shifted = \n");
-    //printMatrix(shifted);
-    TwoDMatrix* exp_score = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(exp_score,score->height,score->width);
-    elementExp(shifted,exp_score);
-    //printf("exp_score = \n");
-    //printMatrix(exp_score);
-    TwoDMatrix* exp_sum = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(exp_sum,score->height,1);
-    sumX2DMatrix(exp_score,exp_sum);
-    //printf("exp_sum = \n");
-    //printMatrix(exp_sum);
-    TwoDMatrix* probs = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(probs,score->height,score->width);
-    broadcastDiv(exp_score,exp_sum,0,probs);
-    //printf("probs = \n");
-    //printMatrix(probs);
-    TwoDMatrix* correct_probs = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(correct_probs,score->height,1);
-    for(int i=0;i<score->height;i++) {
+float softmaxLoss_thread(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dscore,int id, bool* mem_allocated) {
+    int h_start = calc_h_start(id,score->height);
+    int h_end = calc_h_end(id,score->height);
+    init2DMatrix_thread(dscore,score->height,score->width,id,mem_allocated);
+    TwoDMatrix* max_scores = matrixMalloc_thread("/softmaxLoss_thread_max_cores_shm",sizeof(TwoDMatrix),id);
+    init2DMatrix_thread(max_scores,score->height,1,id,mem_allocated);
+    maxX2DMatrix_thread(score,max_scores,id,mem_allocated);
+    TwoDMatrix* shifted = matrixMalloc_thread("/softmaxLoss_thread_shifted_shm",sizeof(TwoDMatrix),id);
+    init2DMatrix_thread(shifted,score->height,score->width,id,mem_allocated);
+    broadcastSub_thread(score,max_scores,0,shifted,id,mem_allocated);
+    TwoDMatrix* exp_score = matrixMalloc_thread("/softmaxLoss_thread_exp_score_shm",sizeof(TwoDMatrix),id);
+    init2DMatrix_thread(exp_score,score->height,score->width,id,mem_allocated);
+    elementExp_thread(shifted,exp_score,id,mem_allocated);
+    TwoDMatrix* exp_sum = matrixMalloc_thread("/softmaxLoss_thread_exp_sum_shm",sizeof(TwoDMatrix),id);
+    init2DMatrix_thread(exp_sum,score->height,1,id,mem_allocated);
+    sumX2DMatrix_thread(exp_score,exp_sum,id,mem_allocated);
+    TwoDMatrix* probs = matrixMalloc_thread("/softmaxLoss_thread_probs_shm",sizeof(TwoDMatrix),id);
+    init2DMatrix_thread(probs,score->height,score->width,id,mem_allocated);
+    broadcastDiv_thread(exp_score,exp_sum,0,probs,id,mem_allocated);
+    TwoDMatrix* correct_probs = matrixMalloc_thread("/softmaxLoss_thread_correct_probs_shm",sizeof(TwoDMatrix),id);
+    init2DMatrix_thread(correct_probs,score->height,1,id,mem_allocated);
+    for(int i=h_start;i<=h_end;i++) {
         int correct_index = correct_label->d[i][0];
         for(int j=0;j<score->width;j++) {
             dscore->d[i][j] = probs->d[i][j];
@@ -190,70 +181,18 @@ float softmaxLoss(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dsco
             // log(0) will produce a nan, which will break the network. Add a small number to fix it
             correct_probs->d[i][0] = -log(probs->d[i][correct_index]+1e-6);
         }
-#if defined(DEBUG) && DEBUG > 3
-        if (isnan(correct_probs->d[i][0])) {
-            printf("DEBUG: softmaxLoss produced a nan, score=%f, max_score=%f, shifted=%f, exp_score=%f, exp_sum=%f, -log(%f) = nan\n", 
-                score->d[i][correct_index],
-                max_scores->d[i][correct_index],
-                shifted->d[i][correct_index],
-                exp_score->d[i][correct_index],
-                exp_sum->d[i][0],
-                probs->d[i][correct_index]);
-        }
-#endif
     }
     //printf("correct_probs = \n");
     //printMatrix(correct_probs);
     int number_of_examples = score->height;
-    float data_loss = sumAll(correct_probs) / number_of_examples;
-    destroy2DMatrix(max_scores);
-    destroy2DMatrix(shifted);
-    destroy2DMatrix(exp_score);
-    destroy2DMatrix(exp_sum);
-    destroy2DMatrix(probs);
-    destroy2DMatrix(correct_probs);
+    float data_loss = sumAll_thread(correct_probs,id,mem_allocated) / number_of_examples;
+    destroy2DMatrix_thread(max_scores,id,mem_allocated);
+    destroy2DMatrix_thread(shifted,id,mem_allocated);
+    destroy2DMatrix_thread(exp_score,id,mem_allocated);
+    destroy2DMatrix_thread(exp_sum,id,mem_allocated);
+    destroy2DMatrix_thread(probs,id,mem_allocated);
+    destroy2DMatrix_thread(correct_probs,id,mem_allocated);
     return data_loss;
-}
-
-float training_accuracy(TwoDMatrix* scores, TwoDMatrix* correct_labels) {
-    int correct = 0;
-#if defined(DEBUG) && DEBUG > 3
-    /* DEBUG  */
-    printf("Calculated scores\n");
-    /**********/
-#endif
-    for(int i=0;i<scores->height;i++) {
-        int predicted = 0;
-        float max_score = -1e99;
-        int correct_label = (int) correct_labels->d[i][0];
-        for(int j=0;j<scores->width;j++) {
-            if (scores->d[i][j] > max_score) {
-                predicted = j;
-                max_score = scores->d[i][j];
-            }
-        }
-        if (correct_label == predicted) correct++;
-#if defined(DEBUG) && DEBUG > 3
-        /* DEBUG  */
-        for(int j=0;j<scores->width;j++) {
-            if (j == predicted && correct_label == predicted) {
-                //printf(ANSI_COLOR_GREEN "%f" ANSI_COLOR_RESET "\t",scores->d[i][j]);
-                printf("%f""\t",scores->d[i][j]);
-            } else if (j == predicted && correct_label != predicted) {
-                //printf(ANSI_COLOR_RED "%f" ANSI_COLOR_RESET "\t",scores->d[i][j]);
-                printf("%f""\t",scores->d[i][j]);
-            } else if (j == correct_label && correct_label != predicted) {
-                //printf(ANSI_COLOR_GREEN "%f" ANSI_COLOR_RESET "\t",scores->d[i][j]);
-                printf("%f""\t",scores->d[i][j]);
-            } else {
-                printf("%f\t",scores->d[i][j]);
-            }
-        }
-        printf("\n");
-        /**/
-#endif
-    }
-    return ((float) correct)/(scores->height);
 }
 
 float L2RegLoss(TwoDMatrix** Ms,int network_depth, float reg_strength) {
