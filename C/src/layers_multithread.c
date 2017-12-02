@@ -29,8 +29,8 @@ int affineLayerBackword_thread(TwoDMatrix* dOUT, TwoDMatrix* X, TwoDMatrix* W, T
     //init2DMatrix(dX, X->height, X->width);
     //init2DMatrix(dW, W->height, W->width);
     //init2DMatrix(db, b->height, b->width);
-    TwoDMatrix* XT = matrixMalloc_thread("/affineLayerBackword_thread_XT", id, sizeof(TwoDMatrix));
-    TwoDMatrix* WT = matrixMalloc_thread("/affineLayerBackword_thread_XT", id, sizeof(TwoDMatrix));
+    TwoDMatrix* XT = matrixMalloc_thread("/affineLayerBackword_thread_XT", sizeof(TwoDMatrix), id);
+    TwoDMatrix* WT = matrixMalloc_thread("/affineLayerBackword_thread_XT", sizeof(TwoDMatrix), id);
     //init2DMatrix(XT, X->width, X->height);
     //init2DMatrix(WT, W->width, W->height);
     transpose2DMatrix_thread(X, XT, id, mem_allocated);
@@ -106,9 +106,6 @@ int leakyReLUBackward_thread(TwoDMatrix* dM, TwoDMatrix* M, float alpha, TwoDMat
     return 0;
 }
 
-/////////////////////////////////////////////
-// To be implemented
-/////////////////////////////////////////////
 float SVMLoss_thread(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dscore, int id, bool* mem_allocated) {
     TwoDMatrix* margins = matrixMalloc_thread("/SVMLoss_thread_margins",sizeof(TwoDMatrix),id);
     int number_of_examples = score->height;
@@ -195,242 +192,38 @@ float softmaxLoss_thread(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatri
     return data_loss;
 }
 
-float L2RegLoss(TwoDMatrix** Ms,int network_depth, float reg_strength) {
-    float reg_loss = 0;
-    for (int i = 0; i < network_depth; i++) {
-        TwoDMatrix* M_squared = matrixMalloc(sizeof(TwoDMatrix));
-        init2DMatrix(M_squared,Ms[i]->height,Ms[i]->width);
-        elementwiseMul2DMatrix(Ms[i],Ms[i],M_squared);
-        reg_loss += 0.5*reg_strength*sumAll(M_squared);
-        destroy2DMatrix(M_squared);
-    }
-    return reg_loss;
-}
-
-int L2RegLossBackward(TwoDMatrix* dM, TwoDMatrix* M, float reg_strength, TwoDMatrix* OUT) {
-    init2DMatrix(OUT, M->height, M->width);
-    TwoDMatrix* M_scaled = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(M_scaled, M->height, M->width);
-    elementMul(M,reg_strength,M_scaled);
-    int retval = elementwiseAdd2DMatrix(dM, M_scaled, OUT);
-    destroy2DMatrix(M_scaled);
+int L2RegLossBackward_thread(TwoDMatrix* dM, TwoDMatrix* M, float reg_strength, TwoDMatrix* OUT, int id, bool* mem_allocated) {
+    TwoDMatrix* M_scaled = matrixMalloc_thread("/L2RegLossBackward_thread_M_scaled_shm",sizeof(TwoDMatrix),id);
+    init2DMatrix_thread(M_scaled, M->height, M->width,id,mem_allocated);
+    elementMul_thread(M,reg_strength,M_scaled,id,mem_allocated);
+    int retval = elementwiseAdd2DMatrix_thread(dM, M_scaled, OUT,id,mem_allocated);
+    destroy2DMatrix_thread(M_scaled,id,mem_allocated);
     return retval;
 }
 
-int momentumUpdate(TwoDMatrix* X, TwoDMatrix* dX, TwoDMatrix* v, float mu, float learning_rate,  TwoDMatrix* OUT) {
-    init2DMatrix(OUT, X->height, X->width);
-    TwoDMatrix* v_mu = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(v_mu, v->height, v->width);
-    elementMul(v, mu, v_mu);
-    TwoDMatrix* dX_scaled = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(dX_scaled, X->height, X->width);
-    elementMul(dX,learning_rate,dX_scaled);
-    int retval = elementwiseSub2DMatrix(v_mu,dX_scaled,v);
-    destroy2DMatrix(v_mu);
-    destroy2DMatrix(dX_scaled);
-    retval += elementwiseAdd2DMatrix(X,v,OUT);
-    return retval;
-}
-
-int NAGUpdate(TwoDMatrix* X, TwoDMatrix* dX, TwoDMatrix* v, TwoDMatrix* v_prev, float mu, float learning_rate,  TwoDMatrix* OUT) {
-    init2DMatrix(OUT, X->height, X->width);
-    copyTwoDMatrix(v,v_prev);
-    TwoDMatrix* v_mu = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(v_mu, v->height, v->width);
-    elementMul(v, mu, v_mu);
-    TwoDMatrix* dX_scaled = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(dX_scaled, X->height, X->width);
-    elementMul(dX,learning_rate,dX_scaled);
-    elementwiseSub2DMatrix(v_mu,dX_scaled,v);
-    destroy2DMatrix(v_mu);
-    destroy2DMatrix(dX_scaled);
-    TwoDMatrix* v_prev_mu = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(v_prev_mu, v->height, v->width);
-    elementMul(v_prev, -1*mu, v_prev_mu);
-    TwoDMatrix* v_mu_plus_one = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(v_mu_plus_one, v->height, v->width);
-    elementMul(v, 1+mu, v_mu_plus_one);
-    TwoDMatrix* X_update = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(X_update, v->height, v->width);
-    elementwiseAdd2DMatrix(X,X_update,OUT);
-    destroy2DMatrix(v_prev_mu);
-    destroy2DMatrix(v_mu_plus_one);
-    destroy2DMatrix(X_update);
-    return 0;
-}
-
-int RMSProp(TwoDMatrix* X, TwoDMatrix* dX, TwoDMatrix* cache, float learning_rate, float decay_rate, float eps, TwoDMatrix* OUT) {
-    TwoDMatrix* cache_scaled = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(cache_scaled, X->height, X->width);
-    elementMul(cache,decay_rate,cache_scaled);
-    TwoDMatrix* dX_squared = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(dX_squared, dX->height, dX->width);
-    elementwiseMul2DMatrix(dX,dX,dX_squared);
-    TwoDMatrix* dX_squared_scaled = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(dX_squared_scaled, dX->height, dX->width);
-    elementMul(dX_squared,1-decay_rate,dX_squared_scaled);
-    elementwiseAdd2DMatrix(cache_scaled,dX_squared_scaled,cache);
-    destroy2DMatrix(cache_scaled);
-    destroy2DMatrix(dX_squared);
-    destroy2DMatrix(dX_squared_scaled);
-    TwoDMatrix* cache_sqrt = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(cache_sqrt, X->height, X->width);
-    elementSqrt(cache,cache_sqrt);
-    TwoDMatrix* cache_sqrt_eps = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(cache_sqrt_eps, X->height, X->width);
-    elementAdd(cache_sqrt, eps, cache_sqrt_eps);
-    TwoDMatrix* dX_scaled = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(dX_scaled, X->height, X->width);
-    elementMul(dX,learning_rate,dX_scaled);
-    TwoDMatrix* X_update = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(X_update, dX->height, dX->width);
-    elementwiseDiv2DMatrix(dX_scaled,cache_sqrt_eps,X_update);
-    elementwiseSub2DMatrix(X,X_update,OUT);
-    destroy2DMatrix(cache_sqrt);
-    destroy2DMatrix(cache_sqrt_eps);
-    destroy2DMatrix(dX_scaled);
-    destroy2DMatrix(X_update);
-    return 0;
-}
-
-int batchnorm_training_forward(TwoDMatrix* M, float momentum, float eps, TwoDMatrix* gamma, TwoDMatrix* beta, TwoDMatrix* OUT, TwoDMatrix* mean_cache, TwoDMatrix* var_cache, TwoDMatrix* mean, TwoDMatrix* var, TwoDMatrix* M_normalized) {
-    matrixYMeanVar(M, mean, var);
-    TwoDMatrix* M_centered = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(M_centered,M->height,M->width);
-    broadcastSub(M,mean,1,M_centered);
-    TwoDMatrix* var_eps = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(var_eps,var->height,var->width);
-    TwoDMatrix* std_var = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(std_var,var->height,var->width);
-    elementAdd(var,eps,var_eps);
-    elementSqrt(var_eps,std_var);
-    init2DMatrix(M_normalized,M->height,M->width);
-    broadcastDiv(M_centered,std_var,1,M_normalized);
-    init2DMatrix(OUT, M->height, M->width);
-    broadcastMul(M_normalized,gamma,1,M_normalized);
-    broadcastAdd(M_normalized,beta,1,OUT);
-    TwoDMatrix* mean_scaled = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(mean_scaled,mean->height,mean->width);
-    TwoDMatrix* var_scaled = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(var_scaled,var->height,var->width);
-    elementMul(mean_cache,momentum,mean_cache);
-    elementMul(mean,1-momentum,mean_scaled);
-    elementwiseAdd2DMatrix(mean_cache,mean_scaled,mean_cache);
-    elementMul(var_cache,momentum,var_cache);
-    elementMul(var,1-momentum,var_scaled);
-    elementwiseAdd2DMatrix(var_cache,var_scaled,var_cache);
-    destroy2DMatrix(M_centered);
-    destroy2DMatrix(var_eps);
-    destroy2DMatrix(std_var);
-    destroy2DMatrix(mean_scaled);
-    destroy2DMatrix(var_scaled);
-    return 0;
-}
-
-int batchnorm_test_forward(TwoDMatrix* M, TwoDMatrix* mean_cache, TwoDMatrix* var_cache, float eps, TwoDMatrix* gamma, TwoDMatrix* beta, TwoDMatrix* OUT) {
-    TwoDMatrix* M_centered = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(M_centered,M->height,M->width);
-    broadcastSub(M,mean_cache,1,M_centered);
-    TwoDMatrix* var_eps = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(var_eps,var_cache->height,var_cache->width);
-    TwoDMatrix* std_var = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(std_var,var_cache->height,var_cache->width);
-    elementAdd(var_cache,eps,var_eps);
-    elementSqrt(var_eps,std_var);
-    TwoDMatrix* M_normalized = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(M_normalized,M->height,M->width);
-    broadcastDiv(M_centered,std_var,1,M_normalized);
-    init2DMatrix(OUT, M->height, M->width);
-    broadcastMul(M_normalized,gamma,1,M_normalized);
-    broadcastAdd(M_normalized,beta,1,OUT);
-    destroy2DMatrix(M_centered);
-    destroy2DMatrix(var_eps);
-    destroy2DMatrix(std_var);
-    destroy2DMatrix(M_normalized);
-    return 0;
-}
-
-int batchnorm_backward(TwoDMatrix* dOUT, TwoDMatrix* M, TwoDMatrix* M_normalized, TwoDMatrix* gamma, TwoDMatrix* beta, TwoDMatrix* mean, TwoDMatrix* var, float eps, TwoDMatrix* dM, TwoDMatrix* dgamma, TwoDMatrix* dbeta) {
-    init2DMatrix(dbeta,beta->height,beta->width);
-    sumY2DMatrix(dOUT,dbeta);
-    init2DMatrix(dgamma,gamma->height,gamma->width);
-    TwoDMatrix* dOUT_M_normalized = matrixMalloc(sizeof(TwoDMatrix));
-    elementwiseMul2DMatrix(dOUT, M_normalized,dOUT_M_normalized);
-    sumY2DMatrix(dOUT_M_normalized,dgamma);
-    TwoDMatrix* dM_normalized = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(dM_normalized, M_normalized->height, M_normalized->width);
-    broadcastMul(dOUT,gamma,1,dM_normalized);
-    TwoDMatrix* M_mu = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(M_mu, M_normalized->height, M_normalized->width);
-    broadcastSub(M,mean,1,M_mu);
-    TwoDMatrix* std_var = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(std_var, var->height, var->width);
-    elementAdd(var, eps, std_var);
-    elementSqrt(std_var,std_var);
-    TwoDMatrix* std_var_inv = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(std_var_inv, var->height, var->width);
-    for(int i=0;i<std_var_inv->height;i++) {
-        for(int j=0;j<std_var_inv->width;j++) {
-            std_var_inv->d[i][j] = 1.0/std_var->d[i][j];
-        }
-    }
-    TwoDMatrix* std_var_inv_cube = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(std_var_inv_cube, var->height, var->width);
-    elementwiseMul2DMatrix(std_var_inv,std_var_inv,std_var_inv_cube);
-    elementwiseMul2DMatrix(std_var_inv_cube,std_var_inv,std_var_inv_cube);
-    TwoDMatrix* M_tmp = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(M_tmp,M->height,M->width);
-    elementwiseMul2DMatrix(dM_normalized,M_mu,M_tmp);
-    TwoDMatrix* dvar = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(dvar, var->height, var->width);
-    sumY2DMatrix(M_tmp,dvar);
-    elementMul(dvar,-0.5,dvar);
-    elementwiseMul2DMatrix(dvar,std_var_inv_cube,dvar);
-    TwoDMatrix* M_mu_mean = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(M_mu_mean,mean->height,mean->width);
-    matrixYMeanVar(M_mu, M_mu_mean, NULL);
-    TwoDMatrix* var_tmp = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(var_tmp,var->height,var->width);
-    elementwiseMul2DMatrix(dvar,M_mu_mean,var_tmp);
-    elementMul(var_tmp,2.0,var_tmp);
-    TwoDMatrix* dmean = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(dmean, mean->height, mean->width);
-    TwoDMatrix* M_tmp2 = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(M_tmp2,M->height,M->width);
-    broadcastMul(dM_normalized,std_var_inv,1,M_tmp2);
-    TwoDMatrix* mean_tmp = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(mean_tmp,mean->height,mean->width);
-    sumY2DMatrix(M_tmp2,mean_tmp);
-    elementMul(M_tmp2,-1.0,M_tmp2);
-    elementwiseSub2DMatrix(M_tmp2,var_tmp,dmean);
-    TwoDMatrix* dM1 = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(dM1,M->height,M->width);
-    broadcastMul(dM_normalized,std_var_inv,1,dM1);
-    TwoDMatrix* dM2 = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(dM2,M->height,M->width);
-    broadcastMul(M_mu,dvar,1,dM2);
-    elementMul(dM2,2.0,dM2);
-    elementDiv(dM2,dM2->height,dM2);
-    elementwiseAdd2DMatrix(dM1,dM2,dM);
-    TwoDMatrix* dmean_tmp = matrixMalloc(sizeof(TwoDMatrix));
-    init2DMatrix(dmean_tmp,dmean->height,dmean->width);
-    elementDiv(dmean,M->height,dmean_tmp);
-    broadcastAdd(dM,dmean_tmp,1,dM);
-    destroy2DMatrix(dM_normalized);
-    destroy2DMatrix(M_mu);
-    destroy2DMatrix(std_var);
-    destroy2DMatrix(std_var_inv);
-    destroy2DMatrix(std_var_inv_cube);
-    destroy2DMatrix(M_tmp);
-    destroy2DMatrix(dvar);
-    destroy2DMatrix(M_mu_mean);
-    destroy2DMatrix(var_tmp);
-    destroy2DMatrix(dmean);
-    destroy2DMatrix(M_tmp2);
-    destroy2DMatrix(mean_tmp);
-    destroy2DMatrix(dM1);
-    destroy2DMatrix(dM2);
-    destroy2DMatrix(dmean_tmp);
-    destroy2DMatrix(dOUT_M_normalized);
+int RMSProp_thread(TwoDMatrix* X, TwoDMatrix* dX, TwoDMatrix* cache, float learning_rate, float decay_rate, float eps, TwoDMatrix* OUT,int id, bool* mem_allocated) {
+    TwoDMatrix* cache_scaled = matrixMalloc_thread("/RMSProp_thread_cache_scaled_shm",sizeof(TwoDMatrix),id);
+    elementMul_thread(cache,decay_rate,cache_scaled,id,mem_allocated);
+    TwoDMatrix* dX_squared = matrixMalloc_thread("/RMSProp_thread_dX_squared_shm",sizeof(TwoDMatrix),id);
+    elementwiseMul2DMatrix_thread(dX,dX,dX_squared,id,mem_allocated);
+    TwoDMatrix* dX_squared_scaled = matrixMalloc_thread("/RMSProp_thread_dX_squared_scaled_shm",sizeof(TwoDMatrix),id);
+    elementMul_thread(dX_squared,1-decay_rate,dX_squared_scaled,id,mem_allocated);
+    elementwiseAdd2DMatrix_thread(cache_scaled,dX_squared_scaled,cache,id,mem_allocated);
+    destroy2DMatrix_thread(cache_scaled,id,mem_allocated);
+    destroy2DMatrix_thread(dX_squared,id,mem_allocated);
+    destroy2DMatrix_thread(dX_squared_scaled,id,mem_allocated);
+    TwoDMatrix* cache_sqrt = matrixMalloc_thread("/RMSProp_thread_cache_sqrt_shm",sizeof(TwoDMatrix),id);
+    elementSqrt_thread(cache,cache_sqrt,id,mem_allocated);
+    TwoDMatrix* cache_sqrt_eps = matrixMalloc_thread("/RMSProp_thread_cache_sqrt_eps_shm",sizeof(TwoDMatrix),id);
+    elementAdd_thread(cache_sqrt, eps, cache_sqrt_eps,id,mem_allocated);
+    TwoDMatrix* dX_scaled = matrixMalloc_thread("/RMSProp_thread_dX_scaled_shm",sizeof(TwoDMatrix),id);
+    elementMul_thread(dX,learning_rate,dX_scaled,id,mem_allocated);
+    TwoDMatrix* X_update = matrixMalloc_thread("/RMSProp_thread_X_update_shm",sizeof(TwoDMatrix),id);
+    elementwiseDiv2DMatrix_thread(dX_scaled,cache_sqrt_eps,X_update,id,mem_allocated);
+    elementwiseSub2DMatrix_thread(X,X_update,OUT,id,mem_allocated);
+    destroy2DMatrix_thread(cache_sqrt,id,mem_allocated);
+    destroy2DMatrix_thread(cache_sqrt_eps,id,mem_allocated);
+    destroy2DMatrix_thread(dX_scaled,id,mem_allocated);
+    destroy2DMatrix_thread(X_update,id,mem_allocated);
     return 0;
 }
