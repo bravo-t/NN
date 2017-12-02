@@ -5,12 +5,14 @@ int calc_h_start(int id, int height);
 int calc_h_end(int id, int height);
 void reset_mem_allocated(int id, bool* mem_allocated);
 void preset_mem_allocated(int id, bool* mem_allocated);
-void* matrixMalloc_thread(char* share_memory_name, int size, int id);
-int init2DMatrix_thread(TwoDMatrix* M, int height, int width, int h_start, int h_end, bool* mem_allocated);
-int init2DMatrixNormRand_thread(TwoDMatrix* M, int height, int width, float mean, float std, int n,int h_start, int h_end, bool* mem_allocated);
-int init2DMatrixZero_thread(TwoDMatrix* M, int height, int width,int h_start, int h_end, bool* mem_allocated);
-int init2DMatrixOne_thread(TwoDMatrix* M, int height, int width,int h_start, int h_end, bool* mem_allocated);
-int destroy2DMatrix_thread(TwoDMatrix* M, int h_start, int h_end, bool* mem_allocated);
+void* matrixMalloc_thread(char* share_memory_name, int size, int id, bool* mem_allocated);
+void* malloc_thread(char* share_memory_name, int size, int id, bool* mem_allocated);
+void* calloc_thread(char* share_memory_name, int n, int blk_size, int id, bool* mem_allocated);
+int init2DMatrix_thread(TwoDMatrix* M, int height, int width, int id, bool* mem_allocated);
+int init2DMatrixNormRand_thread(TwoDMatrix* M, int height, int width, float mean, float std, int n,int id, bool* mem_allocated);
+int init2DMatrixZero_thread(TwoDMatrix* M, int height, int width,int id, bool* mem_allocated);
+int init2DMatrixOne_thread(TwoDMatrix* M, int height, int width,int id, bool* mem_allocated);
+int destroy2DMatrix_thread(TwoDMatrix* M, int id, bool* mem_allocated);
 int copyTwoDMatrix_thread(TwoDMatrix* M, TwoDMatrix* OUT, int id, bool* mem_allocated);
 int transpose2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated);
 int dotProduct_thread(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* OUT,int id, bool* mem_allocated);
@@ -31,5 +33,6 @@ int sumX2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocate
 int maxX2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated);
 int sumY2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated);
 int maxY2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated);
+float sumAll_thread(TwoDMatrix* M,int id, bool* mem_allocated);
 
 #endif

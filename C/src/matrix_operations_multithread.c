@@ -5,8 +5,9 @@
 #include <stdbool.h>
 #include <string.h>
 #include <pthread.h>
-#include "network_type.h"
+#include <semaphore.h>
 #include "inter-process_communication.h"
+#include "network_type.h"
 #include "matrix_operations.h"
 #include "matrix_operations_multithread.h"
 
@@ -44,7 +45,7 @@ void reset_mem_allocated(int id, bool* mem_allocated) {
         pthread_mutex_unlock(&mutex);
     } else {
         pthread_mutex_lock(&mutex);
-        while((*mem_allocated)) pthread_cond_wait(&cond);
+        while((*mem_allocated)) pthread_cond_wait(&cond,&mutex);
         pthread_mutex_unlock(&mutex);
     }
     if(id == 0) {
@@ -63,7 +64,7 @@ void preset_mem_allocated(int id, bool* mem_allocated) {
         pthread_mutex_unlock(&mutex);
     } else {
         pthread_mutex_lock(&mutex);
-        while(!(*mem_allocated)) pthread_cond_wait(&cond);
+        while(!(*mem_allocated)) pthread_cond_wait(&cond,&mutex);
         pthread_mutex_unlock(&mutex);
     }
     if(id == 0) {
@@ -74,7 +75,7 @@ void preset_mem_allocated(int id, bool* mem_allocated) {
     pthead_barrier_wait(&barrier);
 }
 
-void* matrixMalloc_thread(char* share_memory_name, int size, int id) {
+void* matrixMalloc_thread(char* share_memory_name, int size, int id, bool* mem_allocated) {
     void* M;
     if (id == 0) {
         pthread_mutex_lock(&mutex);
@@ -85,7 +86,7 @@ void* matrixMalloc_thread(char* share_memory_name, int size, int id) {
         pthread_mutex_unlock(&mutex);
     } else {
         pthread_mutex_lock(&mutex);
-        while(!(*mem_allocated)) pthread_cond_wait(&cond);
+        while(!(*mem_allocated)) pthread_cond_wait(&cond,&mutex);
         pthread_mutex_unlock(&mutex);
     }
     if(id == 0) {
@@ -103,7 +104,7 @@ void* matrixMalloc_thread(char* share_memory_name, int size, int id) {
     return M;
 }
 
-void* malloc_thread(char* share_memory_name, int size, int id) {
+void* malloc_thread(char* share_memory_name, int size, int id, bool* mem_allocated) {
     void* M;
     if (id == 0) {
         pthread_mutex_lock(&mutex);
@@ -114,7 +115,7 @@ void* malloc_thread(char* share_memory_name, int size, int id) {
         pthread_mutex_unlock(&mutex);
     } else {
         pthread_mutex_lock(&mutex);
-        while(!(*mem_allocated)) pthread_cond_wait(&cond);
+        while(!(*mem_allocated)) pthread_cond_wait(&cond,&mutex);
         pthread_mutex_unlock(&mutex);
     }
     if(id == 0) {
@@ -132,7 +133,7 @@ void* malloc_thread(char* share_memory_name, int size, int id) {
     return M;
 }
 
-void* calloc_thread(char* share_memory_name, int n, int blk_size, int id) {
+void* calloc_thread(char* share_memory_name, int n, int blk_size, int id, bool* mem_allocated) {
     void* M;
     if (id == 0) {
         pthread_mutex_lock(&mutex);
@@ -143,7 +144,7 @@ void* calloc_thread(char* share_memory_name, int n, int blk_size, int id) {
         pthread_mutex_unlock(&mutex);
     } else {
         pthread_mutex_lock(&mutex);
-        while(!(*mem_allocated)) pthread_cond_wait(&cond);
+        while(!(*mem_allocated)) pthread_cond_wait(&cond,&mutex);
         pthread_mutex_unlock(&mutex);
     }
     if(id == 0) {
@@ -177,7 +178,7 @@ int init2DMatrix_thread(TwoDMatrix* M, int height, int width, int id, bool* mem_
         pthread_mutex_unlock(&mutex);
     } else {
         pthread_mutex_lock(&mutex);
-        while(!(*mem_allocated)) pthread_cond_wait(&cond);
+        while(!(*mem_allocated)) pthread_cond_wait(&cond,&mutex);
         pthread_mutex_unlock(&mutex);
     }
     if(h_start == 0) {
@@ -210,7 +211,7 @@ int init2DMatrixNormRand_thread(TwoDMatrix* M, int height, int width, float mean
         pthread_mutex_unlock(&mutex);
     } else {
         pthread_mutex_lock(&mutex);
-        while(!(*mem_allocated)) pthread_cond_wait(&cond);
+        while(!(*mem_allocated)) pthread_cond_wait(&cond,&mutex);
         pthread_mutex_unlock(&mutex);
     }
     if(h_start == 0) {
@@ -249,7 +250,7 @@ int init2DMatrixOne_thread(TwoDMatrix* M, int height, int width,int id, bool* me
         pthread_mutex_unlock(&mutex);
     } else {
         pthread_mutex_lock(&mutex);
-        while(!(*mem_allocated)) pthread_cond_wait(&cond);
+        while(!(*mem_allocated)) pthread_cond_wait(&cond,&mutex);
         pthread_mutex_unlock(&mutex);
     }
     if(h_start == 0) {
@@ -287,7 +288,7 @@ int destroy2DMatrix_thread(TwoDMatrix* M, int id, bool* mem_allocated) {
         pthread_mutex_unlock(&mutex);
     } else {
         pthread_mutex_lock(&mutex);
-        while((*mem_allocated)) pthread_cond_wait(&cond);
+        while((*mem_allocated)) pthread_cond_wait(&cond,&mutex);
         pthread_mutex_unlock(&mutex);
     }
     if(h_start == 0) {
@@ -599,7 +600,7 @@ int sumY2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocate
         pthread_mutex_unlock(&mutex);
     } else {
         pthread_mutex_lock(&mutex);
-        while(!(*mem_allocated)) pthread_cond_wait(&cond);
+        while(!(*mem_allocated)) pthread_cond_wait(&cond,&mutex);
         pthread_mutex_unlock(&mutex);
     }
     if(id == 0) {
@@ -621,7 +622,7 @@ int maxY2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocate
         pthread_mutex_unlock(&mutex);
     } else {
         pthread_mutex_lock(&mutex);
-        while(!(*mem_allocated)) pthread_cond_wait(&cond);
+        while(!(*mem_allocated)) pthread_cond_wait(&cond,&mutex);
         pthread_mutex_unlock(&mutex);
     }
     if(id == 0) {
@@ -646,7 +647,7 @@ float sumAll_thread(TwoDMatrix* M,int id, bool* mem_allocated) {
         pthread_mutex_unlock(&mutex);
     } else {
         pthread_mutex_lock(&mutex);
-        while(!(*mem_allocated)) pthread_cond_wait(&cond);
+        while(!(*mem_allocated)) pthread_cond_wait(&cond,&mutex);
         pthread_mutex_unlock(&mutex);
     }
     if(id == 0) {
