@@ -110,7 +110,7 @@ void* malloc_thread(char* share_memory_name, int size, int id, bool* mem_allocat
         pthread_mutex_lock(&mutex);
         pthread_barrier_init(&barrier,NULL,number_of_threads);
         M = malloc(size);
-        IPCWriteToSharedMem(share_memory_name,M,size);
+        IPCWriteToSharedMem(share_memory_name,&M,size);
         *mem_allocated = true;
         pthread_mutex_unlock(&mutex);
     } else {
@@ -139,7 +139,7 @@ void* calloc_thread(char* share_memory_name, int n, int blk_size, int id, bool* 
         pthread_mutex_lock(&mutex);
         pthread_barrier_init(&barrier,NULL,number_of_threads);
         M = calloc(n,blk_size);
-        IPCWriteToSharedMem(share_memory_name,M,size);
+        IPCWriteToSharedMem(share_memory_name,M,sizeof(M));
         *mem_allocated = true;
         pthread_mutex_unlock(&mutex);
     } else {
