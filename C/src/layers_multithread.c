@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include "network_type.h"
 #include "inter-process_communication.h"
 #include "matrix_operations.h"
@@ -29,8 +30,8 @@ int affineLayerBackword_thread(TwoDMatrix* dOUT, TwoDMatrix* X, TwoDMatrix* W, T
     //init2DMatrix(dX, X->height, X->width);
     //init2DMatrix(dW, W->height, W->width);
     //init2DMatrix(db, b->height, b->width);
-    TwoDMatrix* XT = matrixMalloc_thread("/affineLayerBackword_thread_XT", sizeof(TwoDMatrix), id);
-    TwoDMatrix* WT = matrixMalloc_thread("/affineLayerBackword_thread_XT", sizeof(TwoDMatrix), id);
+    TwoDMatrix* XT = matrixMalloc_thread("/affineLayerBackword_thread_XT", sizeof(TwoDMatrix), id,mem_allocated);
+    TwoDMatrix* WT = matrixMalloc_thread("/affineLayerBackword_thread_XT", sizeof(TwoDMatrix), id,mem_allocated);
     //init2DMatrix(XT, X->width, X->height);
     //init2DMatrix(WT, W->width, W->height);
     transpose2DMatrix_thread(X, XT, id, mem_allocated);
@@ -48,8 +49,8 @@ int affineLayerBackword_thread(TwoDMatrix* dOUT, TwoDMatrix* X, TwoDMatrix* W, T
     } else {
         sumX2DMatrix_thread(dOUT,db,id,mem_allocated);
     }
-    destroy2DMatrix_thread(XT,calc_h_start(id,XT->height),calc_h_end(id,XT->height),mem_allocated);
-    destroy2DMatrix_thread(WT,calc_h_start(id,WT->height),calc_h_end(id,WT->height),mem_allocated);
+    destroy2DMatrix_thread(XT,id,mem_allocated);
+    destroy2DMatrix_thread(WT,id,mem_allocated);
     return 0;
 }
 
@@ -89,7 +90,7 @@ int vanillaUpdate_thread(TwoDMatrix* M, TwoDMatrix* dM, float learning_rate, Two
     return 0;
 }
 
-int leakyReLUBackward_thread(TwoDMatrix* dM, TwoDMatrix* M, float alpha, TwoDMatrix* OUT) {
+int leakyReLUBackward_thread(TwoDMatrix* dM, TwoDMatrix* M, float alpha, TwoDMatrix* OUT,int id, bool* mem_allocated) {
     int h_start = calc_h_start(id,dM->height);
     int h_end = calc_h_end(id,dM->height);
     reset_mem_allocated(id,mem_allocated);
@@ -107,7 +108,7 @@ int leakyReLUBackward_thread(TwoDMatrix* dM, TwoDMatrix* M, float alpha, TwoDMat
 }
 
 float SVMLoss_thread(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dscore, int id, bool* mem_allocated) {
-    TwoDMatrix* margins = matrixMalloc_thread("/SVMLoss_thread_margins",sizeof(TwoDMatrix),id);
+    TwoDMatrix* margins = matrixMalloc_thread("/SVMLoss_thread_margins",sizeof(TwoDMatrix),id,mem_allocated);
     int number_of_examples = score->height;
     int h_start = calc_h_start(number_of_examples, id);
     int h_end = calc_h_end(number_of_examples, id);
@@ -115,7 +116,7 @@ float SVMLoss_thread(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* d
     init2DMatrix_thread(margins, score->height, score->width, id, mem_allocated);
     reset_mem_allocated(id,mem_allocated);
     init2DMatrix_thread(dscore, score->height, score->width, id, mem_allocated);
-    int* number_of_pos = calloc_thread("/SVMLoss_thread_number_of_examples", number_of_examples, sizeof(int), id);
+    int* number_of_pos = calloc_thread("/SVMLoss_thread_number_of_examples", number_of_examples, sizeof(int), id,mem_allocated);
     for(int i=h_start;i<=h_end;i++) {
         int correct_index = correct_label->d[i][0];
         float correct_score = score->d[i][correct_index];
@@ -139,7 +140,7 @@ float SVMLoss_thread(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* d
     destroy2DMatrix_thread(margins,id,mem_allocated);
     if(id == 0) free(number_of_pos);
     // Here the reset_mem_allocated function is used as a thread barrier
-    reset_mem_allocated(mem_allocated);
+    reset_mem_allocated(id,mem_allocated);
     return data_loss;
 }
 
@@ -147,22 +148,22 @@ float softmaxLoss_thread(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatri
     int h_start = calc_h_start(id,score->height);
     int h_end = calc_h_end(id,score->height);
     init2DMatrix_thread(dscore,score->height,score->width,id,mem_allocated);
-    TwoDMatrix* max_scores = matrixMalloc_thread("/softmaxLoss_thread_max_cores_shm",sizeof(TwoDMatrix),id);
+    TwoDMatrix* max_scores = matrixMalloc_thread("/softmaxLoss_thread_max_cores_shm",sizeof(TwoDMatrix),id,mem_allocated);
     init2DMatrix_thread(max_scores,score->height,1,id,mem_allocated);
     maxX2DMatrix_thread(score,max_scores,id,mem_allocated);
-    TwoDMatrix* shifted = matrixMalloc_thread("/softmaxLoss_thread_shifted_shm",sizeof(TwoDMatrix),id);
+    TwoDMatrix* shifted = matrixMalloc_thread("/softmaxLoss_thread_shifted_shm",sizeof(TwoDMatrix),id,mem_allocated);
     init2DMatrix_thread(shifted,score->height,score->width,id,mem_allocated);
     broadcastSub_thread(score,max_scores,0,shifted,id,mem_allocated);
-    TwoDMatrix* exp_score = matrixMalloc_thread("/softmaxLoss_thread_exp_score_shm",sizeof(TwoDMatrix),id);
+    TwoDMatrix* exp_score = matrixMalloc_thread("/softmaxLoss_thread_exp_score_shm",sizeof(TwoDMatrix),id,mem_allocated);
     init2DMatrix_thread(exp_score,score->height,score->width,id,mem_allocated);
     elementExp_thread(shifted,exp_score,id,mem_allocated);
-    TwoDMatrix* exp_sum = matrixMalloc_thread("/softmaxLoss_thread_exp_sum_shm",sizeof(TwoDMatrix),id);
+    TwoDMatrix* exp_sum = matrixMalloc_thread("/softmaxLoss_thread_exp_sum_shm",sizeof(TwoDMatrix),id,mem_allocated);
     init2DMatrix_thread(exp_sum,score->height,1,id,mem_allocated);
     sumX2DMatrix_thread(exp_score,exp_sum,id,mem_allocated);
-    TwoDMatrix* probs = matrixMalloc_thread("/softmaxLoss_thread_probs_shm",sizeof(TwoDMatrix),id);
+    TwoDMatrix* probs = matrixMalloc_thread("/softmaxLoss_thread_probs_shm",sizeof(TwoDMatrix),id,mem_allocated);
     init2DMatrix_thread(probs,score->height,score->width,id,mem_allocated);
     broadcastDiv_thread(exp_score,exp_sum,0,probs,id,mem_allocated);
-    TwoDMatrix* correct_probs = matrixMalloc_thread("/softmaxLoss_thread_correct_probs_shm",sizeof(TwoDMatrix),id);
+    TwoDMatrix* correct_probs = matrixMalloc_thread("/softmaxLoss_thread_correct_probs_shm",sizeof(TwoDMatrix),id,mem_allocated);
     init2DMatrix_thread(correct_probs,score->height,1,id,mem_allocated);
     for(int i=h_start;i<=h_end;i++) {
         int correct_index = correct_label->d[i][0];
@@ -193,7 +194,7 @@ float softmaxLoss_thread(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatri
 }
 
 int L2RegLossBackward_thread(TwoDMatrix* dM, TwoDMatrix* M, float reg_strength, TwoDMatrix* OUT, int id, bool* mem_allocated) {
-    TwoDMatrix* M_scaled = matrixMalloc_thread("/L2RegLossBackward_thread_M_scaled_shm",sizeof(TwoDMatrix),id);
+    TwoDMatrix* M_scaled = matrixMalloc_thread("/L2RegLossBackward_thread_M_scaled_shm",sizeof(TwoDMatrix),id,mem_allocated);
     init2DMatrix_thread(M_scaled, M->height, M->width,id,mem_allocated);
     elementMul_thread(M,reg_strength,M_scaled,id,mem_allocated);
     int retval = elementwiseAdd2DMatrix_thread(dM, M_scaled, OUT,id,mem_allocated);
@@ -202,23 +203,23 @@ int L2RegLossBackward_thread(TwoDMatrix* dM, TwoDMatrix* M, float reg_strength, 
 }
 
 int RMSProp_thread(TwoDMatrix* X, TwoDMatrix* dX, TwoDMatrix* cache, float learning_rate, float decay_rate, float eps, TwoDMatrix* OUT,int id, bool* mem_allocated) {
-    TwoDMatrix* cache_scaled = matrixMalloc_thread("/RMSProp_thread_cache_scaled_shm",sizeof(TwoDMatrix),id);
+    TwoDMatrix* cache_scaled = matrixMalloc_thread("/RMSProp_thread_cache_scaled_shm",sizeof(TwoDMatrix),id,mem_allocated);
     elementMul_thread(cache,decay_rate,cache_scaled,id,mem_allocated);
-    TwoDMatrix* dX_squared = matrixMalloc_thread("/RMSProp_thread_dX_squared_shm",sizeof(TwoDMatrix),id);
+    TwoDMatrix* dX_squared = matrixMalloc_thread("/RMSProp_thread_dX_squared_shm",sizeof(TwoDMatrix),id,mem_allocated);
     elementwiseMul2DMatrix_thread(dX,dX,dX_squared,id,mem_allocated);
-    TwoDMatrix* dX_squared_scaled = matrixMalloc_thread("/RMSProp_thread_dX_squared_scaled_shm",sizeof(TwoDMatrix),id);
+    TwoDMatrix* dX_squared_scaled = matrixMalloc_thread("/RMSProp_thread_dX_squared_scaled_shm",sizeof(TwoDMatrix),id,mem_allocated);
     elementMul_thread(dX_squared,1-decay_rate,dX_squared_scaled,id,mem_allocated);
     elementwiseAdd2DMatrix_thread(cache_scaled,dX_squared_scaled,cache,id,mem_allocated);
     destroy2DMatrix_thread(cache_scaled,id,mem_allocated);
     destroy2DMatrix_thread(dX_squared,id,mem_allocated);
     destroy2DMatrix_thread(dX_squared_scaled,id,mem_allocated);
-    TwoDMatrix* cache_sqrt = matrixMalloc_thread("/RMSProp_thread_cache_sqrt_shm",sizeof(TwoDMatrix),id);
+    TwoDMatrix* cache_sqrt = matrixMalloc_thread("/RMSProp_thread_cache_sqrt_shm",sizeof(TwoDMatrix),id,mem_allocated);
     elementSqrt_thread(cache,cache_sqrt,id,mem_allocated);
-    TwoDMatrix* cache_sqrt_eps = matrixMalloc_thread("/RMSProp_thread_cache_sqrt_eps_shm",sizeof(TwoDMatrix),id);
+    TwoDMatrix* cache_sqrt_eps = matrixMalloc_thread("/RMSProp_thread_cache_sqrt_eps_shm",sizeof(TwoDMatrix),id,mem_allocated);
     elementAdd_thread(cache_sqrt, eps, cache_sqrt_eps,id,mem_allocated);
-    TwoDMatrix* dX_scaled = matrixMalloc_thread("/RMSProp_thread_dX_scaled_shm",sizeof(TwoDMatrix),id);
+    TwoDMatrix* dX_scaled = matrixMalloc_thread("/RMSProp_thread_dX_scaled_shm",sizeof(TwoDMatrix),id,mem_allocated);
     elementMul_thread(dX,learning_rate,dX_scaled,id,mem_allocated);
-    TwoDMatrix* X_update = matrixMalloc_thread("/RMSProp_thread_X_update_shm",sizeof(TwoDMatrix),id);
+    TwoDMatrix* X_update = matrixMalloc_thread("/RMSProp_thread_X_update_shm",sizeof(TwoDMatrix),id,mem_allocated);
     elementwiseDiv2DMatrix_thread(dX_scaled,cache_sqrt_eps,X_update,id,mem_allocated);
     elementwiseSub2DMatrix_thread(X,X_update,OUT,id,mem_allocated);
     destroy2DMatrix_thread(cache_sqrt,id,mem_allocated);

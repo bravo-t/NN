@@ -402,6 +402,19 @@ int elementwiseDiv2DMatrix_thread(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,
     return 0;
 }
 
+int elementSqrt_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated) {
+    int h_start = calc_h_start(id,M->height);
+    int h_end = calc_h_end(id,M->height);
+    reset_mem_allocated(id,mem_allocated);
+    init2DMatrix_thread(OUT,M->height,M->width,id,mem_allocated);
+    for(int i=h_start;i<=h_end;i++) {
+        for(int j=0;j<M->width;j++) {
+            OUT->d[i][j] = sqrt(M->d[i][j]);
+        }
+    }
+    return 0;
+}
+
 int elementExp_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated) {
     int h_start = calc_h_start(id,M->height);
     int h_end = calc_h_end(id,M->height);
