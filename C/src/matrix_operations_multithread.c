@@ -81,7 +81,7 @@ void* matrixMalloc_thread(char* share_memory_name, int size, int id, bool* mem_a
         pthread_mutex_lock(&mutex);
         pthread_barrier_init(&barrier,NULL,number_of_threads);
         M = matrixMalloc(size);
-        IPCWriteToSharedMem(share_memory_name,M,size);
+        IPCWriteToSharedMem(share_memory_name,&M,sizeof(void*));
         *mem_allocated = true;
         pthread_mutex_unlock(&mutex);
     } else {
@@ -95,7 +95,7 @@ void* matrixMalloc_thread(char* share_memory_name, int size, int id, bool* mem_a
         pthread_mutex_unlock(&mutex);
     }
     pthread_mutex_lock(&mutex);
-    IPCReadFromSharedMem(share_memory_name,M,size);
+    IPCReadFromSharedMem(share_memory_name,M,sizeof(void*));
     pthread_mutex_unlock(&mutex);
     pthead_barrier_wait(&barrier);
     if (id == 0) {
@@ -110,7 +110,7 @@ void* malloc_thread(char* share_memory_name, int size, int id, bool* mem_allocat
         pthread_mutex_lock(&mutex);
         pthread_barrier_init(&barrier,NULL,number_of_threads);
         M = malloc(size);
-        IPCWriteToSharedMem(share_memory_name,&M,size);
+        IPCWriteToSharedMem(share_memory_name,&M,sizeof(void*));
         *mem_allocated = true;
         pthread_mutex_unlock(&mutex);
     } else {
@@ -124,7 +124,7 @@ void* malloc_thread(char* share_memory_name, int size, int id, bool* mem_allocat
         pthread_mutex_unlock(&mutex);
     }
     pthread_mutex_lock(&mutex);
-    IPCReadFromSharedMem(share_memory_name,M,size);
+    IPCReadFromSharedMem(share_memory_name,M,sizeof(void*));
     pthread_mutex_unlock(&mutex);
     pthead_barrier_wait(&barrier);
     if (id == 0) {
@@ -153,7 +153,7 @@ void* calloc_thread(char* share_memory_name, int n, int blk_size, int id, bool* 
         pthread_mutex_unlock(&mutex);
     }
     pthread_mutex_lock(&mutex);
-    IPCReadFromSharedMem(share_memory_name,M,size);
+    IPCReadFromSharedMem(share_memory_name,M,sizeof(void*));
     pthread_mutex_unlock(&mutex);
     pthead_barrier_wait(&barrier);
     if (id == 0) {
