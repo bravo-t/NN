@@ -22,7 +22,7 @@ pthread_mutex_t printf_mutex = PTHREAD_MUTEX_INITIALIZER;
 ThreadControl control_handle;
 pthread_mutex_t test_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t test_cond = PTHREAD_COND_INITIALIZER;
-state_t test_state = RESUME;
+state_t test_state = state_t.RESUME;
 bool test_set = false;
 int main() {
     int number_of_threads = 8;
@@ -37,7 +37,7 @@ int main() {
     int t = 0;
     for(;t<number_of_threads;t++) {
         TestArgs* a = malloc(sizeof(TestArgs));
-        a->handle = (ThreadControl*) malloc(sizeof((ThreadControl));
+        a->handle = (ThreadControl*) malloc(sizeof((ThreadControl)));
         a->handle = &control_handle;
         a->id = t;
         int create_error = pthread_create(&thread[t],&attr,test,a);
@@ -46,6 +46,12 @@ int main() {
             exit(-1);
         }
     }
+    sleep(1);
+    threadController_master(&control_handle, state_t.RESUME);
+    sleep(1);
+    threadController_master(&control_handle, state_t.RESUME);
+    sleep(10);
+    threadController_master(&control_handle, state_t.EXIT);
     void* status;
     for(int n=0;n<t;n++) {
         int join_error = pthread_join(thread[n],&status);
@@ -53,7 +59,7 @@ int main() {
             printf("ERROR: Join thread failed.\n");
             exit(-1);
         }
-    } 
+    }
     pthread_attr_destroy(&attr);
 
 
@@ -64,6 +70,9 @@ void test(void* a) {
     int id = *(a)->id;
     ThreadControl* control_handle = a->handle;
     while(1) {
+        pthread_mutex_lock(&printf_mutex);
+        printf("Thread %d: ",id);
+        pthread_mutex_unlock(&printf_mutex);
         threadController_slave(control_handle);
     }
 }
