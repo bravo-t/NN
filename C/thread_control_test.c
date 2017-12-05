@@ -4,6 +4,8 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
 #include "src/inter-process_communication.h"
 
 #define THREAD_RESUME 0
@@ -27,6 +29,7 @@ void* test(void* a);
 void threadController_slave(ThreadControl* handle, int id);
 ThreadControl* initControlHandle(pthread_mutex_t* mutex, pthread_cond_t* cond, sem_t* sem);
 void threadController_master(ThreadControl* handle, int state_id, int number_of_threads);
+void waitUntilEveryoneIsFinished_test(sem_t *sem);
 
 pthread_mutex_t printf_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -54,7 +57,6 @@ int main() {
             exit(-1);
         }
     }
-    sleep(10);
     pthread_mutex_lock(&printf_mutex);
     printf("Signal all threads to resume\n");
     pthread_mutex_unlock(&printf_mutex);
@@ -82,8 +84,8 @@ void* test(void* a) {
     int id = (*args).id;
     ThreadControl* control_handle = (*args).handle;
     while(1) {
-        sleep(1);
         threadController_slave(control_handle,id);
+        sleep(1);
     }
 }
 
@@ -93,6 +95,11 @@ void threadController_slave(ThreadControl* handle,int id) {
     if (i == 0) {
         pthread_mutex_lock(&printf_mutex);
         printf("Thread %d: Waiting for instructions...\n",id);
+        pthread_mutex_unlock(&printf_mutex);
+        int sem_value;
+        sem_getvalue(handle->semaphore, &sem_value);
+        pthread_mutex_lock(&printf_mutex);
+        printf("Thread %d: semaphore value: %d\n",sem_value);
         pthread_mutex_unlock(&printf_mutex);
         sem_wait(handle->semaphore);
         pthread_mutex_lock(&printf_mutex);
@@ -141,6 +148,17 @@ void threadController_master(ThreadControl* handle, int state_id, int number_of_
     pthread_mutex_lock(&printf_mutex);
     printf("Wait threads to finish\n");
     pthread_mutex_unlock(&printf_mutex);
-    waitUntilEveryoneIsFinished(handle->semaphore);
+    //waitUntilEveryoneIsFinished_test(handle->semaphore);
+    pthread_mutex_lock(&printf_mutex);
+    printf("Thread finished\n");
+    pthread_mutex_unlock(&printf_mutex);
 }
 
+void waitUntilEveryoneIsFinished_test(sem_t *sem) {
+    while (sem_trywait(sem) != -1 && errno != EAGAIN) {
+        sem_post(sem);
+        pthread_mutex_lock(&printf_mutex);
+        printf("Thread is still running\n");
+        pthread_mutex_unlock(&printf_mutex);
+    }
+}
