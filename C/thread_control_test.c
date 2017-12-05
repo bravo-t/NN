@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <unistd.h>
 
 typedef enum {RESUME,EXIT} state_t;
 
@@ -17,12 +19,16 @@ typedef struct {
     int id;
 } TestArgs;
 
+void* test(void* a);
+void threadController_slave(ThreadControl* handle);
+void threadController_master(ThreadControl* handle, int state_id);
+
 pthread_mutex_t printf_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 ThreadControl control_handle;
 pthread_mutex_t test_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t test_cond = PTHREAD_COND_INITIALIZER;
-state_t test_state = state_t.RESUME;
+state_t test_state = RESUME;
 bool test_set = false;
 int main() {
     int number_of_threads = 8;
@@ -37,7 +43,7 @@ int main() {
     int t = 0;
     for(;t<number_of_threads;t++) {
         TestArgs* a = malloc(sizeof(TestArgs));
-        a->handle = (ThreadControl*) malloc(sizeof((ThreadControl)));
+        a->handle = (ThreadControl*) malloc(sizeof(ThreadControl));
         a->handle = &control_handle;
         a->id = t;
         int create_error = pthread_create(&thread[t],&attr,test,a);
@@ -47,11 +53,20 @@ int main() {
         }
     }
     sleep(1);
-    threadController_master(&control_handle, state_t.RESUME);
+    pthread_mutex_lock(&printf_mutex);
+    printf("Signal all threads to resume\n");
+    pthread_mutex_unlock(&printf_mutex);
+    threadController_master(&control_handle, RESUME);
     sleep(1);
-    threadController_master(&control_handle, state_t.RESUME);
+    pthread_mutex_lock(&printf_mutex);
+    printf("Signal all threads to resume\n");
+    pthread_mutex_unlock(&printf_mutex);
+    threadController_master(&control_handle, RESUME);
     sleep(10);
-    threadController_master(&control_handle, state_t.EXIT);
+    pthread_mutex_lock(&printf_mutex);
+    printf("Signal all threads to exit\n");
+    pthread_mutex_unlock(&printf_mutex);
+    threadController_master(&control_handle, EXIT);
     void* status;
     for(int n=0;n<t;n++) {
         int join_error = pthread_join(thread[n],&status);
@@ -66,9 +81,10 @@ int main() {
     return 0;
 }
 
-void test(void* a) {
-    int id = *(a)->id;
-    ThreadControl* control_handle = a->handle;
+void* test(void* a) {
+    TestArgs* args = (TestArgs*) a;
+    int id = (*args).id;
+    ThreadControl* control_handle = (*args).handle;
     while(1) {
         pthread_mutex_lock(&printf_mutex);
         printf("Thread %d: ",id);
@@ -98,6 +114,7 @@ void threadController_slave(ThreadControl* handle) {
 void threadController_master(ThreadControl* handle, int state_id) {
     pthread_mutex_lock(handle->mutex);
     *(handle->state) = state_id;
+    *(handle->cond_set) = true;
     pthread_cond_broadcast(handle->cond);
     pthread_mutex_unlock(handle->mutex);
 }
