@@ -20,7 +20,7 @@ typedef struct {
 } TestArgs;
 
 void* test(void* a);
-void threadController_slave(ThreadControl* handle);
+void threadController_slave(ThreadControl* handle, int id);
 void threadController_master(ThreadControl* handle, int state_id);
 
 pthread_mutex_t printf_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -62,7 +62,7 @@ int main() {
     printf("Signal all threads to resume\n");
     pthread_mutex_unlock(&printf_mutex);
     threadController_master(&control_handle, RESUME);
-    sleep(10);
+    sleep(1);
     pthread_mutex_lock(&printf_mutex);
     printf("Signal all threads to exit\n");
     pthread_mutex_unlock(&printf_mutex);
@@ -86,26 +86,23 @@ void* test(void* a) {
     int id = (*args).id;
     ThreadControl* control_handle = (*args).handle;
     while(1) {
-        pthread_mutex_lock(&printf_mutex);
-        printf("Thread %d: ",id);
-        pthread_mutex_unlock(&printf_mutex);
-        threadController_slave(control_handle);
+        threadController_slave(control_handle,id);
     }
 }
 
 
-void threadController_slave(ThreadControl* handle) {
+void threadController_slave(ThreadControl* handle,int id) {
     pthread_mutex_lock(handle->mutex);
     while(!(*(handle->cond_set))) pthread_cond_wait(handle->cond,handle->mutex);
     pthread_mutex_unlock(handle->mutex);
     if (*(handle->state) == EXIT) {
         pthread_mutex_lock(&printf_mutex);
-        printf("Exiting...\n");
+        printf("Thread %d: Exiting...\n",id);
         pthread_mutex_unlock(&printf_mutex);
         pthread_exit(NULL);
     } else if (*(handle->state) == RESUME) {
         pthread_mutex_lock(&printf_mutex);
-        printf("Resuming...\n");
+        printf("Thread %d: Resuming...\n",id);
         pthread_mutex_unlock(&printf_mutex);
         return;
     }
