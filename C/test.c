@@ -9,6 +9,8 @@ pthread_mutex_t printf_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_barrier_t barrier;
 
 void signal_threads();
+void* thread(void* id);
+void barrier_print(int i, int* id);
 
 int main() {
     int number_of_threads = 4;
