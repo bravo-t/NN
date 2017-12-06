@@ -38,7 +38,7 @@ pthread_cond_t test_cond = PTHREAD_COND_INITIALIZER;
 //state_t test_state = RESUME;
 bool test_set = false;
 int main() {
-    int number_of_threads = 8;
+    int number_of_threads = 4;
     sem_t sem;
     ThreadControl* control_handle = initControlHandle(&test_mutex, &test_cond, &sem);
     pthread_attr_t attr;
@@ -99,7 +99,7 @@ void threadController_slave(ThreadControl* handle,int id) {
         int sem_value;
         sem_getvalue(handle->semaphore, &sem_value);
         pthread_mutex_lock(&printf_mutex);
-        printf("Thread %d: semaphore value: %d\n",sem_value);
+        printf("Thread %d: semaphore value: %d\n",id, sem_value);
         pthread_mutex_unlock(&printf_mutex);
         sem_wait(handle->semaphore);
         pthread_mutex_lock(&printf_mutex);
@@ -142,13 +142,17 @@ void threadController_master(ThreadControl* handle, int state_id, int number_of_
     pthread_mutex_lock(handle->mutex);
     handle->state = state_id;
     handle->cond_set = true;
-    for(int i=0;i<number_of_threads;i++) sem_post(handle->semaphore);
+    int c=0;
+    for(int i=0;i<number_of_threads;i++) {
+        c++;
+        sem_post(handle->semaphore);
+    }
     pthread_cond_broadcast(handle->cond);
     pthread_mutex_unlock(handle->mutex);
     pthread_mutex_lock(&printf_mutex);
-    printf("Wait threads to finish\n");
+    printf("Signaled %d threads, wait for them to finish\n",c);
     pthread_mutex_unlock(&printf_mutex);
-    //waitUntilEveryoneIsFinished_test(handle->semaphore);
+    waitUntilEveryoneIsFinished_test(handle->semaphore);
     pthread_mutex_lock(&printf_mutex);
     printf("Thread finished\n");
     pthread_mutex_unlock(&printf_mutex);
