@@ -35,7 +35,11 @@ pthread_mutex_t printf_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 pthread_mutex_t test_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t test_cond = PTHREAD_COND_INITIALIZER;
+
+//pthread_barrier_t instruction_ready;
+//pthread_barrier_t execute;
 //state_t test_state = RESUME;
+
 bool test_set = false;
 int main() {
     int number_of_threads = 4;
@@ -58,9 +62,9 @@ int main() {
             exit(-1);
         }
     }
-    //pthread_mutex_lock(&printf_mutex);
-    //printf("Signal all threads to resume\n");
-    //pthread_mutex_unlock(&printf_mutex);
+    pthread_mutex_lock(&printf_mutex);
+    printf("Signal all threads to resume\n");
+    pthread_mutex_unlock(&printf_mutex);
     threadController_master(control_handle, THREAD_RESUME);
     pthread_mutex_lock(&printf_mutex);
     printf("Signal all threads to exit\n");
@@ -114,7 +118,6 @@ void threadController_slave(ThreadControl* handle,int id) {
             //pthread_mutex_lock(&printf_mutex);
             //printf("Thread %d: re-init inst_ready barrier\n",id);
             //pthread_mutex_unlock(&printf_mutex);
-            microsecSleep(10);
             pthread_barrier_init(handle->inst_ready,0,(handle->number_of_threads)+1);
         }
         //pthread_mutex_unlock(handle->mutex);
@@ -171,7 +174,6 @@ void threadController_master(ThreadControl* handle, int state_id) {
         pthread_mutex_lock(&printf_mutex);
         printf("Main: re-init inst_ready barrier\n");
         pthread_mutex_unlock(&printf_mutex);
-        microsecSleep(10);
         pthread_barrier_init(handle->inst_ready,0,(handle->number_of_threads)+1);
     }
     //pthread_mutex_unlock(handle->mutex);

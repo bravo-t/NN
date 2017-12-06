@@ -11,9 +11,9 @@ pthread_barrier_t barrier;
 void signal_threads();
 void* thread(void* id);
 void barrier_print(int i, int* id);
+int number_of_threads = 4;
 
 int main() {
-    int number_of_threads = 4;
     pthread_barrier_init(&barrier,0,number_of_threads+1);
     int* ids = malloc(sizeof(int)*number_of_threads);
     pthread_attr_t attr;
