@@ -143,10 +143,17 @@ void threadController_master(ThreadControl* handle, int state_id, int number_of_
     handle->state = state_id;
     handle->cond_set = true;
     int c=0;
+    sem_getvalue(handle->semaphore, &c);
+    pthread_mutex_lock(&printf_mutex);
+    printf("Semaphore before post: %d\n",c);
+    pthread_mutex_unlock(&printf_mutex);
     for(int i=0;i<number_of_threads;i++) {
-        c++;
         sem_post(handle->semaphore);
     }
+    sem_getvalue(handle->semaphore, &c);
+    pthread_mutex_lock(&printf_mutex);
+    printf("Semaphore after post: %d\n",c);
+    pthread_mutex_unlock(&printf_mutex);
     pthread_cond_broadcast(handle->cond);
     pthread_mutex_unlock(handle->mutex);
     pthread_mutex_lock(&printf_mutex);
@@ -161,8 +168,5 @@ void threadController_master(ThreadControl* handle, int state_id, int number_of_
 void waitUntilEveryoneIsFinished_test(sem_t *sem) {
     while (sem_trywait(sem) != -1 && errno != EAGAIN) {
         sem_post(sem);
-        pthread_mutex_lock(&printf_mutex);
-        printf("Thread is still running\n");
-        pthread_mutex_unlock(&printf_mutex);
     }
 }
