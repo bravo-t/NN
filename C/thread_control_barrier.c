@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include "src/thread_barrier.h"
 
 #define THREAD_RESUME 0
 #define THREAD_EXIT 1
@@ -12,7 +13,7 @@
 typedef struct {
     pthread_mutex_t* mutex;
     pthread_cond_t* cond;
-    pthread_barrier_t* inst_ready;
+    thread_barrier_t* inst_ready;
     pthread_barrier_t* exec_inst;
     bool cond_set;
     int state;
@@ -28,22 +29,18 @@ typedef struct {
 void* test(void* a);
 void threadController_slave(ThreadControl* handle, int id);
 void threadController_master(ThreadControl* handle, int state_id);
-ThreadControl* initControlHandle(pthread_mutex_t* mutex, pthread_cond_t* cond, pthread_barrier_t* rdy, pthread_barrier_t* exec, int number_of_threads);
+ThreadControl* initControlHandle(pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* rdy, pthread_barrier_t* exec, int number_of_threads);
 void microsecSleep (long ms);
 
 pthread_mutex_t printf_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 pthread_mutex_t test_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t test_cond = PTHREAD_COND_INITIALIZER;
-
-//pthread_barrier_t instruction_ready;
-//pthread_barrier_t execute;
 //state_t test_state = RESUME;
-
 bool test_set = false;
 int main() {
     int number_of_threads = 4;
-    pthread_barrier_t instruction_ready;
+    thread_barrier_t instruction_ready = THREAD_BARRIER_INITIALIZER;
     pthread_barrier_t execute;
     ThreadControl* control_handle = initControlHandle(&test_mutex, &test_cond, &instruction_ready, &execute, number_of_threads);
     pthread_attr_t attr;
@@ -104,21 +101,28 @@ void threadController_slave(ThreadControl* handle,int id) {
             pthread_mutex_unlock(&printf_mutex);
             pthread_exit(NULL);
         }
-        //pthread_mutex_lock(&printf_mutex);
-        //printf("Thread %d: Waiting for instructions...\n",id);
-        //pthread_mutex_unlock(&printf_mutex);
+        pthread_mutex_lock(&printf_mutex);
+        printf("Thread %d: Waiting for instructions...\n",id);
+        pthread_mutex_unlock(&printf_mutex);
         //int sem_value;
         //sem_getvalue(handle->semaphore, &sem_value);
         //pthread_mutex_lock(&printf_mutex);
         //printf("Thread %d: semaphore value: %d\n",id, sem_value);
         //pthread_mutex_unlock(&printf_mutex);
-        int r = pthread_barrier_wait(handle->inst_ready);
+        
+        int r = thread_barrier_wait(handle->inst_ready);
+       // microsecSleep(10);
+
         //pthread_mutex_lock(handle->mutex);
         if (r == PTHREAD_BARRIER_SERIAL_THREAD) {
-            //pthread_mutex_lock(&printf_mutex);
-            //printf("Thread %d: re-init inst_ready barrier\n",id);
-            //pthread_mutex_unlock(&printf_mutex);
-            pthread_barrier_init(handle->inst_ready,0,(handle->number_of_threads)+1);
+            pthread_mutex_lock(&printf_mutex);
+            printf("Thread %d: re-init inst_ready barrier\n",id);
+            pthread_mutex_unlock(&printf_mutex);
+         //   microsecSleep(1);
+            int d;
+            do { d = thread_barrier_destroy(handle->inst_ready); } while(d == EDSTRY_BUSY);
+            int ie;
+            do { ie = thread_barrier_init(handle->inst_ready,(handle->number_of_threads)+1);} while (id == EINIT_BUSY);
         }
         //pthread_mutex_unlock(handle->mutex);
         pthread_mutex_lock(&printf_mutex);
@@ -132,7 +136,11 @@ void threadController_slave(ThreadControl* handle,int id) {
     //pthread_mutex_unlock(handle->mutex);
     //int e = pthread_barrier_wait(handle->exec_inst);
     //pthread_mutex_lock(handle->mutex);
-    //if (e == PTHREAD_BARRIER_SERIAL_THREAD) pthread_barrier_init(handle->exec_inst,0,(handle->number_of_threads)+1);
+    //if (e == PTHREAD_BARRIER_SERIAL_THREAD) {
+    //    int d;
+    //    do { d = pthread_barrier_destroy(handle->exec_inst); } while(d != 0);
+    //    pthread_barrier_init(handle->exec_inst,0,(handle->number_of_threads)+1);
+    //}
     //pthread_mutex_unlock(handle->mutex);
     if (handle->state == THREAD_EXIT) {
         pthread_mutex_lock(&printf_mutex);
@@ -147,12 +155,12 @@ void threadController_slave(ThreadControl* handle,int id) {
     }
 }
 
-ThreadControl* initControlHandle(pthread_mutex_t* mutex, pthread_cond_t* cond, pthread_barrier_t* rdy, pthread_barrier_t* exec, int number_of_threads) {
+ThreadControl* initControlHandle(pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* rdy, pthread_barrier_t* exec, int number_of_threads) {
     ThreadControl* handle = malloc(sizeof(ThreadControl));
     handle->cond_set = false;
     handle->mutex = mutex;
     handle->cond = cond;
-    pthread_barrier_init(rdy, NULL, number_of_threads+1);
+    thread_barrier_init(rdy, number_of_threads+1);
     handle->inst_ready = rdy;
     pthread_barrier_init(exec, NULL, number_of_threads+1);
     handle->exec_inst = exec;
@@ -168,13 +176,17 @@ void threadController_master(ThreadControl* handle, int state_id) {
     //handle->cond_set = true;
     //pthread_cond_broadcast(handle->cond);
     pthread_mutex_unlock(handle->mutex);
-    int r = pthread_barrier_wait(handle->inst_ready);
+    int r = thread_barrier_wait(handle->inst_ready);
     //pthread_mutex_lock(handle->mutex);
     if (r == PTHREAD_BARRIER_SERIAL_THREAD) {
         pthread_mutex_lock(&printf_mutex);
         printf("Main: re-init inst_ready barrier\n");
         pthread_mutex_unlock(&printf_mutex);
-        pthread_barrier_init(handle->inst_ready,0,(handle->number_of_threads)+1);
+        //microsecSleep(10);
+        int d;
+        do { d = thread_barrier_destroy(handle->inst_ready); } while(d == EDSTRY_BUSY);
+        int ie;
+        do {thread_barrier_init(handle->inst_ready,(handle->number_of_threads)+1);} while(ie == EINIT_BUSY);
     }
     //pthread_mutex_unlock(handle->mutex);
     pthread_mutex_lock(&printf_mutex);
@@ -182,7 +194,11 @@ void threadController_master(ThreadControl* handle, int state_id) {
     pthread_mutex_unlock(&printf_mutex);
     //int e = pthread_barrier_wait(handle->exec_inst);
     //pthread_mutex_lock(handle->mutex);
-    //if (e == PTHREAD_BARRIER_SERIAL_THREAD) pthread_barrier_init(handle->exec_inst,0,(handle->number_of_threads)+1);
+    //if (e == PTHREAD_BARRIER_SERIAL_THREAD) {
+    //    int d;
+    //    do { d = pthread_barrier_destroy(handle->exec_inst); } while(d != 0);
+    //    pthread_barrier_init(handle->exec_inst,0,(handle->number_of_threads)+1);
+    //} 
     //pthread_mutex_unlock(handle->mutex);
     pthread_mutex_lock(&printf_mutex);
     printf("Thread finished\n");
