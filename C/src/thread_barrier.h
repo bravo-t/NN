@@ -6,24 +6,25 @@
 #define PTHREAD_BARRIER_SERIAL_THREAD -1
 #endif
 
-#ifndef EINIT_INITIALIZED
-#define EINIT_INITIALIZED 1
+#ifndef THREAD_BARRIER_EINIT_INITIALIZED
+#define THREAD_BARRIER_EINIT_INITIALIZED 1
 #endif
-#ifndef EINIT_BUSY
-#define EINIT_BUSY 2
+#ifndef THREAD_BARRIER_EINIT_BUSY
+#define THREAD_BARRIER_EINIT_BUSY 2
 #endif
-#ifndef EDSTRY_UNINIT
-#define EDSTRY_UNINIT 3
+#ifndef THREAD_BARRIER_EDSTRY_UNINIT
+#define THREAD_BARRIER_EDSTRY_UNINIT 3
 #endif
-#ifndef EDSTRY_BUSY
-#define EDSTRY_BUSY 4
+#ifndef THREAD_BARRIER_EDSTRY_BUSY
+#define THREAD_BARRIER_EDSTRY_BUSY 4
 #endif
 
 typedef struct {
     pthread_cond_t c;
     pthread_mutex_t m;
     int remain;
-    bool busy;
+    int total;
+    int released;
     bool initialized;
 } thread_barrier_t;
 

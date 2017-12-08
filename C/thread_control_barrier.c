@@ -120,9 +120,9 @@ void threadController_slave(ThreadControl* handle,int id) {
             pthread_mutex_unlock(&printf_mutex);
          //   microsecSleep(1);
             int d;
-            do { d = thread_barrier_destroy(handle->inst_ready); } while(d == EDSTRY_BUSY);
+            do { d = thread_barrier_destroy(handle->inst_ready); } while(d == THREAD_BARRIER_EDSTRY_BUSY);
             int ie;
-            do { ie = thread_barrier_init(handle->inst_ready,(handle->number_of_threads)+1);} while (id == EINIT_BUSY);
+            do { ie = thread_barrier_init(handle->inst_ready,(handle->number_of_threads)+1);} while (id == THREAD_BARRIER_EINIT_BUSY);
         }
         //pthread_mutex_unlock(handle->mutex);
         pthread_mutex_lock(&printf_mutex);
@@ -184,9 +184,9 @@ void threadController_master(ThreadControl* handle, int state_id) {
         pthread_mutex_unlock(&printf_mutex);
         //microsecSleep(10);
         int d;
-        do { d = thread_barrier_destroy(handle->inst_ready); } while(d == EDSTRY_BUSY);
+        do { d = thread_barrier_destroy(handle->inst_ready); } while(d == THREAD_BARRIER_EDSTRY_BUSY);
         int ie;
-        do {thread_barrier_init(handle->inst_ready,(handle->number_of_threads)+1);} while(ie == EINIT_BUSY);
+        do {thread_barrier_init(handle->inst_ready,(handle->number_of_threads)+1);} while(ie == THREAD_BARRIER_EINIT_BUSY);
     }
     //pthread_mutex_unlock(handle->mutex);
     pthread_mutex_lock(&printf_mutex);
