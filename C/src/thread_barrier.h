@@ -25,6 +25,7 @@ typedef struct {
     int remain;
     int total;
     int released;
+    bool to_be_destroyed;
     bool initialized;
 } thread_barrier_t;
 
