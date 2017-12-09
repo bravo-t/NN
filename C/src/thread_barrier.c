@@ -65,6 +65,7 @@ int thread_barrier_wait(thread_barrier_t* b) {
     printf("DEBUG: barrier_wait: b->remain = %d\n",b->remain);
     int retval = 0;
     if (b->remain == 0) {
+        b->to_be_destroyed = true;
         pthread_cond_broadcast(&(b->c));
         retval = PTHREAD_BARRIER_SERIAL_THREAD;
     } else {
