@@ -18,6 +18,9 @@
 #ifndef THREAD_BARRIER_EDSTRY_BUSY
 #define THREAD_BARRIER_EDSTRY_BUSY 4
 #endif
+#ifndef THREAD_BARRIER_EDSTRY_NOTYET
+#define THREAD_BARRIER_EDSTRY_NOTYET 5
+#endif
 
 typedef struct {
     pthread_cond_t c;

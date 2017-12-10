@@ -13,15 +13,12 @@ const thread_barrier_t THREAD_BARRIER_INITIALIZER = {
     0,
     0,
     false,
+    false,
 };
 
 int thread_barrier_init(thread_barrier_t* b, int n) {
-    if (b->initialized) {
-        return THREAD_BARRIER_EINIT_INITIALIZED;
-    }
-    if (b->released != b->total) {
-        return THREAD_BARRIER_EINIT_BUSY;
-    }
+    if (b->initialized) return THREAD_BARRIER_EINIT_INITIALIZED;
+    if (b->released != b->total) return THREAD_BARRIER_EINIT_BUSY;
     pthread_mutex_lock(&(b->m));
     pthread_cond_init(&(b->c),NULL);
     b->remain = n;
@@ -33,33 +30,26 @@ int thread_barrier_init(thread_barrier_t* b, int n) {
 }
 
 int thread_barrier_destroy(thread_barrier_t* b) {
-    if (! b->initialized) {
-        return THREAD_BARRIER_EDSTRY_UNINIT;
-    }
-    if (b->released != b->total) {
-        return THREAD_BARRIER_EDSTRY_BUSY;
-    }
+    if (! b->initialized) return THREAD_BARRIER_EDSTRY_UNINIT;
+    if (b->released != b->total) return THREAD_BARRIER_EDSTRY_BUSY;
+    if (! b->to_be_destroyed) return THREAD_BARRIER_EDSTRY_NOTYET;
     pthread_mutex_lock(&(b->m));
     b->remain = 0;
     pthread_cond_destroy(&(b->c));
     b->released = b->total;
+    b->to_be_destroyed = false;
     b->initialized = false;
     pthread_mutex_unlock(&(b->m));
     return 0;
 }
 
 int thread_barrier_wait(thread_barrier_t* b) {
-    if (! b->initialized) {
-        return THREAD_BARRIER_EDSTRY_UNINIT;
-    }
-    int rel;
-    bool inited;
+    bool wait_until_reinit;
     do {
         pthread_mutex_lock(&(b->m));
-        rel = b->released;
-        inited = b->initialized;
+        wait_until_reinit = b->to_be_destroyed || (! b->initialized);
         pthread_mutex_unlock(&(b->m));
-    } while (rel != 0 && ! inited);
+    } while (wait_until_reinit);
     pthread_mutex_lock(&(b->m));
     b->remain--;
     printf("DEBUG: barrier_wait: b->remain = %d\n",b->remain);
