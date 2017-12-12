@@ -65,3 +65,22 @@ int thread_barrier_wait(thread_barrier_t* b) {
     pthread_mutex_unlock(&(b->m));
     return retval;
 }
+
+int thread_barrier_wait_reinit(thread_barrier_t* b) {
+    int r = thread_barrier_wait(b);
+    if (r == PTHREAD_BARRIER_SERIAL_THREAD) {
+        int d;
+        do { d = thread_barrier_destroy(b); } while(d == THREAD_BARRIER_EDSTRY_BUSY);
+        int ie;
+        do {thread_barrier_init(b,b->total);} while(ie == THREAD_BARRIER_EINIT_BUSY);
+    } else {
+        bool to_be_destroyed,initialized;
+        do {
+            pthread_mutex_lock(&(b->m));
+            to_be_destroyed = b->to_be_destroyed;
+            initialized = b->initialized;
+            pthread_mutex_unlock(&(b->m));
+        } while (to_be_destroyed || (!initialized));
+    }
+    return r;
+}

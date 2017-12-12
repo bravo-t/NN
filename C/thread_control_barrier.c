@@ -110,10 +110,11 @@ void threadController_slave(ThreadControl* handle,int id) {
         //printf("Thread %d: semaphore value: %d\n",id, sem_value);
         //pthread_mutex_unlock(&printf_mutex);
         
-        int r = thread_barrier_wait(handle->inst_ready);
+        int r = thread_barrier_wait_reinit(handle->inst_ready);
        // microsecSleep(10);
 
         //pthread_mutex_lock(handle->mutex);
+        /*
         if (r == PTHREAD_BARRIER_SERIAL_THREAD) {
             pthread_mutex_lock(&printf_mutex);
             printf("Thread %d: re-init inst_ready barrier\n",id);
@@ -124,6 +125,7 @@ void threadController_slave(ThreadControl* handle,int id) {
             int ie;
             do { ie = thread_barrier_init(handle->inst_ready,(handle->number_of_threads)+1);} while (ie == THREAD_BARRIER_EINIT_BUSY);
         }
+        */
         //pthread_mutex_unlock(handle->mutex);
         pthread_mutex_lock(&printf_mutex);
         printf("Thread %d: Instructions received...\n",id);
@@ -176,8 +178,9 @@ void threadController_master(ThreadControl* handle, int state_id) {
     //handle->cond_set = true;
     //pthread_cond_broadcast(handle->cond);
     pthread_mutex_unlock(handle->mutex);
-    int r = thread_barrier_wait(handle->inst_ready);
+    int r = thread_barrier_wait_reinit(handle->inst_ready);
     //pthread_mutex_lock(handle->mutex);
+    /*
     if (r == PTHREAD_BARRIER_SERIAL_THREAD) {
         pthread_mutex_lock(&printf_mutex);
         printf("Main: re-init inst_ready barrier\n");
@@ -188,6 +191,7 @@ void threadController_master(ThreadControl* handle, int state_id) {
         int ie;
         do {thread_barrier_init(handle->inst_ready,(handle->number_of_threads)+1);} while(ie == THREAD_BARRIER_EINIT_BUSY);
     }
+    */
     //pthread_mutex_unlock(handle->mutex);
     pthread_mutex_lock(&printf_mutex);
     printf("Signaled %d threads, wait for them to finish\n",handle->number_of_threads);
