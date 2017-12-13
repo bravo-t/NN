@@ -37,6 +37,6 @@ extern const thread_barrier_t THREAD_BARRIER_INITIALIZER;
 int thread_barrier_init(thread_barrier_t* b, int n);
 int thread_barrier_destroy(thread_barrier_t* b);
 int thread_barrier_wait(thread_barrier_t* b);
-int thread_barrier_wait_reinit(thread_barrier_t* b);
+int thread_barrier_wait_reinit(thread_barrier_t* b, int n);
 
 #endif
