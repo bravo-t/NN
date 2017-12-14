@@ -13,7 +13,7 @@
 typedef struct {
     pthread_mutex_t* mutex;
     thread_barrier_t* inst_ready;
-    pthread_barrier_t* inst_ack;
+    thread_barrier_t* inst_ack;
     int inst;
     int number_of_threads;
 } ThreadControl;
@@ -37,7 +37,7 @@ bool test_set = false;
 int main() {
     int number_of_threads = 4;
     thread_barrier_t instruction_ready = THREAD_BARRIER_INITIALIZER;
-    pthread_barrier_t acknowledge = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t acknowledge = THREAD_BARRIER_INITIALIZER;
     ThreadControl* control_handle = initControlHandle(&test_mutex, &instruction_ready, &acknowledge, number_of_threads);
     pthread_attr_t attr;
     pthread_attr_init(&attr);
@@ -122,7 +122,7 @@ void threadController_slave(ThreadControl* handle,int id) {
     //pthread_mutex_lock(handle->mutex);
     //while(!(handle->cond_set)) pthread_cond_wait(handle->cond,handle->mutex);
     //pthread_mutex_unlock(handle->mutex);
-    int a = pthread_barrier_wait_reinit(handle->inst_ack,handle->number_of_threads+1);
+    int a = thread_barrier_wait_reinit(handle->inst_ack,handle->number_of_threads+1);
     //pthread_mutex_lock(handle->mutex);
     //if (e == PTHREAD_BARRIER_SERIAL_THREAD) {
     //    int d;
@@ -177,7 +177,7 @@ void threadController_master(ThreadControl* handle, int inst_id) {
     pthread_mutex_lock(&printf_mutex);
     printf("Signaled %d threads, wait for them to finish\n",handle->number_of_threads);
     pthread_mutex_unlock(&printf_mutex);
-    int a = pthread_barrier_wait(handle->inst_ack,handle->number_of_threads+1);
+    int a = thread_barrier_wait_reinit(handle->inst_ack,handle->number_of_threads+1);
     //pthread_mutex_lock(handle->mutex);
     //if (e == PTHREAD_BARRIER_SERIAL_THREAD) {
     //    int d;
