@@ -52,7 +52,6 @@ int thread_barrier_wait(thread_barrier_t* b) {
     } while (wait_until_reinit);
     pthread_mutex_lock(&(b->m));
     b->remain--;
-    printf("DEBUG: barrier_wait: b->remain = %d\n",b->remain);
     int retval = 0;
     if (b->remain == 0) {
         b->to_be_destroyed = true;
