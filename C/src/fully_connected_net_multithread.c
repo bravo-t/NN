@@ -7,6 +7,8 @@
 #include <string.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include "thread_barrier.h"
+#include "thread_control.h"
 #include "network_type.h"
 #include "matrix_operations.h"
 #include "matrix_operations_multithread.h"
