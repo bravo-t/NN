@@ -246,7 +246,10 @@ int train_multithread(FCParameters* network_params) {
     printf("INFO: %d b matrixes, %d learnable biases initialized, %.2f KB meomry used\n", network_depth, number_of_biases, size_of_bs/1024.0f);
     printf("INFO: %d H matrixes, %d learnable hidden layer values initialized, %.2f KB meomry used\n", network_depth, number_of_hvalues, size_of_Hs/1024.0f);
     printf("INFO: A total number of %.2f KB memory is used by learnable parameters in the network\n",(size_of_Ws+size_of_bs+size_of_Hs)/1024.0f);
-
+    // Create slave workers
+    pthread_t* forward_prop = malloc(sizeof(pthread_t)*number_of_threads);
+    pthread_t* backward_prop = malloc(sizeof(pthread_t)*number_of_threads);
+    pthread_t* update_weights = malloc(sizeof(pthread_t)*number_of_threads);
     // Feed data to the network to train it
     printf("INFO: Training network\n");
     int iterations = training_data->height / minibatch_size;
