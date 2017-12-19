@@ -248,6 +248,7 @@ int train_multithread(FCParameters* network_params) {
     printf("INFO: A total number of %.2f KB memory is used by learnable parameters in the network\n",(size_of_Ws+size_of_bs+size_of_Hs)/1024.0f);
     // Create slave workers
     pthread_t* forward_prop = malloc(sizeof(pthread_t)*number_of_threads);
+    pthread_t* calc_loss = malloc(sizeof(pthread_t)*number_of_threads);
     pthread_t* backward_prop = malloc(sizeof(pthread_t)*number_of_threads);
     pthread_t* update_weights = malloc(sizeof(pthread_t)*number_of_threads);
     // Feed data to the network to train it
@@ -457,4 +458,22 @@ int train_multithread(FCParameters* network_params) {
     free(network_params);
     network_params = NULL;
     return 0;
+}
+
+int forward_propagation(TwoDMatrix* X, TwoDMatrix* Ws, TwoDMatrix* bs, TwoDMatrix* Hs, int network_depth, float alpha) {
+    TwoDMatrix* layer_X = NULL;
+    layer_X = X;
+    for(int i=0;i<network_depth;i++) {
+        affineLayerForward(layer_X,Ws[i],bs[i],Hs[i], number_of_threads);
+        // The last layer in the network will calculate the scores
+        // So there will not be a activation function put to it
+        if (i != network_depth - 1) {
+            leakyReLUForward(Hs[i],alpha,Hs[i], number_of_threads);
+        }
+        layer_X = Hs[i];
+    }
+}
+
+void* forward_propagation_slave(void* args) {
+
 }
