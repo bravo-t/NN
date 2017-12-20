@@ -14,8 +14,13 @@ typedef struct {
     TwoDMatrix** dWs;
     TwoDMatrix** dbs;
     TwoDMatrix** dHs;
+    TwoDMatrix** Wcaches;
+    TwoDMatrix** bcaches;
+    TwoDMatrix* correct_labels;
     float alpha;
     float learning_rate;
+    float reg_strength;
+    
 
 } SlaveArgs;
 
