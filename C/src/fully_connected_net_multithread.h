@@ -20,8 +20,8 @@ typedef struct {
     float alpha;
     float learning_rate;
     float reg_strength;
-    
-
+    float decay_rate;
+    float eps;
 } SlaveArgs;
 
 #endif
