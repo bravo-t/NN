@@ -481,4 +481,5 @@ void* forward_propagation_slave(void* args) {
     TwoDMatrix** bs = a->bs;
     TwoDMatrix** Hs = a->Hs;
     float alpha = a->alpha;
+    ThreadControl* handle = a->handle;
 }
