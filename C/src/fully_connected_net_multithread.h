@@ -18,7 +18,7 @@ typedef struct {
     TwoDMatrix** Wcaches;
     TwoDMatrix** bcaches;
     TwoDMatrix* correct_labels;
-    bool* memory_allocated;
+    bool* mem_allocated;
     float alpha;
     float learning_rate;
     float reg_strength;
