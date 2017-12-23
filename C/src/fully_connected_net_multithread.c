@@ -460,7 +460,7 @@ int train_multithread(FCParameters* network_params) {
     return 0;
 }
 
-int forward_propagation(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, TwoDMatrix** Hs, int network_depth, float alpha) {
+int FCNET_forwardPropagation(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, TwoDMatrix** Hs, int network_depth, float alpha) {
     TwoDMatrix* layer_X = NULL;
     layer_X = X;
     for(int i=0;i<network_depth;i++) {
@@ -474,12 +474,17 @@ int forward_propagation(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, TwoDMat
     }
 }
 
-void* forward_propagation_slave(void* args) {
+void* FCNET_forwardPropagation_slave(void* args) {
     (SlaveArgs*) a = (SlaveArgs*) args;
     TwoDMatrix* X = a->X;
     TwoDMatrix** Ws = a->Ws;
     TwoDMatrix** bs = a->bs;
     TwoDMatrix** Hs = a->Hs;
     float alpha = a->alpha;
+    int network_depth = a->network_depth;
     ThreadControl* handle = a->handle;
+    while(1) {
+        threadController_slave(handle);
+        FCNET_forwardPropagation(X,Ws,bs,Hs,network_depth,alpha);
+    }
 }
