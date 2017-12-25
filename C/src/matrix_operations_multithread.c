@@ -195,7 +195,7 @@ int init2DMatrix_thread(TwoDMatrix* M, int height, int width, int id, bool* mem_
     return 0;
 }
 
-int init2DMatrixNormRand_thread(TwoDMatrix* M, int height, int width, float mean, float std, int n,int id, bool* mem_allocated) {
+int init2DMatrixNormRand_thread(TwoDMatrix* M, int height, int width, float mean, float std, int n,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
     if (M->initialized) return 0;
     int h_start = calc_h_start(id,height,number_of_threads);
@@ -229,12 +229,12 @@ int init2DMatrixNormRand_thread(TwoDMatrix* M, int height, int width, float mean
     return 0;
 }
 
-int init2DMatrixZero_thread(TwoDMatrix* M, int height, int width,int id, bool* mem_allocated) {
+int init2DMatrixZero_thread(TwoDMatrix* M, int height, int width,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     init2DMatrix_thread(M,height,width,id,mem_allocated);
     return 0;
 }
 
-int init2DMatrixOne_thread(TwoDMatrix* M, int height, int width,int id, bool* mem_allocated) {
+int init2DMatrixOne_thread(TwoDMatrix* M, int height, int width,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
     if (M->initialized) return 0;
     int h_start = calc_h_start(id,height,number_of_threads);
@@ -268,7 +268,7 @@ int init2DMatrixOne_thread(TwoDMatrix* M, int height, int width,int id, bool* me
     return 0;
 }
 
-int destroy2DMatrix_thread(TwoDMatrix* M, int id, bool* mem_allocated) {
+int destroy2DMatrix_thread(TwoDMatrix* M, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     int h_start = calc_h_start(id,M->height,number_of_threads);
     int h_end = calc_h_end(id,M->height,number_of_threads);
     for(int i=h_start;i<=h_end;i++) {
@@ -299,7 +299,7 @@ int destroy2DMatrix_thread(TwoDMatrix* M, int id, bool* mem_allocated) {
     return 0;
 }
 
-int copyTwoDMatrix_thread(TwoDMatrix* M, TwoDMatrix* OUT, int id, bool* mem_allocated) {
+int copyTwoDMatrix_thread(TwoDMatrix* M, TwoDMatrix* OUT, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     int h_start = calc_h_start(id,M->height,number_of_threads);
     int h_end = calc_h_end(id,M->height,number_of_threads);
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
@@ -312,7 +312,7 @@ int copyTwoDMatrix_thread(TwoDMatrix* M, TwoDMatrix* OUT, int id, bool* mem_allo
     return retval;
 }
 
-int transpose2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated) {
+int transpose2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     int w_start = calc_h_start(id,M->width,number_of_threads);
     int w_end = calc_h_end(id,M->width,number_of_threads);
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
@@ -323,7 +323,7 @@ int transpose2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_all
     return 0;
 }
 
-int dotProduct_thread(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* OUT,int id, bool* mem_allocated) {
+int dotProduct_thread(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* OUT,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     if (X->width != W->height) {
         return 1;
     }
@@ -341,7 +341,7 @@ int dotProduct_thread(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* OUT,int id, bool
     return 0;
 }
 
-int elementwiseAdd2DMatrix_thread(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,int id, bool* mem_allocated) {
+int elementwiseAdd2DMatrix_thread(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     if (A->height != B->height) return 1;
     if (A->width != B->width) return 1;
     int h_start = calc_h_start(id,A->height,number_of_threads);
@@ -356,7 +356,7 @@ int elementwiseAdd2DMatrix_thread(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,
     return 0;
 }
 
-int elementwiseSub2DMatrix_thread(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,int id, bool* mem_allocated) {
+int elementwiseSub2DMatrix_thread(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     if (A->height != B->height) return 1;
     if (A->width != B->width) return 1;
     int h_start = calc_h_start(id,A->height,number_of_threads);
@@ -371,7 +371,7 @@ int elementwiseSub2DMatrix_thread(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,
     return 0;
 }
 
-int elementwiseMul2DMatrix_thread(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,int id, bool* mem_allocated) {
+int elementwiseMul2DMatrix_thread(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     if (A->height != B->height) return 1;
     if (A->width != B->width) return 1;
     int h_start = calc_h_start(id,A->height,number_of_threads);
@@ -386,7 +386,7 @@ int elementwiseMul2DMatrix_thread(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,
     return 0;
 }
 
-int elementwiseDiv2DMatrix_thread(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,int id, bool* mem_allocated) {
+int elementwiseDiv2DMatrix_thread(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     if (A->height != B->height) return 1;
     if (A->width != B->width) return 1;
     int h_start = calc_h_start(id,A->height,number_of_threads);
@@ -401,7 +401,7 @@ int elementwiseDiv2DMatrix_thread(TwoDMatrix* A, TwoDMatrix* B, TwoDMatrix* OUT,
     return 0;
 }
 
-int elementSqrt_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated) {
+int elementSqrt_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     int h_start = calc_h_start(id,M->height,number_of_threads);
     int h_end = calc_h_end(id,M->height,number_of_threads);
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
@@ -414,7 +414,7 @@ int elementSqrt_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated
     return 0;
 }
 
-int elementExp_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated) {
+int elementExp_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     int h_start = calc_h_start(id,M->height,number_of_threads);
     int h_end = calc_h_end(id,M->height,number_of_threads);
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
@@ -427,7 +427,7 @@ int elementExp_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated)
     return 0;
 }
 
-int elementLeakyReLU_thread(TwoDMatrix* M, float alpha,TwoDMatrix* OUT,int id, bool* mem_allocated) {
+int elementLeakyReLU_thread(TwoDMatrix* M, float alpha,TwoDMatrix* OUT,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     int h_start = calc_h_start(id,M->height,number_of_threads);
     int h_end = calc_h_end(id,M->height,number_of_threads);
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
@@ -444,7 +444,7 @@ int elementLeakyReLU_thread(TwoDMatrix* M, float alpha,TwoDMatrix* OUT,int id, b
     return 0;
 }
 
-int elementAdd_thread(TwoDMatrix* M, float a,TwoDMatrix* OUT,int id, bool* mem_allocated) {
+int elementAdd_thread(TwoDMatrix* M, float a,TwoDMatrix* OUT,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     int h_start = calc_h_start(id,M->height,number_of_threads);
     int h_end = calc_h_end(id,M->height,number_of_threads);
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
@@ -457,7 +457,7 @@ int elementAdd_thread(TwoDMatrix* M, float a,TwoDMatrix* OUT,int id, bool* mem_a
     return 0;
 }
 
-int elementMul_thread(TwoDMatrix* M, float a,TwoDMatrix* OUT,int id, bool* mem_allocated) {
+int elementMul_thread(TwoDMatrix* M, float a,TwoDMatrix* OUT,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     int h_start = calc_h_start(id,M->height,number_of_threads);
     int h_end = calc_h_end(id,M->height,number_of_threads);
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
@@ -470,7 +470,7 @@ int elementMul_thread(TwoDMatrix* M, float a,TwoDMatrix* OUT,int id, bool* mem_a
     return 0;
 }
 
-int elementDiv_thread(TwoDMatrix* M, float a,TwoDMatrix* OUT,int id, bool* mem_allocated) {
+int elementDiv_thread(TwoDMatrix* M, float a,TwoDMatrix* OUT,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     float n;
     if (a < 1e-6) {
         n = 1/(a+1e-6);
@@ -481,7 +481,7 @@ int elementDiv_thread(TwoDMatrix* M, float a,TwoDMatrix* OUT,int id, bool* mem_a
     return 0;
 }
 
-int broadcastAdd_thread(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int id, bool* mem_allocated) {
+int broadcastAdd_thread(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     int h_start = calc_h_start(id,M->height,number_of_threads);
     int h_end = calc_h_end(id,M->height,number_of_threads);
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
@@ -504,7 +504,7 @@ int broadcastAdd_thread(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix*
     return 0;
 }
 
-int broadcastSub_thread(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int id, bool* mem_allocated) {
+int broadcastSub_thread(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     int h_start = calc_h_start(id,M->height,number_of_threads);
     int h_end = calc_h_end(id,M->height,number_of_threads);
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
@@ -527,7 +527,7 @@ int broadcastSub_thread(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix*
     return 0;
 }
 
-int broadcastMul_thread(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int id, bool* mem_allocated) {
+int broadcastMul_thread(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     int h_start = calc_h_start(id,M->height,number_of_threads);
     int h_end = calc_h_end(id,M->height,number_of_threads);
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
@@ -550,7 +550,7 @@ int broadcastMul_thread(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix*
     return 0;
 }
 
-int broadcastDiv_thread(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int id, bool* mem_allocated) {
+int broadcastDiv_thread(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix* OUT, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     int h_start = calc_h_start(id,M->height,number_of_threads);
     int h_end = calc_h_end(id,M->height,number_of_threads);
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
@@ -574,7 +574,7 @@ int broadcastDiv_thread(TwoDMatrix* M, TwoDMatrix* b, int direction, TwoDMatrix*
 }
 
 
-int sumX2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated) {
+int sumX2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     int h_start = calc_h_start(id,M->height,number_of_threads);
     int h_end = calc_h_end(id,M->height,number_of_threads);
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
@@ -586,7 +586,7 @@ int sumX2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocate
     return 0;
 }
 
-int maxX2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated) {
+int maxX2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     int h_start = calc_h_start(id,M->height,number_of_threads);
     int h_end = calc_h_end(id,M->height,number_of_threads);
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
@@ -602,7 +602,7 @@ int maxX2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocate
 // sumY2DMatrix_thread is only a single-threaded function 
 // only thread 0 does the work, while other threads sit and watch
 //////////////////////////////////
-int sumY2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated) {
+int sumY2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
     if (id == 0) {
         pthread_mutex_lock(&mutex);
@@ -624,7 +624,7 @@ int sumY2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocate
     return 0;
 }
 
-int maxY2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated) {
+int maxY2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
     if (id == 0) {
         pthread_mutex_lock(&mutex);
@@ -646,7 +646,7 @@ int maxY2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocate
     return 0;
 }
 
-float sumAll_thread(TwoDMatrix* M,int id, bool* mem_allocated) {
+float sumAll_thread(TwoDMatrix* M,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
     float* retval = 0;
     char* share_memory_name = "/sumAll_thread_shared_memory";
