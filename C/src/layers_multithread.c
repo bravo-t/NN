@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <pthread.h>
+#include "thread_barrier.h"
 #include <semaphore.h>
 #include "network_type.h"
 #include "inter-process_communication.h"
@@ -13,56 +14,56 @@
 #include "layers.h"
 #include "layers_multithread.h"
 
-int affineLayerForward_thread(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* b, TwoDMatrix* OUT, int id, bool* mem_allocated) {
+int affineLayerForward_thread(TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* b, TwoDMatrix* OUT, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     //int h_start = calc_h_start(id,X->height);
     //int h_end = calc_h_end(id,X->height);
     //reset_mem_allocated(mem_allocated);
     //init2DMatrix_thread(OUT, X->height, W->width, id, mem_allocated);
-    if (dotProduct_thread(X,W,OUT,id,mem_allocated)) {
+    if (dotProduct_thread(X,W,OUT,id,mem_allocated,number_of_threads,mutex,cond,barrier)) {
         printf("ERROR: Input matrix size mismatch: X->width = %d, W->height = %d\n", X->width,W->height);
         exit(1);
     }
-    broadcastAdd_thread(OUT, b, 1, OUT,id,mem_allocated);
+    broadcastAdd_thread(OUT, b, 1, OUT,id,mem_allocated,number_of_threads,mutex,cond,barrier);
     return 0;
 }
 
-int affineLayerBackword_thread(TwoDMatrix* dOUT, TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* b, TwoDMatrix* dX, TwoDMatrix* dW, TwoDMatrix* db,int id, bool* mem_allocated) {
+int affineLayerBackword_thread(TwoDMatrix* dOUT, TwoDMatrix* X, TwoDMatrix* W, TwoDMatrix* b, TwoDMatrix* dX, TwoDMatrix* dW, TwoDMatrix* db,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     //init2DMatrix(dX, X->height, X->width);
     //init2DMatrix(dW, W->height, W->width);
     //init2DMatrix(db, b->height, b->width);
-    TwoDMatrix* XT = matrixMalloc_thread("/affineLayerBackword_thread_XT", sizeof(TwoDMatrix), id,mem_allocated);
-    TwoDMatrix* WT = matrixMalloc_thread("/affineLayerBackword_thread_XT", sizeof(TwoDMatrix), id,mem_allocated);
+    TwoDMatrix* XT = matrixMalloc_thread("/affineLayerBackword_thread_XT", sizeof(TwoDMatrix), id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    TwoDMatrix* WT = matrixMalloc_thread("/affineLayerBackword_thread_XT", sizeof(TwoDMatrix), id,mem_allocated,number_of_threads,mutex,cond,barrier);
     //init2DMatrix(XT, X->width, X->height);
     //init2DMatrix(WT, W->width, W->height);
-    transpose2DMatrix_thread(X, XT, id, mem_allocated);
-    transpose2DMatrix_thread(W, WT, id, mem_allocated);
-    if (dotProduct_thread(dOUT,WT,dX,id,mem_allocated)) {
+    transpose2DMatrix_thread(X, XT, id, mem_allocated,number_of_threads,mutex,cond,barrier);
+    transpose2DMatrix_thread(W, WT, id, mem_allocated,number_of_threads,mutex,cond,barrier);
+    if (dotProduct_thread(dOUT,WT,dX,id,mem_allocated,number_of_threads,mutex,cond,barrier)) {
         printf("ERROR: Input matrix size mismatch: dOUT->width = %d, W.T->height = %d\n", dOUT->width,WT->height);
         exit(1);
     }
-    if (dotProduct_thread(XT,dOUT,dW,id,mem_allocated)) {
+    if (dotProduct_thread(XT,dOUT,dW,id,mem_allocated,number_of_threads,mutex,cond,barrier)) {
         printf("ERROR: Input matrix size mismatch: X.T->width = %d, dOUT->height = %d\n", XT->width,dOUT->height);
         exit(1);
     }
     if (db->height == 1) {
-        sumY2DMatrix_thread(dOUT,db,id,mem_allocated);
+        sumY2DMatrix_thread(dOUT,db,id,mem_allocated,number_of_threads,mutex,cond,barrier);
     } else {
-        sumX2DMatrix_thread(dOUT,db,id,mem_allocated);
+        sumX2DMatrix_thread(dOUT,db,id,mem_allocated,number_of_threads,mutex,cond,barrier);
     }
-    destroy2DMatrix_thread(XT,id,mem_allocated);
-    destroy2DMatrix_thread(WT,id,mem_allocated);
+    destroy2DMatrix_thread(XT,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    destroy2DMatrix_thread(WT,id,mem_allocated,number_of_threads,mutex,cond,barrier);
     return 0;
 }
 
-int leakyReLUForward_thread(TwoDMatrix* M, float alpha, TwoDMatrix* OUT,int id, bool* mem_allocated) {
-    return elementLeakyReLU_thread(M, alpha, OUT, id, mem_allocated);
+int leakyReLUForward_thread(TwoDMatrix* M, float alpha, TwoDMatrix* OUT,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
+    return elementLeakyReLU_thread(M, alpha, OUT, id, mem_allocated,number_of_threads,mutex,cond,barrier);
 }
 
-int vanillaUpdate_thread(TwoDMatrix* M, TwoDMatrix* dM, float learning_rate, TwoDMatrix* OUT, int id, bool* mem_allocated) {
-    int h_start = calc_h_start(id,M->height);
-    int h_end = calc_h_end(id,M->height);
-    reset_mem_allocated(id,mem_allocated);
-    init2DMatrix_thread(OUT,M->height,M->width,id,mem_allocated);
+int vanillaUpdate_thread(TwoDMatrix* M, TwoDMatrix* dM, float learning_rate, TwoDMatrix* OUT, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
+    int h_start = calc_h_start(id,M->height,number_of_threads);
+    int h_end = calc_h_end(id,M->height,number_of_threads);
+    reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    init2DMatrix_thread(OUT,M->height,M->width,id,mem_allocated,number_of_threads,mutex,cond,barrier);
     for(int i=h_start;i<=h_end;i++) {
         for(int j=0;j<M->width;j++) {
             OUT->d[i][j] = M->d[i][j] - dM->d[i][j]*learning_rate;
@@ -90,11 +91,11 @@ int vanillaUpdate_thread(TwoDMatrix* M, TwoDMatrix* dM, float learning_rate, Two
     return 0;
 }
 
-int leakyReLUBackward_thread(TwoDMatrix* dM, TwoDMatrix* M, float alpha, TwoDMatrix* OUT,int id, bool* mem_allocated) {
-    int h_start = calc_h_start(id,dM->height);
-    int h_end = calc_h_end(id,dM->height);
-    reset_mem_allocated(id,mem_allocated);
-    init2DMatrix_thread(OUT,dM->height,dM->width,id,mem_allocated);
+int leakyReLUBackward_thread(TwoDMatrix* dM, TwoDMatrix* M, float alpha, TwoDMatrix* OUT,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
+    int h_start = calc_h_start(id,dM->height,number_of_threads);
+    int h_end = calc_h_end(id,dM->height,number_of_threads);
+    reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    init2DMatrix_thread(OUT,dM->height,dM->width,id,mem_allocated,number_of_threads,mutex,cond,barrier);
     for(int i=h_start;i<=h_end;i++) {
         for(int j=0;j<dM->width;j++) {
             if (M->d[i][j] > 0) {
@@ -107,16 +108,16 @@ int leakyReLUBackward_thread(TwoDMatrix* dM, TwoDMatrix* M, float alpha, TwoDMat
     return 0;
 }
 
-float SVMLoss_thread(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dscore, int id, bool* mem_allocated) {
-    TwoDMatrix* margins = matrixMalloc_thread("/SVMLoss_thread_margins",sizeof(TwoDMatrix),id,mem_allocated);
+float SVMLoss_thread(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dscore, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
+    TwoDMatrix* margins = matrixMalloc_thread("/SVMLoss_thread_margins",sizeof(TwoDMatrix),id,mem_allocated,number_of_threads,mutex,cond,barrier);
     int number_of_examples = score->height;
-    int h_start = calc_h_start(number_of_examples, id);
-    int h_end = calc_h_end(number_of_examples, id);
-    reset_mem_allocated(id,mem_allocated);
-    init2DMatrix_thread(margins, score->height, score->width, id, mem_allocated);
-    reset_mem_allocated(id,mem_allocated);
-    init2DMatrix_thread(dscore, score->height, score->width, id, mem_allocated);
-    int* number_of_pos = calloc_thread("/SVMLoss_thread_number_of_examples", number_of_examples, sizeof(int), id,mem_allocated);
+    int h_start = calc_h_start(number_of_examples, id, number_of_threads);
+    int h_end = calc_h_end(number_of_examples, id,number_of_threads);
+    reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    init2DMatrix_thread(margins, score->height, score->width, id, mem_allocated,number_of_threads,mutex,cond,barrier);
+    reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    init2DMatrix_thread(dscore, score->height, score->width, id, mem_allocated,number_of_threads,mutex,cond,barrier);
+    int* number_of_pos = calloc_thread("/SVMLoss_thread_number_of_examples", number_of_examples, sizeof(int), id,mem_allocated,number_of_threads,mutex,cond,barrier);
     for(int i=h_start;i<=h_end;i++) {
         int correct_index = correct_label->d[i][0];
         float correct_score = score->d[i][correct_index];
@@ -131,40 +132,40 @@ float SVMLoss_thread(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* d
         }
         margins->d[i][correct_index] = 0;
     }
-    float data_loss = sumAll_thread(margins,id,mem_allocated) / number_of_examples;
+    float data_loss = sumAll_thread(margins,id,mem_allocated,number_of_threads,mutex,cond,barrier) / number_of_examples;
     for(int i=0;i<score->height;i++) {
         int correct_index = correct_label->d[i][0];
         dscore->d[i][correct_index] -= number_of_pos[i];
     }
-    elementDiv_thread(dscore,number_of_examples,dscore,id,mem_allocated);
-    destroy2DMatrix_thread(margins,id,mem_allocated);
+    elementDiv_thread(dscore,number_of_examples,dscore,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    destroy2DMatrix_thread(margins,id,mem_allocated,number_of_threads,mutex,cond,barrier);
     if(id == 0) free(number_of_pos);
     // Here the reset_mem_allocated function is used as a thread barrier
-    reset_mem_allocated(id,mem_allocated);
+    reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
     return data_loss;
 }
 
-float softmaxLoss_thread(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dscore,int id, bool* mem_allocated) {
-    int h_start = calc_h_start(id,score->height);
-    int h_end = calc_h_end(id,score->height);
-    init2DMatrix_thread(dscore,score->height,score->width,id,mem_allocated);
-    TwoDMatrix* max_scores = matrixMalloc_thread("/softmaxLoss_thread_max_cores_shm",sizeof(TwoDMatrix),id,mem_allocated);
-    init2DMatrix_thread(max_scores,score->height,1,id,mem_allocated);
-    maxX2DMatrix_thread(score,max_scores,id,mem_allocated);
-    TwoDMatrix* shifted = matrixMalloc_thread("/softmaxLoss_thread_shifted_shm",sizeof(TwoDMatrix),id,mem_allocated);
-    init2DMatrix_thread(shifted,score->height,score->width,id,mem_allocated);
-    broadcastSub_thread(score,max_scores,0,shifted,id,mem_allocated);
-    TwoDMatrix* exp_score = matrixMalloc_thread("/softmaxLoss_thread_exp_score_shm",sizeof(TwoDMatrix),id,mem_allocated);
-    init2DMatrix_thread(exp_score,score->height,score->width,id,mem_allocated);
-    elementExp_thread(shifted,exp_score,id,mem_allocated);
-    TwoDMatrix* exp_sum = matrixMalloc_thread("/softmaxLoss_thread_exp_sum_shm",sizeof(TwoDMatrix),id,mem_allocated);
-    init2DMatrix_thread(exp_sum,score->height,1,id,mem_allocated);
-    sumX2DMatrix_thread(exp_score,exp_sum,id,mem_allocated);
-    TwoDMatrix* probs = matrixMalloc_thread("/softmaxLoss_thread_probs_shm",sizeof(TwoDMatrix),id,mem_allocated);
-    init2DMatrix_thread(probs,score->height,score->width,id,mem_allocated);
-    broadcastDiv_thread(exp_score,exp_sum,0,probs,id,mem_allocated);
-    TwoDMatrix* correct_probs = matrixMalloc_thread("/softmaxLoss_thread_correct_probs_shm",sizeof(TwoDMatrix),id,mem_allocated);
-    init2DMatrix_thread(correct_probs,score->height,1,id,mem_allocated);
+float softmaxLoss_thread(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatrix* dscore,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
+    int h_start = calc_h_start(id,score->height,number_of_threads);
+    int h_end = calc_h_end(id,score->height,number_of_threads);
+    init2DMatrix_thread(dscore,score->height,score->width,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    TwoDMatrix* max_scores = matrixMalloc_thread("/softmaxLoss_thread_max_cores_shm",sizeof(TwoDMatrix),id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    init2DMatrix_thread(max_scores,score->height,1,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    maxX2DMatrix_thread(score,max_scores,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    TwoDMatrix* shifted = matrixMalloc_thread("/softmaxLoss_thread_shifted_shm",sizeof(TwoDMatrix),id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    init2DMatrix_thread(shifted,score->height,score->width,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    broadcastSub_thread(score,max_scores,0,shifted,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    TwoDMatrix* exp_score = matrixMalloc_thread("/softmaxLoss_thread_exp_score_shm",sizeof(TwoDMatrix),id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    init2DMatrix_thread(exp_score,score->height,score->width,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    elementExp_thread(shifted,exp_score,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    TwoDMatrix* exp_sum = matrixMalloc_thread("/softmaxLoss_thread_exp_sum_shm",sizeof(TwoDMatrix),id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    init2DMatrix_thread(exp_sum,score->height,1,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    sumX2DMatrix_thread(exp_score,exp_sum,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    TwoDMatrix* probs = matrixMalloc_thread("/softmaxLoss_thread_probs_shm",sizeof(TwoDMatrix),id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    init2DMatrix_thread(probs,score->height,score->width,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    broadcastDiv_thread(exp_score,exp_sum,0,probs,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    TwoDMatrix* correct_probs = matrixMalloc_thread("/softmaxLoss_thread_correct_probs_shm",sizeof(TwoDMatrix),id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    init2DMatrix_thread(correct_probs,score->height,1,id,mem_allocated,number_of_threads,mutex,cond,barrier);
     for(int i=h_start;i<=h_end;i++) {
         int correct_index = correct_label->d[i][0];
         for(int j=0;j<score->width;j++) {
@@ -183,26 +184,26 @@ float softmaxLoss_thread(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatri
     //printf("correct_probs = \n");
     //printMatrix(correct_probs);
     int number_of_examples = score->height;
-    float data_loss = sumAll_thread(correct_probs,id,mem_allocated) / number_of_examples;
-    destroy2DMatrix_thread(max_scores,id,mem_allocated);
-    destroy2DMatrix_thread(shifted,id,mem_allocated);
-    destroy2DMatrix_thread(exp_score,id,mem_allocated);
-    destroy2DMatrix_thread(exp_sum,id,mem_allocated);
-    destroy2DMatrix_thread(probs,id,mem_allocated);
-    destroy2DMatrix_thread(correct_probs,id,mem_allocated);
+    float data_loss = sumAll_thread(correct_probs,id,mem_allocated,number_of_threads,mutex,cond,barrier) / number_of_examples;
+    destroy2DMatrix_thread(max_scores,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    destroy2DMatrix_thread(shifted,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    destroy2DMatrix_thread(exp_score,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    destroy2DMatrix_thread(exp_sum,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    destroy2DMatrix_thread(probs,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    destroy2DMatrix_thread(correct_probs,id,mem_allocated,number_of_threads,mutex,cond,barrier);
     return data_loss;
 }
 
-int L2RegLossBackward_thread(TwoDMatrix* dM, TwoDMatrix* M, float reg_strength, TwoDMatrix* OUT, int id, bool* mem_allocated) {
-    TwoDMatrix* M_scaled = matrixMalloc_thread("/L2RegLossBackward_thread_M_scaled_shm",sizeof(TwoDMatrix),id,mem_allocated);
-    init2DMatrix_thread(M_scaled, M->height, M->width,id,mem_allocated);
-    elementMul_thread(M,reg_strength,M_scaled,id,mem_allocated);
-    int retval = elementwiseAdd2DMatrix_thread(dM, M_scaled, OUT,id,mem_allocated);
-    destroy2DMatrix_thread(M_scaled,id,mem_allocated);
+int L2RegLossBackward_thread(TwoDMatrix* dM, TwoDMatrix* M, float reg_strength, TwoDMatrix* OUT, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
+    TwoDMatrix* M_scaled = matrixMalloc_thread("/L2RegLossBackward_thread_M_scaled_shm",sizeof(TwoDMatrix),id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    init2DMatrix_thread(M_scaled, M->height, M->width,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    elementMul_thread(M,reg_strength,M_scaled,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    int retval = elementwiseAdd2DMatrix_thread(dM, M_scaled, OUT,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    destroy2DMatrix_thread(M_scaled,id,mem_allocated,number_of_threads,mutex,cond,barrier);
     return retval;
 }
 
-int RMSProp_thread(TwoDMatrix* X, TwoDMatrix* dX, TwoDMatrix* cache, float learning_rate, float decay_rate, float eps, TwoDMatrix* OUT,int id, bool* mem_allocated) {
+int RMSProp_thread(TwoDMatrix* X, TwoDMatrix* dX, TwoDMatrix* cache, float learning_rate, float decay_rate, float eps, TwoDMatrix* OUT,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     TwoDMatrix* cache_scaled = matrixMalloc_thread("/RMSProp_thread_cache_scaled_shm",sizeof(TwoDMatrix),id,mem_allocated);
     elementMul_thread(cache,decay_rate,cache_scaled,id,mem_allocated);
     TwoDMatrix* dX_squared = matrixMalloc_thread("/RMSProp_thread_dX_squared_shm",sizeof(TwoDMatrix),id,mem_allocated);

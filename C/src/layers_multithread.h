@@ -2,71 +2,106 @@
 #define __LAYERS_MT_HEADER__
 
 int affineLayerForward_thread(
-    TwoDMatrix* X, 
-    TwoDMatrix* W, 
-    TwoDMatrix* b, 
-    TwoDMatrix* OUT, 
-    int id, 
-    bool* mem_allocated);
+    TwoDMatrix* X,
+    TwoDMatrix* W,
+    TwoDMatrix* b,
+    TwoDMatrix* OUT,
+    int id,
+    bool* mem_allocated,
+    int number_of_threads,
+    pthread_mutex_t* mutex,
+    pthread_cond_t* cond,
+    thread_barrier_t* barrier);
 int affineLayerBackword_thread(
-    TwoDMatrix* dOUT, 
-    TwoDMatrix* X, 
-    TwoDMatrix* W, 
-    TwoDMatrix* b, 
-    TwoDMatrix* dX, 
-    TwoDMatrix* dW, 
+    TwoDMatrix* dOUT,
+    TwoDMatrix* X,
+    TwoDMatrix* W,
+    TwoDMatrix* b,
+    TwoDMatrix* dX,
+    TwoDMatrix* dW,
     TwoDMatrix* db,
-    int id, 
-    bool* mem_allocated);
+    int id,
+    bool* mem_allocated,
+    int number_of_threads,
+    pthread_mutex_t* mutex,
+    pthread_cond_t* cond,
+    thread_barrier_t* barrier);
 int leakyReLUForward_thread(
-    TwoDMatrix* M, 
-    float alpha, 
+    TwoDMatrix* M,
+    float alpha,
     TwoDMatrix* OUT,
-    int id, 
-    bool* mem_allocated);
+    int id,
+    bool* mem_allocated,
+    int number_of_threads,
+    pthread_mutex_t* mutex,
+    pthread_cond_t* cond,
+    thread_barrier_t* barrier);
 int vanillaUpdate_thread(
-    TwoDMatrix* M, 
-    TwoDMatrix* dM, 
-    float learning_rate, 
-    TwoDMatrix* OUT, 
-    int id, 
-    bool* mem_allocated);
+    TwoDMatrix* M,
+    TwoDMatrix* dM,
+    float learning_rate,
+    TwoDMatrix* OUT,
+    int id,
+    bool* mem_allocated,
+    int number_of_threads,
+    pthread_mutex_t* mutex,
+    pthread_cond_t* cond,
+    thread_barrier_t* barrier);
 int leakyReLUBackward_thread(
-    TwoDMatrix* dM, 
-    TwoDMatrix* M, 
-    float alpha, 
+    TwoDMatrix* dM,
+    TwoDMatrix* M,
+    float alpha,
     TwoDMatrix* OUT,
-    int id, 
-    bool* mem_allocated);
+    int id,
+    bool* mem_allocated,
+    int number_of_threads,
+    pthread_mutex_t* mutex,
+    pthread_cond_t* cond,
+    thread_barrier_t* barrier);
 float SVMLoss_thread(
-    TwoDMatrix* score, 
-    TwoDMatrix* correct_label, 
-    TwoDMatrix* dscore, 
-    int id, 
-    bool* mem_allocated);
-float softmaxLoss_thread(
-    TwoDMatrix* score, 
-    TwoDMatrix* correct_label, 
+    TwoDMatrix* score,
+    TwoDMatrix* correct_label,
     TwoDMatrix* dscore,
-    int id, 
-    bool* mem_allocated);
+    int id,
+    bool* mem_allocated,
+    int number_of_threads,
+    pthread_mutex_t* mutex,
+    pthread_cond_t* cond,
+    thread_barrier_t* barrier);
+float softmaxLoss_thread(
+    TwoDMatrix* score,
+    TwoDMatrix* correct_label,
+    TwoDMatrix* dscore,
+    int id,
+    bool* mem_allocated,
+    int number_of_threads,
+    pthread_mutex_t* mutex,
+    pthread_cond_t* cond,
+    thread_barrier_t* barrier);
 int L2RegLossBackward_thread(
-    TwoDMatrix* dM, 
-    TwoDMatrix* M, 
-    float reg_strength, 
-    TwoDMatrix* OUT, 
-    int id, 
-    bool* mem_allocated);
-int RMSProp_thread(
-    TwoDMatrix* X, 
-    TwoDMatrix* dX, 
-    TwoDMatrix* cache, 
-    float learning_rate, 
-    float decay_rate, 
-    float eps, 
+    TwoDMatrix* dM,
+    TwoDMatrix* M,
+    float reg_strength,
     TwoDMatrix* OUT,
-    int id, 
-    bool* mem_allocated);
-
+    int id,
+    bool* mem_allocated,
+    int number_of_threads,
+    pthread_mutex_t* mutex,
+    pthread_cond_t* cond,
+    thread_barrier_t* barrier);
+int RMSProp_thread(
+    TwoDMatrix* X,
+    TwoDMatrix* dX,
+    TwoDMatrix* cache,
+    float learning_rate,
+    float decay_rate,
+    float eps,
+    TwoDMatrix* OUT,
+    int id,
+    bool* mem_allocated,
+    int number_of_threads,
+    pthread_mutex_t* mutex,
+    pthread_cond_t* cond,
+    thread_barrier_t* barrier);
 
 #endif
