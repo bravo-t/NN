@@ -18,12 +18,16 @@ typedef struct {
     TwoDMatrix** Wcaches;
     TwoDMatrix** bcaches;
     TwoDMatrix* correct_labels;
-    bool* mem_allocated;
     float alpha;
     float learning_rate;
     float reg_strength;
     float decay_rate;
     float eps;
+    bool* mem_allocated;
+    int number_of_threads;
+    pthread_mutex_t* mutex;
+    pthread_cond_t* cond;
+    thread_barrier_t* barrier;
 } SlaveArgs;
 
 #endif

@@ -460,15 +460,15 @@ int train_multithread(FCParameters* network_params) {
     return 0;
 }
 
-int FCNET_forwardPropagation(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, TwoDMatrix** Hs, int network_depth, float alpha, int thread_id, bool* mem_allocated) {
+int FCNET_forwardPropagation(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, TwoDMatrix** Hs, int network_depth, float alpha, int thread_id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     TwoDMatrix* layer_X = NULL;
     layer_X = X;
     for(int i=0;i<network_depth;i++) {
-        affineLayerForward_thread(layer_X, Ws[i], bs[i], Hs[i], thread_id, mem_allocated);
+        affineLayerForward_thread(layer_X, Ws[i], bs[i], Hs[i], thread_id, mem_allocated,number_of_threads,mutex,cond,barrier);
         // The last layer in the network will calculate the scores
         // So there will not be a activation function put to it
         if (i != network_depth - 1) {
-            leakyReLUForward(Hs[i],alpha,Hs[i],thread_id, mem_allocated);
+            leakyReLUForward(Hs[i],alpha,Hs[i],thread_id, mem_allocated,number_of_threads,mutex,cond,barrier);
         }
         layer_X = Hs[i];
     }
@@ -485,8 +485,12 @@ void* FCNET_forwardPropagation_slave(void* args) {
     bool* mem_allocated = a->mem_allocated;
     int network_depth = a->network_depth;
     ThreadControl* handle = a->handle;
+    int number_of_threads = a->number_of_threads;
+    pthread_mutex_t* mutex = a->mutex;
+    pthread_cond_t* cond = a->cond;
+    thread_barrier_t* barrier = a->barrier;
     while(1) {
         threadController_slave(handle);
-        FCNET_forwardPropagation(X,Ws,bs,Hs,network_depth,alpha,thread_id,mem_allocated);
+        FCNET_forwardPropagation(X,Ws,bs,Hs,network_depth,alpha,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
     }
 }

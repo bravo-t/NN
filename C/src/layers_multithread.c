@@ -6,7 +6,6 @@
 #include <string.h>
 #include <pthread.h>
 #include "thread_barrier.h"
-#include <semaphore.h>
 #include "network_type.h"
 #include "inter-process_communication.h"
 #include "matrix_operations.h"
