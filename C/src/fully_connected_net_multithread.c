@@ -251,6 +251,48 @@ int train_multithread(FCParameters* network_params) {
     pthread_t* calc_loss = malloc(sizeof(pthread_t)*number_of_threads);
     pthread_t* backward_prop = malloc(sizeof(pthread_t)*number_of_threads);
     pthread_t* update_weights = malloc(sizeof(pthread_t)*number_of_threads);
+    
+    bool forward_prop_mem_alloc = false;
+    thread_barrier_t forward_prop_barrier = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_init(&forward_prop_barrier,number_of_threads);
+    pthread_mutex_t forward_prop_mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_cond_t forward_prop_cond = PTHREAD_COND_INITIALIZER;
+    pthread_mutex_t forward_prop_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
+    thread_barrier_t forward_prop_inst_ready = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t forward_prop_inst_ack = THREAD_BARRIER_INITIALIZER;
+    ThreadControl* forward_prop_control_handle = initControlHandle(&forward_prop_control_handle_mutex, &forward_prop_inst_ready, &forward_prop_inst_ack, number_of_threads);
+
+    bool calc_loss_mem_alloc = false;
+    thread_barrier_t calc_loss_barrier = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_init(&calc_loss_barrier,number_of_threads);
+    pthread_mutex_t calc_loss_mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_cond_t calc_loss_cond = PTHREAD_COND_INITIALIZER;
+    pthread_mutex_t calc_loss_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
+    thread_barrier_t calc_loss_inst_ready = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t calc_loss_inst_ack = THREAD_BARRIER_INITIALIZER;
+    ThreadControl* calc_loss_control_handle = initControlHandle(&calc_loss_control_handle_mutex, &calc_loss_inst_ready, &calc_loss_inst_ack, number_of_threads);
+    
+    bool backward_prop_mem_alloc = false;
+    thread_barrier_t backward_prop_barrier = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_init(&backward_prop_barrier,number_of_threads);
+    pthread_mutex_t backward_prop_mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_cond_t backward_prop_cond = PTHREAD_COND_INITIALIZER;
+    pthread_mutex_t backward_prop_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
+    thread_barrier_t backward_prop_inst_ready = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t backward_prop_inst_ack = THREAD_BARRIER_INITIALIZER;
+    ThreadControl* backward_prop_control_handle = initControlHandle(&backward_prop_control_handle_mutex, &backward_prop_inst_ready, &backward_prop_inst_ack, number_of_threads);
+    
+    bool update_weights_mem_alloc = false;
+    thread_barrier_t update_weights_barrier = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_init(&update_weights_barrier,number_of_threads);
+    pthread_mutex_t update_weights_mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_cond_t update_weights_cond = PTHREAD_COND_INITIALIZER;
+    pthread_mutex_t update_weights_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
+    thread_barrier_t update_weights_inst_ready = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t update_weights_inst_ack = THREAD_BARRIER_INITIALIZER;
+    ThreadControl* update_weights_control_handle = initControlHandle(&update_weights_control_handle_mutex, &update_weights_inst_ready, &update_weights_inst_ack, number_of_threads);
+    
+
     // Feed data to the network to train it
     printf("INFO: Training network\n");
     int iterations = training_data->height / minibatch_size;
