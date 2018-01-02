@@ -247,11 +247,6 @@ int train_multithread(FCParameters* network_params) {
     printf("INFO: %d H matrixes, %d learnable hidden layer values initialized, %.2f KB meomry used\n", network_depth, number_of_hvalues, size_of_Hs/1024.0f);
     printf("INFO: A total number of %.2f KB memory is used by learnable parameters in the network\n",(size_of_Ws+size_of_bs+size_of_Hs)/1024.0f);
     // Create slave workers
-    pthread_t* forward_prop = malloc(sizeof(pthread_t)*number_of_threads);
-    pthread_t* calc_loss = malloc(sizeof(pthread_t)*number_of_threads);
-    pthread_t* backward_prop = malloc(sizeof(pthread_t)*number_of_threads);
-    pthread_t* update_weights = malloc(sizeof(pthread_t)*number_of_threads);
-    
     bool forward_prop_mem_alloc = false;
     thread_barrier_t forward_prop_barrier = THREAD_BARRIER_INITIALIZER;
     thread_barrier_init(&forward_prop_barrier,number_of_threads);
@@ -292,6 +287,25 @@ int train_multithread(FCParameters* network_params) {
     thread_barrier_t update_weights_inst_ack = THREAD_BARRIER_INITIALIZER;
     ThreadControl* update_weights_control_handle = initControlHandle(&update_weights_control_handle_mutex, &update_weights_inst_ready, &update_weights_inst_ack, number_of_threads);
     
+    printf("INFO: Creating slave threads\n");
+    pthread_t* forward_prop = malloc(sizeof(pthread_t)*number_of_threads);
+    pthread_t* calc_loss = malloc(sizeof(pthread_t)*number_of_threads);
+    pthread_t* backward_prop = malloc(sizeof(pthread_t)*number_of_threads);
+    pthread_t* update_weights = malloc(sizeof(pthread_t)*number_of_threads);
+
+    SlaveArgs** forward_prop_arguments = malloc(sizeof(SlaveArgs*)*number_of_threads);
+    SlaveArgs** calc_loss_arguments = malloc(sizeof(SlaveArgs*)*number_of_threads);
+    SlaveArgs** backward_prop_arguments = malloc(sizeof(SlaveArgs*)*number_of_threads);
+    SlaveArgs** update_weights_arguments = malloc(sizeof(SlaveArgs*)*number_of_threads);
+
+    for(int i=0;i<number_of_threads;i++) {
+        forward_prop_arguments[i] = (SlaveArgs*) malloc(sizeof(SlaveArgs));
+        calc_loss_arguments[i] = (SlaveArgs*) malloc(sizeof(SlaveArgs));
+        backward_prop_arguments[i] = (SlaveArgs*) malloc(sizeof(SlaveArgs));
+        update_weights_arguments[i] = (SlaveArgs*) malloc(sizeof(SlaveArgs));
+
+        
+    }
 
     // Feed data to the network to train it
     printf("INFO: Training network\n");
