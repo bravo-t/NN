@@ -304,7 +304,7 @@ int train_multithread(FCParameters* network_params) {
         backward_prop_arguments[i] = (SlaveArgs*) malloc(sizeof(SlaveArgs));
         update_weights_arguments[i] = (SlaveArgs*) malloc(sizeof(SlaveArgs));
 
-        
+
     }
 
     // Feed data to the network to train it
@@ -549,4 +549,10 @@ void* FCNET_forwardPropagation_slave(void* args) {
         threadController_slave(handle);
         FCNET_forwardPropagation(X,Ws,bs,Hs,network_depth,alpha,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
     }
+}
+
+int FCNET_calcLoss(TwoDMatrix* Ws, TwoDMatrix* Hs, TwoDMatrix* correct_labels, int network_depth, ) {
+    float data_loss = softmaxLoss_thread(Hs[network_depth-1], correct_labels, dHs[network_depth-1], number_of_threads);
+            //debugPrintMatrix(dHs[network_depth-1]);
+    float reg_loss = L2RegLoss_thread(Ws, network_depth, reg_strength, number_of_threads);
 }
