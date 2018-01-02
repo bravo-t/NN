@@ -162,9 +162,9 @@ int train_multithread(FCParameters* network_params) {
             printf("INFO: Initializing b%d to be a %dx%d matrix\n",i,1,hidden_layer_sizes[i]);
             printf("INFO: Initializing H%d to be a %dx%d matrix\n",i,minibatch_size,hidden_layer_sizes[i]);
         }
-        init2DMatrixNormRand(Ws[i],former_width,hidden_layer_sizes[i],0.0,1.0,former_width,number_of_threads);
-        init2DMatrixZero(bs[i],1,hidden_layer_sizes[i], number_of_threads);
-        init2DMatrix(Hs[i],minibatch_size,hidden_layer_sizes[i], number_of_threads);
+        init2DMatrixNormRand(Ws[i],former_width,hidden_layer_sizes[i],0.0,1.0,former_width);
+        init2DMatrixZero(bs[i],1,hidden_layer_sizes[i]);
+        init2DMatrix(Hs[i],minibatch_size,hidden_layer_sizes[i]);
         // Statistic data
         number_of_weights += former_width*hidden_layer_sizes[i];
         number_of_biases += hidden_layer_sizes[i];
@@ -177,66 +177,66 @@ int train_multithread(FCParameters* network_params) {
         // Initialize variables for optimization
         if (use_momentum_update) {
             vWs[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero(vWs[i],former_width,hidden_layer_sizes[i], number_of_threads);
+            init2DMatrixZero(vWs[i],former_width,hidden_layer_sizes[i]);
             vbs[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero(vbs[i],1,hidden_layer_sizes[i], number_of_threads);
+            init2DMatrixZero(vbs[i],1,hidden_layer_sizes[i]);
         }
         if (use_nag_update) {
             vWs[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero(vWs[i],former_width,hidden_layer_sizes[i], number_of_threads);
+            init2DMatrixZero(vWs[i],former_width,hidden_layer_sizes[i]);
             vbs[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero(vbs[i],1,hidden_layer_sizes[i], number_of_threads);
+            init2DMatrixZero(vbs[i],1,hidden_layer_sizes[i]);
             vW_prevs[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero(vW_prevs[i],former_width,hidden_layer_sizes[i], number_of_threads);
+            init2DMatrixZero(vW_prevs[i],former_width,hidden_layer_sizes[i]);
             vb_prevs[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero(vb_prevs[i],1,hidden_layer_sizes[i], number_of_threads);
+            init2DMatrixZero(vb_prevs[i],1,hidden_layer_sizes[i]);
         }
         if (use_rmsprop) {
             Wcaches[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero(Wcaches[i],former_width,hidden_layer_sizes[i], number_of_threads);
+            init2DMatrixZero(Wcaches[i],former_width,hidden_layer_sizes[i]);
             bcaches[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero(bcaches[i],1,hidden_layer_sizes[i], number_of_threads);
+            init2DMatrixZero(bcaches[i],1,hidden_layer_sizes[i]);
         }
         if (use_batchnorm) {
             gammas[i] = matrixMalloc(sizeof(TwoDMatrix));
             init2DMatrixOne(gammas[i],1,hidden_layer_sizes[i]);
             betas[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero(betas[i],1,hidden_layer_sizes[i], number_of_threads);
+            init2DMatrixZero(betas[i],1,hidden_layer_sizes[i]);
             dgammas[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrix(dgammas[i],1,hidden_layer_sizes[i], number_of_threads);
+            init2DMatrix(dgammas[i],1,hidden_layer_sizes[i]);
             dbetas[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrix(dbetas[i],1,hidden_layer_sizes[i], number_of_threads);
+            init2DMatrix(dbetas[i],1,hidden_layer_sizes[i]);
             means[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrix(means[i],1,hidden_layer_sizes[i], number_of_threads);
+            init2DMatrix(means[i],1,hidden_layer_sizes[i]);
             vars[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrix(vars[i],1,hidden_layer_sizes[i], number_of_threads);
+            init2DMatrix(vars[i],1,hidden_layer_sizes[i]);
             mean_caches[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero(mean_caches[i],1,hidden_layer_sizes[i], number_of_threads);
+            init2DMatrixZero(mean_caches[i],1,hidden_layer_sizes[i]);
             var_caches[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero(var_caches[i],1,hidden_layer_sizes[i], number_of_threads);
+            init2DMatrixZero(var_caches[i],1,hidden_layer_sizes[i]);
             Hs_normalized[i] = matrixMalloc(sizeof(TwoDMatrix));
-            init2DMatrixZero(Hs_normalized[i],minibatch_size,hidden_layer_sizes[i], number_of_threads);
+            init2DMatrixZero(Hs_normalized[i],minibatch_size,hidden_layer_sizes[i]);
             if (use_momentum_update) {
                 vgammas[i] = matrixMalloc(sizeof(TwoDMatrix));
-                init2DMatrixZero(vgammas[i],1,hidden_layer_sizes[i], number_of_threads);
+                init2DMatrixZero(vgammas[i],1,hidden_layer_sizes[i]);
                 vbetas[i] = matrixMalloc(sizeof(TwoDMatrix));
-                init2DMatrixZero(vbetas[i],1,hidden_layer_sizes[i], number_of_threads);
+                init2DMatrixZero(vbetas[i],1,hidden_layer_sizes[i]);
             }
             if (use_nag_update) {
                 vgamma_prevs[i] = matrixMalloc(sizeof(TwoDMatrix));
-                init2DMatrixZero(vgamma_prevs[i],1,hidden_layer_sizes[i], number_of_threads);
+                init2DMatrixZero(vgamma_prevs[i],1,hidden_layer_sizes[i]);
                 vbeta_prevs[i] = matrixMalloc(sizeof(TwoDMatrix));
-                init2DMatrixZero(vbeta_prevs[i],1,hidden_layer_sizes[i], number_of_threads);
+                init2DMatrixZero(vbeta_prevs[i],1,hidden_layer_sizes[i]);
                 vgammas[i] = matrixMalloc(sizeof(TwoDMatrix));
-                init2DMatrixZero(vgammas[i],1,hidden_layer_sizes[i], number_of_threads);
+                init2DMatrixZero(vgammas[i],1,hidden_layer_sizes[i]);
                 vbetas[i] = matrixMalloc(sizeof(TwoDMatrix));
-                init2DMatrixZero(vbetas[i],1,hidden_layer_sizes[i], number_of_threads);
+                init2DMatrixZero(vbetas[i],1,hidden_layer_sizes[i]);
             }
             if (use_rmsprop) {
                 gamma_caches[i] = matrixMalloc(sizeof(TwoDMatrix));
-                init2DMatrixZero(gamma_caches[i],1,hidden_layer_sizes[i], number_of_threads);
+                init2DMatrixZero(gamma_caches[i],1,hidden_layer_sizes[i]);
                 beta_caches[i] = matrixMalloc(sizeof(TwoDMatrix));
-                init2DMatrixZero(beta_caches[i],1,hidden_layer_sizes[i], number_of_threads);
+                init2DMatrixZero(beta_caches[i],1,hidden_layer_sizes[i]);
             }
         }
         former_width = hidden_layer_sizes[i];
