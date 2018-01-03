@@ -28,6 +28,8 @@ typedef struct {
     pthread_mutex_t* mutex;
     pthread_cond_t* cond;
     thread_barrier_t* barrier;
+    int* int_retval;
+    float* float_retval;
 } SlaveArgs;
 
 #endif

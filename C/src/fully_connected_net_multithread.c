@@ -551,8 +551,30 @@ void* FCNET_forwardPropagation_slave(void* args) {
     }
 }
 
-int FCNET_calcLoss(TwoDMatrix* Ws, TwoDMatrix* Hs, TwoDMatrix* correct_labels, int network_depth, ) {
-    float data_loss = softmaxLoss_thread(Hs[network_depth-1], correct_labels, dHs[network_depth-1], number_of_threads);
-            //debugPrintMatrix(dHs[network_depth-1]);
-    float reg_loss = L2RegLoss_thread(Ws, network_depth, reg_strength, number_of_threads);
+int FCNET_calcLoss(TwoDMatrix** Ws, TwoDMatrix** Hs, TwoDMatrix* correct_labels, int network_depth, float reg_strength, TwoDMatrix** dHs, float* losses, int thread_id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
+    losses[0] = softmaxLoss_thread(Hs[network_depth-1], correct_labels, dHs[network_depth-1],thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    losses[1] = L2RegLoss_thread(Ws, network_depth, reg_strength,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    return 0;
+}
+
+void* FCNET_calcLoss_slave(void* args) {
+    (SlaveArgs*) a = (SlaveArgs*) args;
+    TwoDMatrix** Ws = a->Ws;
+    TwoDMatrix** Hs = a->Hs;
+    TwoDMatrix** dHs = a->dHs;
+    TwoDMatrix* correct_labels = a->correct_labels;
+    float reg_strength = a->reg_strength;
+    int thread_id = a->thread_id;
+    bool* mem_allocated = a->mem_allocated;
+    int network_depth = a->network_depth;
+    ThreadControl* handle = a->handle;
+    int number_of_threads = a->number_of_threads;
+    pthread_mutex_t* mutex = a->mutex;
+    pthread_cond_t* cond = a->cond;
+    thread_barrier_t* barrier = a->barrier;
+    float* losses = a->float_retval;
+    while(1) {
+        threadController_slave(handle);
+        FCNET_calcLoss(Ws,Hs,correct_labels,network_depth,reg_strength,dHs,losses,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    }
 }
