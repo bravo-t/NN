@@ -578,3 +578,25 @@ void* FCNET_calcLoss_slave(void* args) {
         FCNET_calcLoss(Ws,Hs,correct_labels,network_depth,reg_strength,dHs,losses,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
     }
 }
+
+int FCNET_backwardPropagation() {
+    for (int i=network_depth-1; i>=0; i--) {
+                if (i != network_depth-1) {
+                    leakyReLUBackward(dHs[i],Hs[i],alpha,dHs[i], number_of_threads);
+                    if (use_batchnorm) {
+                        batchnorm_backward(dHs[i], Hs[i], Hs_normalized[i], gammas[i], betas[i], means[i], vars[i], batchnorm_eps, dHs[i],  dgammas[i], dbetas[i], number_of_threads);
+                    }
+                }
+                //debugPrintMatrix(dHs[i]);
+                if (i != 0) {
+                    affineLayerBackword(dHs[i],Hs[i-1],Ws[i],bs[i],dHs[i-1],dWs[i],dbs[i], number_of_threads);
+                } else {
+                    affineLayerBackword(dHs[i],X,Ws[i],bs[i],dX,dWs[i],dbs[i], number_of_threads);
+                }
+                //debugPrintMatrix(dWs[i]);
+                //debugPrintMatrix(Ws[i]);
+                // Weight changes contributed by L2 regulization
+                L2RegLossBackward(dWs[i],Ws[i],reg_strength,dWs[i], number_of_threads);
+                //debugPrintMatrix(dWs[i]);
+            }
+}
