@@ -579,24 +579,21 @@ void* FCNET_calcLoss_slave(void* args) {
     }
 }
 
-int FCNET_backwardPropagation() {
+int FCNET_backwardPropagation(TwoDMatrix** Ws, TwoDMatrix** Hs, TwoDMatrix** bs, TwoDMatrix** dWs, TwoDMatrix** dbs, TwoDMatrix** dHs, float alpha, int thread_id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     for (int i=network_depth-1; i>=0; i--) {
         if (i != network_depth-1) {
-            leakyReLUBackward(dHs[i],Hs[i],alpha,dHs[i], number_of_threads);
-            if (use_batchnorm) {
-                batchnorm_backward(dHs[i], Hs[i], Hs_normalized[i], gammas[i], betas[i], means[i], vars[i], batchnorm_eps, dHs[i],  dgammas[i], dbetas[i], number_of_threads);
-            }
+            leakyReLUBackward_thread(dHs[i],Hs[i],alpha,dHs[i], number_of_threads);
         }
         //debugPrintMatrix(dHs[i]);
         if (i != 0) {
-            affineLayerBackword(dHs[i],Hs[i-1],Ws[i],bs[i],dHs[i-1],dWs[i],dbs[i], number_of_threads);
+            affineLayerBackword_thread(dHs[i],Hs[i-1],Ws[i],bs[i],dHs[i-1],dWs[i],dbs[i], number_of_threads);
         } else {
-            affineLayerBackword(dHs[i],X,Ws[i],bs[i],dX,dWs[i],dbs[i], number_of_threads);
+            affineLayerBackword_thread(dHs[i],X,Ws[i],bs[i],dX,dWs[i],dbs[i], number_of_threads);
         }
         //debugPrintMatrix(dWs[i]);
         //debugPrintMatrix(Ws[i]);
         // Weight changes contributed by L2 regulization
-        L2RegLossBackward(dWs[i],Ws[i],reg_strength,dWs[i], number_of_threads);
+        L2RegLossBackward_thread(dWs[i],Ws[i],reg_strength,dWs[i], number_of_threads);
         //debugPrintMatrix(dWs[i]);
     }
 }
