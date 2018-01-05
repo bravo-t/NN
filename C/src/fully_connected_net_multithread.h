@@ -23,6 +23,7 @@ typedef struct {
     float reg_strength;
     float decay_rate;
     float eps;
+    bool use_rmsprop;
     bool* mem_allocated;
     int number_of_threads;
     pthread_mutex_t* mutex;

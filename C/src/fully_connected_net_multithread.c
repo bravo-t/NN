@@ -579,21 +579,45 @@ void* FCNET_calcLoss_slave(void* args) {
     }
 }
 
-int FCNET_backwardPropagation(TwoDMatrix** Ws, TwoDMatrix** Hs, TwoDMatrix** bs, TwoDMatrix** dWs, TwoDMatrix** dbs, TwoDMatrix** dHs, float alpha, int thread_id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
+int FCNET_backwardPropagation(TwoDMatrix** Ws, TwoDMatrix** Hs, TwoDMatrix** bs, TwoDMatrix** dWs, TwoDMatrix** dbs, TwoDMatrix** dHs, int network_depth, float alpha, int thread_id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     for (int i=network_depth-1; i>=0; i--) {
         if (i != network_depth-1) {
-            leakyReLUBackward_thread(dHs[i],Hs[i],alpha,dHs[i], number_of_threads);
+            leakyReLUBackward_thread(dHs[i],Hs[i],alpha,dHs[i],thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
         }
         //debugPrintMatrix(dHs[i]);
         if (i != 0) {
-            affineLayerBackword_thread(dHs[i],Hs[i-1],Ws[i],bs[i],dHs[i-1],dWs[i],dbs[i], number_of_threads);
+            affineLayerBackword_thread(dHs[i],Hs[i-1],Ws[i],bs[i],dHs[i-1],dWs[i],dbs[i],thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
         } else {
-            affineLayerBackword_thread(dHs[i],X,Ws[i],bs[i],dX,dWs[i],dbs[i], number_of_threads);
+            affineLayerBackword_thread(dHs[i],X,Ws[i],bs[i],dX,dWs[i],dbs[i],thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
         }
         //debugPrintMatrix(dWs[i]);
         //debugPrintMatrix(Ws[i]);
         // Weight changes contributed by L2 regulization
-        L2RegLossBackward_thread(dWs[i],Ws[i],reg_strength,dWs[i], number_of_threads);
+        L2RegLossBackward_thread(dWs[i],Ws[i],reg_strength,dWs[i],thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
         //debugPrintMatrix(dWs[i]);
+    }
+}
+
+void* FCNET_backwardPropagation_slave(void* args) {
+    (SlaveArgs*) a = (SlaveArgs*) args;
+    TwoDMatrix** Ws = a->Ws;
+    TwoDMatrix** Hs = a->Hs;
+    TwoDMatrix** bs = a->bs;
+    TwoDMatrix** dWs = a->dWs;
+    TwoDMatrix** dHs = a->dHs;
+    TwoDMatrix** dbs = a->dbs;
+    float alpha = a->alpha;
+    int network_depth = a->network_depth;
+    int thread_id = a->thread_id;
+    bool* mem_allocated = a->mem_allocated;
+    int network_depth = a->network_depth;
+    ThreadControl* handle = a->handle;
+    int number_of_threads = a->number_of_threads;
+    pthread_mutex_t* mutex = a->mutex;
+    pthread_cond_t* cond = a->cond;
+    thread_barrier_t* barrier = a->barrier;
+    while(1) {
+        threadController_slave(handle);
+        FCNET_backwardPropagation(Ws,Hs,bs,dWs,dbs,dHs,network_depth,alpha,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier)
     }
 }
