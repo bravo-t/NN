@@ -618,6 +618,6 @@ void* FCNET_backwardPropagation_slave(void* args) {
     thread_barrier_t* barrier = a->barrier;
     while(1) {
         threadController_slave(handle);
-        FCNET_backwardPropagation(Ws,Hs,bs,dWs,dbs,dHs,network_depth,alpha,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier)
+        FCNET_backwardPropagation(Ws,Hs,bs,dWs,dbs,dHs,network_depth,alpha,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
     }
 }
