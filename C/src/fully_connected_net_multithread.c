@@ -621,3 +621,20 @@ void* FCNET_backwardPropagation_slave(void* args) {
         FCNET_backwardPropagation(Ws,Hs,bs,dWs,dbs,dHs,network_depth,alpha,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
     }
 }
+
+int FCNET_updateParams(TwoDMatrix** Ws, TwoDMatrix** dWs, TwoDMatrix** bs, TwoDMatrix** dbs, TwoDMatrix** Wcaches, TwoDMatrix** bcaches, float learning_rate, float decay_rate,
+    float eps, int network_depth, int thread_id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
+    for (int i=0;i<network_depth;i++) {
+        if (use_rmsprop) {
+            RMSProp_thread(Ws[i], dWs[i], Wcaches[i], learning_rate, decay_rate, eps, Ws[i],thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
+            RMSProp_thread(bs[i], dbs[i], bcaches[i], learning_rate, decay_rate, eps, bs[i],thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
+        } else {
+            vanillaUpdate_thread(Ws[i],dWs[i],learning_rate,Ws[i],thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
+            vanillaUpdate_thread(bs[i],dbs[i],learning_rate,bs[i],thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
+        }
+    }
+}
+
+void* FCNET_updateParams_slave(void* args) {
+    
+}
