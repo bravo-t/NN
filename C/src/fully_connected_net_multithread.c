@@ -636,5 +636,31 @@ int FCNET_updateParams(TwoDMatrix** Ws, TwoDMatrix** dWs, TwoDMatrix** bs, TwoDM
 }
 
 void* FCNET_updateParams_slave(void* args) {
-    
+    * FCNET_backwardPropagation_slave(void* args) {
+    (SlaveArgs*) a = (SlaveArgs*) args;
+    TwoDMatrix** Ws = a->Ws;
+    TwoDMatrix** Hs = a->Hs;
+    TwoDMatrix** bs = a->bs;
+    TwoDMatrix** dWs = a->dWs;
+    TwoDMatrix** dHs = a->dHs;
+    TwoDMatrix** dbs = a->dbs;
+    TwoDMatrix** Wcaches = a->Wcaches;
+    TwoDMatrix** bcaches = b->bcaches;
+    bool use_rmsprop = a->use_rmsprop;
+    float learning_rate = a->learning_rate;
+    float decay_rate = a->decay_rate;
+    float eps = a->eps;
+    int network_depth = a->network_depth;
+    int thread_id = a->thread_id;
+    bool* mem_allocated = a->mem_allocated;
+    int network_depth = a->network_depth;
+    ThreadControl* handle = a->handle;
+    int number_of_threads = a->number_of_threads;
+    pthread_mutex_t* mutex = a->mutex;
+    pthread_cond_t* cond = a->cond;
+    thread_barrier_t* barrier = a->barrier;
+    while(1) {
+        threadController_slave(handle);
+        FCNET_updateParams()
+    }
 }
