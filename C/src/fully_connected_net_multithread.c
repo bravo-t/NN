@@ -661,6 +661,6 @@ void* FCNET_updateParams_slave(void* args) {
     thread_barrier_t* barrier = a->barrier;
     while(1) {
         threadController_slave(handle);
-        FCNET_updateParams()
+        FCNET_updateParams(Ws,dWs,bs,dbs,Wcaches,bcaches,learning_rate,decay_rate,eps,network_depth,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
     }
 }
