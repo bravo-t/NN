@@ -664,3 +664,58 @@ void* FCNET_updateParams_slave(void* args) {
         FCNET_updateParams(Ws,dWs,bs,dbs,Wcaches,bcaches,learning_rate,decay_rate,eps,network_depth,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
     }
 }
+
+void assignSlaveArguments(SlaveArgs* args,
+    ThreadControl* handle,
+    int thread_id,
+    int network_depth,
+    TwoDMatrix* X,
+    TwoDMatrix** Ws,
+    TwoDMatrix** bs,
+    TwoDMatrix** Hs,
+    TwoDMatrix** dWs,
+    TwoDMatrix** dbs,
+    TwoDMatrix** dHs,
+    TwoDMatrix** Wcaches,
+    TwoDMatrix** bcaches,
+    TwoDMatrix* correct_labels,
+    float alpha,
+    float learning_rate,
+    float reg_strength,
+    float decay_rate,
+    float eps,
+    bool use_rmsprop,
+    bool* mem_allocated,
+    int number_of_threads,
+    pthread_mutex_t* mutex,
+    pthread_cond_t* cond,
+    thread_barrier_t* barrier,
+    int* int_retval,
+    float* float_retval) {
+    a->handle = handle;
+    a->thread_id = thread_id;
+    a->network_depth = network_depth;
+    a->X = X;
+    a->Ws = Ws;
+    a->bs = bs;
+    a->Hs = Hs;
+    a->dWs = dWs;
+    a->dbs = dbs;
+    a->dHs = dHs;
+    a->Wcaches = Wcaches;
+    a->bcaches = bcaches;
+    a->correct_labels = correct_labels;
+    a->alpha = alpha;
+    a->learning_rate = learning_rate;
+    a->reg_strength = reg_strength;
+    a->decay_rate = decay_rate;
+    a->eps = eps;
+    a->use_rmsprop = use_rmsprop;
+    a->mem_allocated = mem_allocated;
+    a->number_of_threads = number_of_threads;
+    a->mutex = mutex;
+    a->cond = cond;
+    a->barrier = barrier;
+    a->int_retval = int_retval;
+    a->float_retval = float_retval;
+}
