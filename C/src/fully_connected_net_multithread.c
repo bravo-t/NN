@@ -293,6 +293,11 @@ int train_multithread(FCParameters* network_params) {
     ThreadControl* update_weights_control_handle = initControlHandle(&update_weights_control_handle_mutex, &update_weights_inst_ready, &update_weights_inst_ack, number_of_threads);
     
     printf("INFO: Creating slave threads\n");
+
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
     pthread_t* forward_prop = malloc(sizeof(pthread_t)*number_of_threads);
     pthread_t* calc_loss = malloc(sizeof(pthread_t)*number_of_threads);
     pthread_t* backward_prop = malloc(sizeof(pthread_t)*number_of_threads);
@@ -417,6 +422,28 @@ int train_multithread(FCParameters* network_params) {
             update_weights_barrier,
             NULL,
             NULL);
+
+        int create_thread_error;
+        create_thread_error = pthread_create(&forward_prop[i],&attr,FCNET_forwardPropagation_slave,&forward_prop_arguments[i]);
+        if (create_thread_error) {
+            printf("Error happened while creating slave threads\n");
+            exit(-1);
+        }
+        create_thread_error = pthread_create(&calc_loss[i],&attr,FCNET_calcLoss_slave,&calc_loss_arguments[i]);
+        if (create_thread_error) {
+            printf("Error happened while creating slave threads\n");
+            exit(-1);
+        }
+        create_thread_error = pthread_create(&backward_prop[i],&attr,FCNET_backwardPropagation_slave,&backward_prop_arguments[i]);
+        if (create_thread_error) {
+            printf("Error happened while creating slave threads\n");
+            exit(-1);
+        }
+        create_thread_error = pthread_create(&update_weights[i],&attr,FCNET_updateWeights_slave,&forward_prop_arguments[i]);
+        if (create_thread_error) {
+            printf("Error happened while creating slave threads\n");
+            exit(-1);
+        }
     }
 
     // Feed data to the network to train it
@@ -734,7 +761,7 @@ void* FCNET_backwardPropagation_slave(void* args) {
     }
 }
 
-int FCNET_updateParams(TwoDMatrix** Ws, TwoDMatrix** dWs, TwoDMatrix** bs, TwoDMatrix** dbs, TwoDMatrix** Wcaches, TwoDMatrix** bcaches, float learning_rate, float decay_rate,
+int FCNET_updateWeights(TwoDMatrix** Ws, TwoDMatrix** dWs, TwoDMatrix** bs, TwoDMatrix** dbs, TwoDMatrix** Wcaches, TwoDMatrix** bcaches, float learning_rate, float decay_rate,
     float eps, int network_depth, int thread_id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     for (int i=0;i<network_depth;i++) {
         if (use_rmsprop) {
@@ -747,8 +774,7 @@ int FCNET_updateParams(TwoDMatrix** Ws, TwoDMatrix** dWs, TwoDMatrix** bs, TwoDM
     }
 }
 
-void* FCNET_updateParams_slave(void* args) {
-    * FCNET_backwardPropagation_slave(void* args) {
+void* FCNET_updateWeights_slave(void* args) {
     (SlaveArgs*) a = (SlaveArgs*) args;
     TwoDMatrix** Ws = a->Ws;
     TwoDMatrix** Hs = a->Hs;
@@ -773,7 +799,7 @@ void* FCNET_updateParams_slave(void* args) {
     thread_barrier_t* barrier = a->barrier;
     while(1) {
         threadController_slave(handle);
-        FCNET_updateParams(Ws,dWs,bs,dbs,Wcaches,bcaches,learning_rate,decay_rate,eps,network_depth,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
+        FCNET_updateWeights(Ws,dWs,bs,dbs,Wcaches,bcaches,learning_rate,decay_rate,eps,network_depth,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
     }
 }
 
