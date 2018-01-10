@@ -241,7 +241,10 @@ int train_multithread(FCParameters* network_params) {
         }
         former_width = hidden_layer_sizes[i];
     }
-    
+
+    // Temporary variables
+    TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
+    TwoDMatrix* dX = matrixMalloc(sizeof(TwoDMatrix));
     // array that holds data loss and reg loss
     float* losses = malloc(sizeof(float)*2);
 
@@ -326,6 +329,7 @@ int train_multithread(FCParameters* network_params) {
             Wcaches,
             bcaches,
             correct_labels,
+            NULL,
             alpha,
             learning_rate,
             reg_strength,
@@ -353,6 +357,7 @@ int train_multithread(FCParameters* network_params) {
             Wcaches,
             bcaches,
             correct_labels,
+            NULL,
             alpha,
             learning_rate,
             reg_strength,
@@ -380,6 +385,7 @@ int train_multithread(FCParameters* network_params) {
             Wcaches,
             bcaches,
             correct_labels,
+            dX,
             alpha,
             learning_rate,
             reg_strength,
@@ -407,6 +413,7 @@ int train_multithread(FCParameters* network_params) {
             Wcaches,
             bcaches,
             correct_labels,
+            NULL,
             alpha,
             learning_rate,
             reg_strength,
@@ -447,7 +454,6 @@ int train_multithread(FCParameters* network_params) {
     // Feed data to the network to train it
     printf("INFO: Training network\n");
     int iterations = training_data->height / minibatch_size;
-    TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
     for(int epoch=1;epoch<=epochs;epoch++) {
         learning_rate = decayLearningRate(enable_learning_rate_step_decay,
             enable_learning_rate_exponential_decay,
@@ -464,7 +470,7 @@ int train_multithread(FCParameters* network_params) {
             int data_end = (iteration+1)*minibatch_size-1;
             chop2DMatrix(training_data,data_start,data_end,X);
             // Forward propagation
-            TwoDMatrix* layer_X = NULL;
+            /* TwoDMatrix* layer_X = NULL;
             layer_X = X;
             for(int i=0;i<network_depth;i++) {
                 affineLayerForward(layer_X,Ws[i],bs[i],Hs[i], number_of_threads);
@@ -481,22 +487,26 @@ int train_multithread(FCParameters* network_params) {
                 //debugPrintMatrix(bs[i]);
                 //debugPrintMatrix(Hs[i]);
                 layer_X = Hs[i];
-            }
+            } */
+            threadController_master(forward_prop_control_handle, THREAD_RESUME);
             
-            
+            /*
             float data_loss = softmaxLoss(Hs[network_depth-1], correct_labels, dHs[network_depth-1], number_of_threads);
             //debugPrintMatrix(dHs[network_depth-1]);
             float reg_loss = L2RegLoss(Ws, network_depth, reg_strength, number_of_threads);
             float loss = data_loss + reg_loss;
+            */
+            threadController_master(calc_loss_control_handle, THREAD_RESUME);
+
+            float data_loss = losses[0][0];
+            float reg_loss = losses[0][1];
             float accu = training_accuracy(Hs[network_depth-1], correct_labels);
             if ((epoch % 1000 == 0 && iteration == 0) || verbose) {
                 printf("INFO: Epoch %d, data loss: %f, regulization loss: %f, total loss: %f, training accuracy: %f\n",
                     epoch, data_loss, reg_loss, loss, accu);
             }
             // Backward propagation
-            // This dX is only a placeholder to babysit the backword function, of course we are not going to modify X
-            TwoDMatrix* dX = matrixMalloc(sizeof(TwoDMatrix));
-            for (int i=network_depth-1; i>=0; i--) {
+            /* for (int i=network_depth-1; i>=0; i--) {
                 //debugPrintMatrix(dHs[i]);
                 //debugPrintMatrix(Hs[i]);
                 if (i != network_depth-1) {
@@ -517,12 +527,10 @@ int train_multithread(FCParameters* network_params) {
                 L2RegLossBackward(dWs[i],Ws[i],reg_strength,dWs[i], number_of_threads);
                 //debugPrintMatrix(dWs[i]);
             }
-            destroy2DMatrix(dX, number_of_threads);
+            destroy2DMatrix(dX, number_of_threads); */
+            threadController_master(backward_prop_control_handle, THREAD_RESUME);
             // Update weights
-            if (0) {
-                printf("INFO: Epoch %d, updating weights with learning rate %f\n",
-                    epoch, learning_rate);
-            }
+            /*
             for (int i=0;i<network_depth;i++) {
                 if (use_momentum_update) {
                     momentumUpdate(Ws[i], dWs[i], vWs[i], mu, learning_rate, Ws[i], number_of_threads);
@@ -546,6 +554,8 @@ int train_multithread(FCParameters* network_params) {
                     vanillaUpdate(betas[i],dbetas[i],learning_rate,betas[i], number_of_threads);
                 }
             }
+            */
+            threadController_master(update_weights_control_handle, THREAD_RESUME);
         }
         if (shuffle_training_samples != 0 && epoch % shuffle_training_samples == 0) {
             shuffleTrainingSamplesFCNet(training_data, correct_labels, training_data, correct_labels);
@@ -716,7 +726,7 @@ void* FCNET_calcLoss_slave(void* args) {
     }
 }
 
-int FCNET_backwardPropagation(TwoDMatrix** Ws, TwoDMatrix** Hs, TwoDMatrix** bs, TwoDMatrix** dWs, TwoDMatrix** dbs, TwoDMatrix** dHs, int network_depth, float alpha, int thread_id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
+int FCNET_backwardPropagation(TwoDMatrix** Ws, TwoDMatrix** Hs, TwoDMatrix** bs, TwoDMatrix** dWs, TwoDMatrix** dbs, TwoDMatrix** dHs, TwoDMatrix* dX, int network_depth, float alpha, int thread_id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     for (int i=network_depth-1; i>=0; i--) {
         if (i != network_depth-1) {
             leakyReLUBackward_thread(dHs[i],Hs[i],alpha,dHs[i],thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
@@ -743,6 +753,7 @@ void* FCNET_backwardPropagation_slave(void* args) {
     TwoDMatrix** dWs = a->dWs;
     TwoDMatrix** dHs = a->dHs;
     TwoDMatrix** dbs = a->dbs;
+    TwoDMatrix* dX = a->tmp;
     float alpha = a->alpha;
     int network_depth = a->network_depth;
     int thread_id = a->thread_id;
@@ -755,7 +766,7 @@ void* FCNET_backwardPropagation_slave(void* args) {
     thread_barrier_t* barrier = a->barrier;
     while(1) {
         threadController_slave(handle);
-        FCNET_backwardPropagation(Ws,Hs,bs,dWs,dbs,dHs,network_depth,alpha,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
+        FCNET_backwardPropagation(Ws,Hs,bs,dWs,dbs,dHs,dX,network_depth,alpha,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
     }
 }
 
@@ -815,6 +826,7 @@ void assignSlaveArguments(SlaveArgs* args,
     TwoDMatrix** Wcaches,
     TwoDMatrix** bcaches,
     TwoDMatrix* correct_labels,
+    TwoDMatrix* tmp,
     float alpha,
     float learning_rate,
     float reg_strength,
@@ -841,6 +853,7 @@ void assignSlaveArguments(SlaveArgs* args,
     a->Wcaches = Wcaches;
     a->bcaches = bcaches;
     a->correct_labels = correct_labels;
+    a->tmp = tmp;
     a->alpha = alpha;
     a->learning_rate = learning_rate;
     a->reg_strength = reg_strength;
