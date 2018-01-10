@@ -242,8 +242,6 @@ int train_multithread(FCParameters* network_params) {
         former_width = hidden_layer_sizes[i];
     }
     
-    // temporary variable used in forward propagation
-    TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
     // array that holds data loss and reg loss
     float* losses = malloc(sizeof(float)*2);
 
