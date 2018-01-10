@@ -242,6 +242,9 @@ int train_multithread(FCParameters* network_params) {
         former_width = hidden_layer_sizes[i];
     }
     
+    // temporary variable used in forward propagation
+    TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
+
     printf("INFO: %d W matrixes, %d learnable weights initialized, %.2f KB meomry used\n", network_depth, number_of_weights, size_of_Ws/1024.0f);
     printf("INFO: %d b matrixes, %d learnable biases initialized, %.2f KB meomry used\n", network_depth, number_of_biases, size_of_bs/1024.0f);
     printf("INFO: %d H matrixes, %d learnable hidden layer values initialized, %.2f KB meomry used\n", network_depth, number_of_hvalues, size_of_Hs/1024.0f);
@@ -304,6 +307,32 @@ int train_multithread(FCParameters* network_params) {
         backward_prop_arguments[i] = (SlaveArgs*) malloc(sizeof(SlaveArgs));
         update_weights_arguments[i] = (SlaveArgs*) malloc(sizeof(SlaveArgs));
 
+        assignSlaveArguments(forward_prop_arguments[i],ThreadControl* handle,
+    int thread_id,
+    int network_depth,
+    TwoDMatrix* X,
+    TwoDMatrix** Ws,
+    TwoDMatrix** bs,
+    TwoDMatrix** Hs,
+    TwoDMatrix** dWs,
+    TwoDMatrix** dbs,
+    TwoDMatrix** dHs,
+    TwoDMatrix** Wcaches,
+    TwoDMatrix** bcaches,
+    TwoDMatrix* correct_labels,
+    float alpha,
+    float learning_rate,
+    float reg_strength,
+    float decay_rate,
+    float eps,
+    bool use_rmsprop,
+    bool* mem_allocated,
+    int number_of_threads,
+    pthread_mutex_t* mutex,
+    pthread_cond_t* cond,
+    thread_barrier_t* barrier,
+    int* int_retval,
+    float* float_retval)
 
     }
 
