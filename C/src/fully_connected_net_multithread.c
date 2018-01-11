@@ -470,34 +470,9 @@ int train_multithread(FCParameters* network_params) {
             int data_end = (iteration+1)*minibatch_size-1;
             chop2DMatrix(training_data,data_start,data_end,X);
             // Forward propagation
-            /* TwoDMatrix* layer_X = NULL;
-            layer_X = X;
-            for(int i=0;i<network_depth;i++) {
-                affineLayerForward(layer_X,Ws[i],bs[i],Hs[i], number_of_threads);
-                // The last layer in the network will calculate the scores
-                // So there will not be a activation function put to it
-                if (i != network_depth - 1) {
-                    if (use_batchnorm) {
-                        batchnorm_training_forward(Hs[i], batchnorm_momentum, batchnorm_eps, gammas[i], betas[i], Hs[i], mean_caches[i], var_caches[i], means[i], vars[i], Hs_normalized[i], number_of_threads);
-                    }
-                    leakyReLUForward(Hs[i],alpha,Hs[i], number_of_threads);
-                }
-                //debugPrintMatrix(layer_X);
-                //debugPrintMatrix(Ws[i]);
-                //debugPrintMatrix(bs[i]);
-                //debugPrintMatrix(Hs[i]);
-                layer_X = Hs[i];
-            } */
             threadController_master(forward_prop_control_handle, THREAD_RESUME);
             
-            /*
-            float data_loss = softmaxLoss(Hs[network_depth-1], correct_labels, dHs[network_depth-1], number_of_threads);
-            //debugPrintMatrix(dHs[network_depth-1]);
-            float reg_loss = L2RegLoss(Ws, network_depth, reg_strength, number_of_threads);
-            float loss = data_loss + reg_loss;
-            */
             threadController_master(calc_loss_control_handle, THREAD_RESUME);
-
             float data_loss = losses[0][0];
             float reg_loss = losses[0][1];
             float accu = training_accuracy(Hs[network_depth-1], correct_labels);
@@ -506,55 +481,8 @@ int train_multithread(FCParameters* network_params) {
                     epoch, data_loss, reg_loss, loss, accu);
             }
             // Backward propagation
-            /* for (int i=network_depth-1; i>=0; i--) {
-                //debugPrintMatrix(dHs[i]);
-                //debugPrintMatrix(Hs[i]);
-                if (i != network_depth-1) {
-                    leakyReLUBackward(dHs[i],Hs[i],alpha,dHs[i], number_of_threads);
-                    if (use_batchnorm) {
-                        batchnorm_backward(dHs[i], Hs[i], Hs_normalized[i], gammas[i], betas[i], means[i], vars[i], batchnorm_eps, dHs[i],  dgammas[i], dbetas[i], number_of_threads);
-                    }
-                }
-                //debugPrintMatrix(dHs[i]);
-                if (i != 0) {
-                    affineLayerBackword(dHs[i],Hs[i-1],Ws[i],bs[i],dHs[i-1],dWs[i],dbs[i], number_of_threads);
-                } else {
-                    affineLayerBackword(dHs[i],X,Ws[i],bs[i],dX,dWs[i],dbs[i], number_of_threads);
-                }
-                //debugPrintMatrix(dWs[i]);
-                //debugPrintMatrix(Ws[i]);
-                // Weight changes contributed by L2 regulization
-                L2RegLossBackward(dWs[i],Ws[i],reg_strength,dWs[i], number_of_threads);
-                //debugPrintMatrix(dWs[i]);
-            }
-            destroy2DMatrix(dX, number_of_threads); */
             threadController_master(backward_prop_control_handle, THREAD_RESUME);
             // Update weights
-            /*
-            for (int i=0;i<network_depth;i++) {
-                if (use_momentum_update) {
-                    momentumUpdate(Ws[i], dWs[i], vWs[i], mu, learning_rate, Ws[i], number_of_threads);
-                    momentumUpdate(bs[i], dbs[i], vbs[i], mu, learning_rate, bs[i], number_of_threads);
-                    //if (use_batchnorm) {
-                    //    momentumUpdate(gammas[i],dgammas[i],)
-                    //}
-                } else if (use_nag_update) {
-                    NAGUpdate(Ws[i], dWs[i], vWs[i], vW_prevs[i], mu, learning_rate, Ws[i], number_of_threads);
-                    NAGUpdate(bs[i], dbs[i], vbs[i], vb_prevs[i], mu, learning_rate, bs[i], number_of_threads);
-                } else if (use_rmsprop) {
-                    RMSProp(Ws[i], dWs[i], Wcaches[i], learning_rate, decay_rate, eps, Ws[i], number_of_threads);
-                    RMSProp(bs[i], dbs[i], bcaches[i], learning_rate, decay_rate, eps, bs[i], number_of_threads);
-                } else {
-                    vanillaUpdate(Ws[i],dWs[i],learning_rate,Ws[i], number_of_threads);
-                    vanillaUpdate(bs[i],dbs[i],learning_rate,bs[i], number_of_threads);
-                }
-                // Let's just use normal SGD update for batchnorm parameters to make it simpler
-                if (use_batchnorm) {
-                    vanillaUpdate(gammas[i],dgammas[i],learning_rate,gammas[i], number_of_threads);
-                    vanillaUpdate(betas[i],dbetas[i],learning_rate,betas[i], number_of_threads);
-                }
-            }
-            */
             threadController_master(update_weights_control_handle, THREAD_RESUME);
         }
         if (shuffle_training_samples != 0 && epoch % shuffle_training_samples == 0) {

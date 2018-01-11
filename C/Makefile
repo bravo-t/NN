@@ -64,6 +64,12 @@ convnet_unit_test: convnet_unit_test.c convnet.o convnet_layers.o convnet_operat
 inter-process_communication.o: src/inter-process_communication.c
 	$(CC) -c -o $@ $< $(CFLAGS) $(LIBS) $(THREAD_LIBS)
 
+thread_barrier.o: src/thread_barrier.c src/thread_barrier.h
+	$(CC) -c -o $@ $< $(LIBS) $(CFLAGS)
+
+thread_control.o: src/thread_control.c src/thread_control.h thread_barrier.o
+	$(CC) -c -o $@ $< $(LIBS) $(CFLAGS)
+
 .PHONY: clean
 clean:
 	rm -f *.o *~ src/*~ 
