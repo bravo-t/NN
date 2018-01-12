@@ -34,7 +34,7 @@ layers_multithread.o: src/layers_multithread.c src/layers_multithread.h matrix_o
 fully_connected_net.o: src/fully_connected_net.c src/fully_connected_net.h layers.o matrix_operations.o
 	$(CC) -c -o $@ $< $(LIBS) $(CFLAGS)
 
-fully_connected_net_multithread.o: src/fully_connected_net_multithread.c src/fully_connected_net_multithread.h matrix_operations.o layers.o layers_multithread.o matrix_operations_multithread.o
+fully_connected_net_multithread.o: src/fully_connected_net_multithread.c src/fully_connected_net_multithread.h matrix_operations.o layers.o layers_multithread.o matrix_operations_multithread.o thread_control.o
 	$(CC) -c -o $@ $< $(CFLAGS) $(LIBS) $(THREAD_LIBS)
 
 unit_test: unit_test.c misc_utils.o matrix_operations.o layers.o fully_connected_net.o
