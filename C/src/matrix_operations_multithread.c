@@ -38,126 +38,126 @@ int calc_h_end(int id, int height,int number_of_threads) {
 /********************************************************************************************/
 void reset_mem_allocated(int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     if (id == 0) {
-        pthread_mutex_lock(&mutex);
-        thread_barrier_init(&barrier,number_of_threads);
+        pthread_mutex_lock(mutex);
+        thread_barrier_init(barrier,number_of_threads);
         *mem_allocated = false;
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_unlock(mutex);
     } else {
-        pthread_mutex_lock(&mutex);
-        while((*mem_allocated)) pthread_cond_wait(&cond,&mutex);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        while((*mem_allocated)) pthread_cond_wait(cond,mutex);
+        pthread_mutex_unlock(mutex);
     }
     if(id == 0) {
-        pthread_mutex_lock(&mutex);
-        pthread_cond_broadcast(&cond);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        pthread_cond_broadcast(cond);
+        pthread_mutex_unlock(mutex);
     }
-    thread_barrier_wait_reinit(&barrier);
+    thread_barrier_wait_reinit(barrier,number_of_threads);
 }
 
 void preset_mem_allocated(int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     if (id == 0) {
-        pthread_mutex_lock(&mutex);
-        thread_barrier_init(&barrier,number_of_threads);
+        pthread_mutex_lock(mutex);
+        thread_barrier_init(barrier,number_of_threads);
         *mem_allocated = true;
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_unlock(mutex);
     } else {
-        pthread_mutex_lock(&mutex);
-        while(!(*mem_allocated)) pthread_cond_wait(&cond,&mutex);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        while(!(*mem_allocated)) pthread_cond_wait(cond,mutex);
+        pthread_mutex_unlock(mutex);
     }
     if(id == 0) {
-        pthread_mutex_lock(&mutex);
-        pthread_cond_broadcast(&cond);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        pthread_cond_broadcast(cond);
+        pthread_mutex_unlock(mutex);
     }
-    thread_barrier_wait_reinit(&barrier);
+    thread_barrier_wait_reinit(barrier,number_of_threads);
 }
 
 void* matrixMalloc_thread(char* share_memory_name, int size, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     void* M;
     if (id == 0) {
-        pthread_mutex_lock(&mutex);
-        thread_barrier_init(&barrier,number_of_threads);
+        pthread_mutex_lock(mutex);
+        thread_barrier_init(barrier,number_of_threads);
         M = matrixMalloc(size);
         IPCWriteToSharedMem(share_memory_name,&M,sizeof(void*));
         *mem_allocated = true;
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_unlock(mutex);
     } else {
-        pthread_mutex_lock(&mutex);
-        while(!(*mem_allocated)) pthread_cond_wait(&cond,&mutex);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        while(!(*mem_allocated)) pthread_cond_wait(cond,mutex);
+        pthread_mutex_unlock(mutex);
     }
     if(id == 0) {
-        pthread_mutex_lock(&mutex);
-        pthread_cond_broadcast(&cond);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        pthread_cond_broadcast(cond);
+        pthread_mutex_unlock(mutex);
     }
-    pthread_mutex_lock(&mutex);
+    pthread_mutex_lock(mutex);
     IPCReadFromSharedMem(share_memory_name,M,sizeof(void*));
-    pthread_mutex_unlock(&mutex);
+    pthread_mutex_unlock(mutex);
     if (id == 0) {
         IPCRemoveSharedMemFile(share_memory_name);
     }
-    thread_barrier_wait_reinit(&barrier);
+    thread_barrier_wait_reinit(barrier,number_of_threads);
     return M;
 }
 
 void* malloc_thread(char* share_memory_name, int size, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     void* M;
     if (id == 0) {
-        pthread_mutex_lock(&mutex);
-        thread_barrier_init(&barrier,number_of_threads);
+        pthread_mutex_lock(mutex);
+        thread_barrier_init(barrier,number_of_threads);
         M = malloc(size);
         IPCWriteToSharedMem(share_memory_name,&M,sizeof(void*));
         *mem_allocated = true;
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_unlock(mutex);
     } else {
-        pthread_mutex_lock(&mutex);
-        while(!(*mem_allocated)) pthread_cond_wait(&cond,&mutex);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        while(!(*mem_allocated)) pthread_cond_wait(cond,mutex);
+        pthread_mutex_unlock(mutex);
     }
     if(id == 0) {
-        pthread_mutex_lock(&mutex);
-        pthread_cond_broadcast(&cond);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        pthread_cond_broadcast(cond);
+        pthread_mutex_unlock(mutex);
     }
-    pthread_mutex_lock(&mutex);
+    pthread_mutex_lock(mutex);
     IPCReadFromSharedMem(share_memory_name,M,sizeof(void*));
-    pthread_mutex_unlock(&mutex);
+    pthread_mutex_unlock(mutex);
     if (id == 0) {
         IPCRemoveSharedMemFile(share_memory_name);
     }
-    thread_barrier_wait_reinit(&barrier);
+    thread_barrier_wait_reinit(barrier,number_of_threads);
     return M;
 }
 
 void* calloc_thread(char* share_memory_name, int n, int blk_size, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     void* M;
     if (id == 0) {
-        pthread_mutex_lock(&mutex);
-        thread_barrier_init(&barrier,number_of_threads);
+        pthread_mutex_lock(mutex);
+        thread_barrier_init(barrier,number_of_threads);
         M = calloc(n,blk_size);
         IPCWriteToSharedMem(share_memory_name,M,sizeof(M));
         *mem_allocated = true;
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_unlock(mutex);
     } else {
-        pthread_mutex_lock(&mutex);
-        while(!(*mem_allocated)) pthread_cond_wait(&cond,&mutex);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        while(!(*mem_allocated)) pthread_cond_wait(cond,mutex);
+        pthread_mutex_unlock(mutex);
     }
     if(id == 0) {
-        pthread_mutex_lock(&mutex);
-        pthread_cond_broadcast(&cond);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        pthread_cond_broadcast(cond);
+        pthread_mutex_unlock(mutex);
     }
-    pthread_mutex_lock(&mutex);
+    pthread_mutex_lock(mutex);
     IPCReadFromSharedMem(share_memory_name,M,sizeof(void*));
-    pthread_mutex_unlock(&mutex);
+    pthread_mutex_unlock(mutex);
     if (id == 0) {
         IPCRemoveSharedMemFile(share_memory_name);
     }
-    thread_barrier_wait_reinit(&barrier);
+    thread_barrier_wait_reinit(barrier,number_of_threads);
     return M;
 }
 
@@ -168,22 +168,22 @@ int init2DMatrix_thread(TwoDMatrix* M, int height, int width, int id, bool* mem_
     int h_start = calc_h_start(id,height,number_of_threads);
     int h_end = calc_h_end(id,height,number_of_threads);
     if (h_start == 0) {
-        pthread_mutex_lock(&mutex);
-        thread_barrier_init(&barrier,number_of_threads);
+        pthread_mutex_lock(mutex);
+        thread_barrier_init(barrier,number_of_threads);
         M->height = height;
         M->width = width;
         M->d = (float**) calloc(height, sizeof(float*));
         *mem_allocated = true;
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_unlock(mutex);
     } else {
-        pthread_mutex_lock(&mutex);
-        while(!(*mem_allocated)) pthread_cond_wait(&cond,&mutex);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        while(!(*mem_allocated)) pthread_cond_wait(cond,mutex);
+        pthread_mutex_unlock(mutex);
     }
     if(h_start == 0) {
-        pthread_mutex_lock(&mutex);
-        pthread_cond_broadcast(&cond);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        pthread_cond_broadcast(cond);
+        pthread_mutex_unlock(mutex);
     }
     // TODO
     // for(int i=h_start;i<=h_end && i<M->height;i++)
@@ -191,7 +191,7 @@ int init2DMatrix_thread(TwoDMatrix* M, int height, int width, int id, bool* mem_
         M->d[i] = (float*) calloc(width,sizeof(float));
     }
     if(h_start == 0) M->initialized = true;
-    thread_barrier_wait_reinit(&barrier);
+    thread_barrier_wait_reinit(barrier,number_of_threads);
     return 0;
 }
 
@@ -201,22 +201,22 @@ int init2DMatrixNormRand_thread(TwoDMatrix* M, int height, int width, float mean
     int h_start = calc_h_start(id,height,number_of_threads);
     int h_end = calc_h_end(id,height,number_of_threads);
     if (h_start == 0) {
-        pthread_mutex_lock(&mutex);
-        thread_barrier_init(&barrier,number_of_threads);
+        pthread_mutex_lock(mutex);
+        thread_barrier_init(barrier,number_of_threads);
         M->height = height;
         M->width = width;
         M->d = (float**) calloc(height, sizeof(float*));
         *mem_allocated = true;
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_unlock(mutex);
     } else {
-        pthread_mutex_lock(&mutex);
-        while(!(*mem_allocated)) pthread_cond_wait(&cond,&mutex);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        while(!(*mem_allocated)) pthread_cond_wait(cond,mutex);
+        pthread_mutex_unlock(mutex);
     }
     if(h_start == 0) {
-        pthread_mutex_lock(&mutex);
-        pthread_cond_broadcast(&cond);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        pthread_cond_broadcast(cond);
+        pthread_mutex_unlock(mutex);
     }
     for(int i=h_start;i<=h_end;i++) {
         M->d[i] = (float*) calloc(width,sizeof(float));
@@ -225,7 +225,7 @@ int init2DMatrixNormRand_thread(TwoDMatrix* M, int height, int width, float mean
         }
     }
     if(h_start == 0) M->initialized = true;
-    thread_barrier_wait_reinit(&barrier);
+    thread_barrier_wait_reinit(barrier,number_of_threads);
     return 0;
 }
 
@@ -240,22 +240,22 @@ int init2DMatrixOne_thread(TwoDMatrix* M, int height, int width,int id, bool* me
     int h_start = calc_h_start(id,height,number_of_threads);
     int h_end = calc_h_end(id,height,number_of_threads);
     if (h_start == 0) {
-        pthread_mutex_lock(&mutex);
-        thread_barrier_init(&barrier,number_of_threads);
+        pthread_mutex_lock(mutex);
+        thread_barrier_init(barrier,number_of_threads);
         M->height = height;
         M->width = width;
         M->d = (float**) calloc(height, sizeof(float*));
         *mem_allocated = true;
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_unlock(mutex);
     } else {
-        pthread_mutex_lock(&mutex);
-        while(!(*mem_allocated)) pthread_cond_wait(&cond,&mutex);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        while(!(*mem_allocated)) pthread_cond_wait(cond,mutex);
+        pthread_mutex_unlock(mutex);
     }
     if(h_start == 0) {
-        pthread_mutex_lock(&mutex);
-        pthread_cond_broadcast(&cond);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        pthread_cond_broadcast(cond);
+        pthread_mutex_unlock(mutex);
     }
     for(int i=h_start;i<=h_end;i++) {
         M->d[i] = (float*) calloc(width,sizeof(float));
@@ -264,7 +264,7 @@ int init2DMatrixOne_thread(TwoDMatrix* M, int height, int width,int id, bool* me
         }
     }
     if(h_start == 0) M->initialized = true;
-    thread_barrier_wait_reinit(&barrier);
+    thread_barrier_wait_reinit(barrier,number_of_threads);
     return 0;
 }
 
@@ -277,25 +277,25 @@ int destroy2DMatrix_thread(TwoDMatrix* M, int id, bool* mem_allocated,int number
     }
     preset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
     if (h_start == 0) {
-        pthread_mutex_lock(&mutex);
-        thread_barrier_init(&barrier,number_of_threads);
+        pthread_mutex_lock(mutex);
+        thread_barrier_init(barrier,number_of_threads);
         free(M->d);
         M->d = NULL;
         free(M);
         M = NULL;
         *mem_allocated = false;
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_unlock(mutex);
     } else {
-        pthread_mutex_lock(&mutex);
-        while((*mem_allocated)) pthread_cond_wait(&cond,&mutex);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        while((*mem_allocated)) pthread_cond_wait(cond,mutex);
+        pthread_mutex_unlock(mutex);
     }
     if(h_start == 0) {
-        pthread_mutex_lock(&mutex);
-        pthread_cond_broadcast(&cond);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        pthread_cond_broadcast(cond);
+        pthread_mutex_unlock(mutex);
     }
-    thread_barrier_wait_reinit(&barrier);
+    thread_barrier_wait_reinit(barrier,number_of_threads);
     return 0;
 }
 
@@ -605,44 +605,44 @@ int maxX2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocate
 int sumY2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
     if (id == 0) {
-        pthread_mutex_lock(&mutex);
-        thread_barrier_init(&barrier,number_of_threads);
+        pthread_mutex_lock(mutex);
+        thread_barrier_init(barrier,number_of_threads);
         sumY2DMatrix(M,OUT);
         *mem_allocated = true;
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_unlock(mutex);
     } else {
-        pthread_mutex_lock(&mutex);
-        while(!(*mem_allocated)) pthread_cond_wait(&cond,&mutex);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        while(!(*mem_allocated)) pthread_cond_wait(cond,mutex);
+        pthread_mutex_unlock(mutex);
     }
     if(id == 0) {
-        pthread_mutex_lock(&mutex);
-        pthread_cond_broadcast(&cond);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        pthread_cond_broadcast(cond);
+        pthread_mutex_unlock(mutex);
     }
-    thread_barrier_wait_reinit(&barrier);
+    thread_barrier_wait_reinit(barrier,number_of_threads);
     return 0;
 }
 
 int maxY2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
     if (id == 0) {
-        pthread_mutex_lock(&mutex);
-        thread_barrier_init(&barrier,number_of_threads);
+        pthread_mutex_lock(mutex);
+        thread_barrier_init(barrier,number_of_threads);
         maxY2DMatrix(M,OUT);
         *mem_allocated = true;
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_unlock(mutex);
     } else {
-        pthread_mutex_lock(&mutex);
-        while(!(*mem_allocated)) pthread_cond_wait(&cond,&mutex);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        while(!(*mem_allocated)) pthread_cond_wait(cond,mutex);
+        pthread_mutex_unlock(mutex);
     }
     if(id == 0) {
-        pthread_mutex_lock(&mutex);
-        pthread_cond_broadcast(&cond);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        pthread_cond_broadcast(cond);
+        pthread_mutex_unlock(mutex);
     }
-    thread_barrier_wait_reinit(&barrier);
+    thread_barrier_wait_reinit(barrier,number_of_threads);
     return 0;
 }
 
@@ -651,28 +651,28 @@ float sumAll_thread(TwoDMatrix* M,int id, bool* mem_allocated,int number_of_thre
     float* retval = 0;
     char* share_memory_name = "/sumAll_thread_shared_memory";
     if (id == 0) {
-        pthread_mutex_lock(&mutex);
-        thread_barrier_init(&barrier,number_of_threads);
+        pthread_mutex_lock(mutex);
+        thread_barrier_init(barrier,number_of_threads);
         *retval = sumAll(M);
         IPCWriteToSharedMem(share_memory_name,retval,sizeof(float));
         *mem_allocated = true;
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_unlock(mutex);
     } else {
-        pthread_mutex_lock(&mutex);
-        while(!(*mem_allocated)) pthread_cond_wait(&cond,&mutex);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        while(!(*mem_allocated)) pthread_cond_wait(cond,mutex);
+        pthread_mutex_unlock(mutex);
     }
     if(id == 0) {
-        pthread_mutex_lock(&mutex);
-        pthread_cond_broadcast(&cond);
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_lock(mutex);
+        pthread_cond_broadcast(cond);
+        pthread_mutex_unlock(mutex);
     }
-    pthread_mutex_lock(&mutex);
+    pthread_mutex_lock(mutex);
     IPCReadFromSharedMem(share_memory_name,retval,sizeof(float));
-    pthread_mutex_unlock(&mutex);
+    pthread_mutex_unlock(mutex);
     if (id == 0) {
         IPCRemoveSharedMemFile(share_memory_name);
     }
-    thread_barrier_wait_reinit(&barrier);
+    thread_barrier_wait_reinit(barrier,number_of_threads);
     return *retval;
 }

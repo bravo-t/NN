@@ -5,14 +5,6 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <string.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <semaphore.h>
-#include <sys/shm.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
 #include "network_type.h"
 #include "inter-process_communication.h"
 
@@ -28,7 +20,7 @@ void microsecSleep (long ms) {
     select(0,NULL,NULL,NULL,&delay);
 }
 
-void waitUntilEveryoneIsFinished(sem_t *sem) {
+void waitUntilEveryoneIsFinished(sem_t* sem) {
     while (sem_trywait(sem) != -1 && errno != EAGAIN) {
         sem_post(sem);
         //microsecSleep(1);
