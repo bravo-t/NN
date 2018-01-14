@@ -203,28 +203,28 @@ int L2RegLossBackward_thread(TwoDMatrix* dM, TwoDMatrix* M, float reg_strength, 
 }
 
 int RMSProp_thread(TwoDMatrix* X, TwoDMatrix* dX, TwoDMatrix* cache, float learning_rate, float decay_rate, float eps, TwoDMatrix* OUT,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
-    TwoDMatrix* cache_scaled = matrixMalloc_thread("/RMSProp_thread_cache_scaled_shm",sizeof(TwoDMatrix),id,mem_allocated);
-    elementMul_thread(cache,decay_rate,cache_scaled,id,mem_allocated);
-    TwoDMatrix* dX_squared = matrixMalloc_thread("/RMSProp_thread_dX_squared_shm",sizeof(TwoDMatrix),id,mem_allocated);
-    elementwiseMul2DMatrix_thread(dX,dX,dX_squared,id,mem_allocated);
-    TwoDMatrix* dX_squared_scaled = matrixMalloc_thread("/RMSProp_thread_dX_squared_scaled_shm",sizeof(TwoDMatrix),id,mem_allocated);
-    elementMul_thread(dX_squared,1-decay_rate,dX_squared_scaled,id,mem_allocated);
-    elementwiseAdd2DMatrix_thread(cache_scaled,dX_squared_scaled,cache,id,mem_allocated);
-    destroy2DMatrix_thread(cache_scaled,id,mem_allocated);
-    destroy2DMatrix_thread(dX_squared,id,mem_allocated);
-    destroy2DMatrix_thread(dX_squared_scaled,id,mem_allocated);
-    TwoDMatrix* cache_sqrt = matrixMalloc_thread("/RMSProp_thread_cache_sqrt_shm",sizeof(TwoDMatrix),id,mem_allocated);
-    elementSqrt_thread(cache,cache_sqrt,id,mem_allocated);
-    TwoDMatrix* cache_sqrt_eps = matrixMalloc_thread("/RMSProp_thread_cache_sqrt_eps_shm",sizeof(TwoDMatrix),id,mem_allocated);
-    elementAdd_thread(cache_sqrt, eps, cache_sqrt_eps,id,mem_allocated);
-    TwoDMatrix* dX_scaled = matrixMalloc_thread("/RMSProp_thread_dX_scaled_shm",sizeof(TwoDMatrix),id,mem_allocated);
-    elementMul_thread(dX,learning_rate,dX_scaled,id,mem_allocated);
-    TwoDMatrix* X_update = matrixMalloc_thread("/RMSProp_thread_X_update_shm",sizeof(TwoDMatrix),id,mem_allocated);
-    elementwiseDiv2DMatrix_thread(dX_scaled,cache_sqrt_eps,X_update,id,mem_allocated);
-    elementwiseSub2DMatrix_thread(X,X_update,OUT,id,mem_allocated);
-    destroy2DMatrix_thread(cache_sqrt,id,mem_allocated);
-    destroy2DMatrix_thread(cache_sqrt_eps,id,mem_allocated);
-    destroy2DMatrix_thread(dX_scaled,id,mem_allocated);
-    destroy2DMatrix_thread(X_update,id,mem_allocated);
+    TwoDMatrix* cache_scaled = matrixMalloc_thread("/RMSProp_thread_cache_scaled_shm",sizeof(TwoDMatrix),id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    elementMul_thread(cache,decay_rate,cache_scaled,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    TwoDMatrix* dX_squared = matrixMalloc_thread("/RMSProp_thread_dX_squared_shm",sizeof(TwoDMatrix),id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    elementwiseMul2DMatrix_thread(dX,dX,dX_squared,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    TwoDMatrix* dX_squared_scaled = matrixMalloc_thread("/RMSProp_thread_dX_squared_scaled_shm",sizeof(TwoDMatrix),id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    elementMul_thread(dX_squared,1-decay_rate,dX_squared_scaled,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    elementwiseAdd2DMatrix_thread(cache_scaled,dX_squared_scaled,cache,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    destroy2DMatrix_thread(cache_scaled,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    destroy2DMatrix_thread(dX_squared,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    destroy2DMatrix_thread(dX_squared_scaled,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    TwoDMatrix* cache_sqrt = matrixMalloc_thread("/RMSProp_thread_cache_sqrt_shm",sizeof(TwoDMatrix),id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    elementSqrt_thread(cache,cache_sqrt,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    TwoDMatrix* cache_sqrt_eps = matrixMalloc_thread("/RMSProp_thread_cache_sqrt_eps_shm",sizeof(TwoDMatrix),id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    elementAdd_thread(cache_sqrt, eps, cache_sqrt_eps,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    TwoDMatrix* dX_scaled = matrixMalloc_thread("/RMSProp_thread_dX_scaled_shm",sizeof(TwoDMatrix),id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    elementMul_thread(dX,learning_rate,dX_scaled,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    TwoDMatrix* X_update = matrixMalloc_thread("/RMSProp_thread_X_update_shm",sizeof(TwoDMatrix),id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    elementwiseDiv2DMatrix_thread(dX_scaled,cache_sqrt_eps,X_update,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    elementwiseSub2DMatrix_thread(X,X_update,OUT,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    destroy2DMatrix_thread(cache_sqrt,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    destroy2DMatrix_thread(cache_sqrt_eps,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    destroy2DMatrix_thread(dX_scaled,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    destroy2DMatrix_thread(X_update,id,mem_allocated,number_of_threads,mutex,cond,barrier);
     return 0;
 }
