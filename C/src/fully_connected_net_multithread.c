@@ -246,7 +246,8 @@ int train_multithread(FCParameters* network_params) {
     TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
     TwoDMatrix* dX = matrixMalloc(sizeof(TwoDMatrix));
     // array that holds data loss and reg loss
-    float* losses = malloc(sizeof(float)*2);
+    float** losses = malloc(sizeof(float*)*number_of_threads);
+
 
     printf("INFO: %d W matrixes, %d learnable weights initialized, %.2f KB meomry used\n", network_depth, number_of_weights, size_of_Ws/1024.0f);
     printf("INFO: %d b matrixes, %d learnable biases initialized, %.2f KB meomry used\n", network_depth, number_of_biases, size_of_bs/1024.0f);
@@ -310,6 +311,8 @@ int train_multithread(FCParameters* network_params) {
     SlaveArgs** update_weights_arguments = malloc(sizeof(SlaveArgs*)*number_of_threads);
 
     for(int i=0;i<number_of_threads;i++) {
+        losses[i] = malloc(sizeof(float)*2);
+
         forward_prop_arguments[i] = (SlaveArgs*) malloc(sizeof(SlaveArgs));
         calc_loss_arguments[i] = (SlaveArgs*) malloc(sizeof(SlaveArgs));
         backward_prop_arguments[i] = (SlaveArgs*) malloc(sizeof(SlaveArgs));
@@ -370,7 +373,7 @@ int train_multithread(FCParameters* network_params) {
             calc_loss_cond,
             calc_loss_barrier,
             NULL,
-            losses);
+            losses[i]);
         assignSlaveArguments(backward_prop_arguments[i], 
             backward_prop_control_handle,
             i,
@@ -524,36 +527,36 @@ int train_multithread(FCParameters* network_params) {
     // Shutdown
     destroy2DMatrix(X, number_of_threads);
     for(int i=0;i<network_depth;i++) {
-        destroy2DMatrix(Ws[i], number_of_threads);
-        destroy2DMatrix(dWs[i], number_of_threads);
-        destroy2DMatrix(bs[i], number_of_threads);
-        destroy2DMatrix(dbs[i], number_of_threads);
-        destroy2DMatrix(Hs[i], number_of_threads);
-        destroy2DMatrix(dHs[i], number_of_threads);
+        destroy2DMatrix(Ws[i]);
+        destroy2DMatrix(dWs[i]);
+        destroy2DMatrix(bs[i]);
+        destroy2DMatrix(dbs[i]);
+        destroy2DMatrix(Hs[i]);
+        destroy2DMatrix(dHs[i]);
         if (use_momentum_update) {
-            destroy2DMatrix(vWs[i], number_of_threads);
-            destroy2DMatrix(vbs[i], number_of_threads);
+            destroy2DMatrix(vWs[i]);
+            destroy2DMatrix(vbs[i]);
         }
         if (use_nag_update) {
-            destroy2DMatrix(vWs[i], number_of_threads);
-            destroy2DMatrix(vbs[i], number_of_threads);
-            destroy2DMatrix(vW_prevs[i], number_of_threads);
-            destroy2DMatrix(vb_prevs[i], number_of_threads);
+            destroy2DMatrix(vWs[i]);
+            destroy2DMatrix(vbs[i]);
+            destroy2DMatrix(vW_prevs[i]);
+            destroy2DMatrix(vb_prevs[i]);
         }
         if (use_rmsprop) {
-            destroy2DMatrix(Wcaches[i], number_of_threads);
-            destroy2DMatrix(bcaches[i], number_of_threads);
+            destroy2DMatrix(Wcaches[i]);
+            destroy2DMatrix(bcaches[i]);
         }
         if (use_batchnorm) {
-            destroy2DMatrix(gammas[i], number_of_threads);
-            destroy2DMatrix(betas[i], number_of_threads);
-            destroy2DMatrix(dgammas[i], number_of_threads);
-            destroy2DMatrix(dbetas[i], number_of_threads);
-            destroy2DMatrix(mean_caches[i], number_of_threads);
-            destroy2DMatrix(var_caches[i], number_of_threads);
-            destroy2DMatrix(means[i], number_of_threads);
-            destroy2DMatrix(vars[i], number_of_threads);
-            destroy2DMatrix(Hs_normalized[i], number_of_threads);
+            destroy2DMatrix(gammas[i]);
+            destroy2DMatrix(betas[i]);
+            destroy2DMatrix(dgammas[i]);
+            destroy2DMatrix(dbetas[i]);
+            destroy2DMatrix(mean_caches[i]);
+            destroy2DMatrix(var_caches[i]);
+            destroy2DMatrix(means[i]);
+            destroy2DMatrix(vars[i]);
+            destroy2DMatrix(Hs_normalized[i]);
         }
     }
     free(Ws);
