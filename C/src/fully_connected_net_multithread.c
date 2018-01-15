@@ -339,11 +339,11 @@ int train_multithread(FCParameters* network_params) {
             decay_rate,
             eps,
             use_rmsprop,
-            forward_prop_mem_alloc,
+            &forward_prop_mem_alloc,
             number_of_threads,
-            forward_prop_mutex,
-            forward_prop_cond,
-            forward_prop_barrier,
+            &forward_prop_mutex,
+            &forward_prop_cond,
+            &forward_prop_barrier,
             NULL,
             NULL);
         assignSlaveArguments(calc_loss_arguments[i], 
@@ -367,11 +367,11 @@ int train_multithread(FCParameters* network_params) {
             decay_rate,
             eps,
             use_rmsprop,
-            calc_loss_mem_alloc,
+            &calc_loss_mem_alloc,
             number_of_threads,
-            calc_loss_mutex,
-            calc_loss_cond,
-            calc_loss_barrier,
+            &calc_loss_mutex,
+            &calc_loss_cond,
+            &calc_loss_barrier,
             NULL,
             losses[i]);
         assignSlaveArguments(backward_prop_arguments[i], 
@@ -395,11 +395,11 @@ int train_multithread(FCParameters* network_params) {
             decay_rate,
             eps,
             use_rmsprop,
-            backward_prop_mem_alloc,
+            &backward_prop_mem_alloc,
             number_of_threads,
-            backward_prop_mutex,
-            backward_prop_cond,
-            backward_prop_barrier,
+            &backward_prop_mutex,
+            &backward_prop_cond,
+            &backward_prop_barrier,
             NULL,
             NULL);
         assignSlaveArguments(update_weights_arguments[i], 
@@ -423,11 +423,11 @@ int train_multithread(FCParameters* network_params) {
             decay_rate,
             eps,
             use_rmsprop,
-            update_weights_mem_alloc,
+            &update_weights_mem_alloc,
             number_of_threads,
-            update_weights_mutex,
-            update_weights_cond,
-            update_weights_barrier,
+            &update_weights_mutex,
+            &update_weights_cond,
+            &update_weights_barrier,
             NULL,
             NULL);
 
@@ -481,7 +481,7 @@ int train_multithread(FCParameters* network_params) {
             float accu = training_accuracy(Hs[network_depth-1], correct_labels);
             if ((epoch % 1000 == 0 && iteration == 0) || verbose) {
                 printf("INFO: Epoch %d, data loss: %f, regulization loss: %f, total loss: %f, training accuracy: %f\n",
-                    epoch, data_loss, reg_loss, loss, accu);
+                    epoch, data_loss, reg_loss, data_loss+reg_loss, accu);
             }
             // Backward propagation
             threadController_master(backward_prop_control_handle, THREAD_RESUME);
@@ -525,7 +525,7 @@ int train_multithread(FCParameters* network_params) {
     dumpNetworkConfig(network_depth, alpha, Ws, bs, use_batchnorm, mean_caches, var_caches, gammas, betas, batchnorm_eps, network_params->params_save_dir,"network.params");
 
     // Shutdown
-    destroy2DMatrix(X, number_of_threads);
+    destroy2DMatrix(X);
     for(int i=0;i<network_depth;i++) {
         destroy2DMatrix(Ws[i]);
         destroy2DMatrix(dWs[i]);
@@ -580,8 +580,8 @@ int train_multithread(FCParameters* network_params) {
         free(bcaches);
     }
     // Remeber to free struct parameter
-    destroy2DMatrix(network_params->X, number_of_threads);
-    destroy2DMatrix(network_params->correct_labels, number_of_threads);
+    destroy2DMatrix(network_params->X);
+    destroy2DMatrix(network_params->correct_labels);
     free(network_params->hidden_layer_sizes);
     free(network_params->mode);
     free(network_params->params_save_dir);
@@ -602,14 +602,14 @@ int FCNET_forwardPropagation(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, Tw
         // The last layer in the network will calculate the scores
         // So there will not be a activation function put to it
         if (i != network_depth - 1) {
-            leakyReLUForward(Hs[i],alpha,Hs[i],thread_id, mem_allocated,number_of_threads,mutex,cond,barrier);
+            leakyReLUForward_thread(Hs[i],alpha,Hs[i],thread_id, mem_allocated,number_of_threads,mutex,cond,barrier);
         }
         layer_X = Hs[i];
     }
 }
 
 void* FCNET_forwardPropagation_slave(void* args) {
-    (SlaveArgs*) a = (SlaveArgs*) args;
+    SlaveArgs* a = (SlaveArgs*) args;
     TwoDMatrix* X = a->X;
     TwoDMatrix** Ws = a->Ws;
     TwoDMatrix** bs = a->bs;
@@ -636,7 +636,7 @@ int FCNET_calcLoss(TwoDMatrix** Ws, TwoDMatrix** Hs, TwoDMatrix* correct_labels,
 }
 
 void* FCNET_calcLoss_slave(void* args) {
-    (SlaveArgs*) a = (SlaveArgs*) args;
+    SlaveArgs* a = (SlaveArgs*) args;
     TwoDMatrix** Ws = a->Ws;
     TwoDMatrix** Hs = a->Hs;
     TwoDMatrix** dHs = a->dHs;
@@ -677,7 +677,7 @@ int FCNET_backwardPropagation(TwoDMatrix** Ws, TwoDMatrix** Hs, TwoDMatrix** bs,
 }
 
 void* FCNET_backwardPropagation_slave(void* args) {
-    (SlaveArgs*) a = (SlaveArgs*) args;
+    SlaveArgs* a = (SlaveArgs*) args;
     TwoDMatrix** Ws = a->Ws;
     TwoDMatrix** Hs = a->Hs;
     TwoDMatrix** bs = a->bs;
@@ -715,7 +715,7 @@ int FCNET_updateWeights(TwoDMatrix** Ws, TwoDMatrix** dWs, TwoDMatrix** bs, TwoD
 }
 
 void* FCNET_updateWeights_slave(void* args) {
-    (SlaveArgs*) a = (SlaveArgs*) args;
+    SlaveArgs* a = (SlaveArgs*) args;
     TwoDMatrix** Ws = a->Ws;
     TwoDMatrix** Hs = a->Hs;
     TwoDMatrix** bs = a->bs;
