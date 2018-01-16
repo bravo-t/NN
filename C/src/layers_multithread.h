@@ -78,6 +78,7 @@ float softmaxLoss_thread(
     pthread_mutex_t* mutex,
     pthread_cond_t* cond,
     thread_barrier_t* barrier);
+float L2RegLoss_thread(TwoDMatrix** Ms,int network_depth, float reg_strength, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier);
 int L2RegLossBackward_thread(
     TwoDMatrix* dM,
     TwoDMatrix* M,

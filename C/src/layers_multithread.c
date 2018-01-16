@@ -196,11 +196,11 @@ float softmaxLoss_thread(TwoDMatrix* score, TwoDMatrix* correct_label, TwoDMatri
 float L2RegLoss_thread(TwoDMatrix** Ms,int network_depth, float reg_strength, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     float reg_loss = 0;
     for (int i = 0; i < network_depth; i++) {
-        TwoDMatrix* M_squared = matrixMalloc("/L2RegLoss_thread_M_squared_shm",sizeof(TwoDMatrix),id,mem_allocated,number_of_threads,mutex,cond,barrier);
+        TwoDMatrix* M_squared = matrixMalloc_thread("/L2RegLoss_thread_M_squared_shm",sizeof(TwoDMatrix),id,mem_allocated,number_of_threads,mutex,cond,barrier);
         init2DMatrix_thread(M_squared,Ms[i]->height,Ms[i]->width,id,mem_allocated,number_of_threads,mutex,cond,barrier);
         elementwiseMul2DMatrix_thread(Ms[i],Ms[i],M_squared,id,mem_allocated,number_of_threads,mutex,cond,barrier);
-        reg_loss += 0.5*reg_strength*sumAll(M_squared,id,mem_allocated,number_of_threads,mutex,cond,barrier);
-        destroy2DMatrix(M_squared,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+        reg_loss += 0.5*reg_strength*sumAll_thread(M_squared,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+        destroy2DMatrix_thread(M_squared,id,mem_allocated,number_of_threads,mutex,cond,barrier);
     }
     return reg_loss;
 }
