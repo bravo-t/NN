@@ -657,7 +657,7 @@ void* FCNET_calcLoss_slave(void* args) {
     }
 }
 
-int FCNET_backwardPropagation(TwoDMatrix** Ws, TwoDMatrix** Hs, TwoDMatrix** bs, TwoDMatrix** dWs, TwoDMatrix** dbs, TwoDMatrix** dHs, TwoDMatrix* dX, int network_depth, float alpha, int thread_id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
+int FCNET_backwardPropagation(TwoDMatrix** Ws, TwoDMatrix** Hs, TwoDMatrix** bs, TwoDMatrix** dWs, TwoDMatrix** dbs, TwoDMatrix** dHs, TwoDMatrix* X, TwoDMatrix* dX, int network_depth, float alpha, int thread_id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     for (int i=network_depth-1; i>=0; i--) {
         if (i != network_depth-1) {
             leakyReLUBackward_thread(dHs[i],Hs[i],alpha,dHs[i],thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
@@ -698,7 +698,7 @@ void* FCNET_backwardPropagation_slave(void* args) {
     thread_barrier_t* barrier = a->barrier;
     while(1) {
         threadController_slave(handle);
-        FCNET_backwardPropagation(Ws,Hs,bs,dWs,dbs,dHs,dX,network_depth,alpha,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
+        FCNET_backwardPropagation(Ws,Hs,bs,dWs,dbs,dHs,X,dX,network_depth,alpha,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
     }
 }
 
