@@ -38,7 +38,7 @@ int FCNET_forwardPropagation(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, Tw
 void* FCNET_forwardPropagation_slave(void* args);
 int FCNET_calcLoss(TwoDMatrix** Ws, TwoDMatrix** Hs, TwoDMatrix* correct_labels, int network_depth, float reg_strength, TwoDMatrix** dHs, float* losses, int thread_id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier);
 void* FCNET_calcLoss_slave(void* args);
-int FCNET_backwardPropagation(TwoDMatrix** Ws, TwoDMatrix** Hs, TwoDMatrix** bs, TwoDMatrix** dWs, TwoDMatrix** dbs, TwoDMatrix** dHs, TwoDMatrix* dX, int network_depth, float alpha, int thread_id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier);
+int FCNET_backwardPropagation(TwoDMatrix** Ws, TwoDMatrix** Hs, TwoDMatrix** bs, TwoDMatrix** dWs, TwoDMatrix** dbs, TwoDMatrix** dHs, TwoDMatrix* X, TwoDMatrix* dX, int network_depth, float alpha, int thread_id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier);
 void* FCNET_backwardPropagation_slave(void* args);
 int FCNET_updateWeights(TwoDMatrix** Ws, TwoDMatrix** dWs, TwoDMatrix** bs, TwoDMatrix** dbs, TwoDMatrix** Wcaches, TwoDMatrix** bcaches, float learning_rate, float decay_rate,
     float eps, int network_depth, int thread_id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier);

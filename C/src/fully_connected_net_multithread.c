@@ -685,6 +685,7 @@ void* FCNET_backwardPropagation_slave(void* args) {
     TwoDMatrix** dHs = a->dHs;
     TwoDMatrix** dbs = a->dbs;
     TwoDMatrix* dX = a->tmp;
+    TwoDMatrix* X = a->X;
     float alpha = a->alpha;
     int network_depth = a->network_depth;
     int thread_id = a->thread_id;
