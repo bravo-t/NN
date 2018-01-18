@@ -800,3 +800,7 @@ void assignSlaveArguments(SlaveArgs* args,
     args->int_retval = int_retval;
     args->float_retval = float_retval;
 }
+
+int test_multithread(FCParameters* network_params,TwoDMatrix* scores, int number_of_threads) {
+    return 0;
+}

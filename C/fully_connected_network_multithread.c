@@ -4,16 +4,16 @@
 #include <malloc.h>
 #include <stdbool.h>
 #include <string.h>
-#include "thread_barrier.h"
-#include "thread_control.h"
-#include "network_type.h"
-#include "matrix_operations.h"
-#include "matrix_operations_multithread.h"
-#include "layers.h"
-#include "layers_multithread.h"
-#include "misc_utils.h"
-#include "fully_connected_net.h"
-#include "fully_connected_net_multithread.h"
+#include "src/thread_barrier.h"
+#include "src/thread_control.h"
+#include "src/network_type.h"
+#include "src/matrix_operations.h"
+#include "src/matrix_operations_multithread.h"
+#include "src/layers.h"
+#include "src/layers_multithread.h"
+#include "src/misc_utils.h"
+#include "src/fully_connected_net.h"
+#include "src/fully_connected_net_multithread.h"
 
 int main(int argc, char** argv) {
     if (argc == 1) {

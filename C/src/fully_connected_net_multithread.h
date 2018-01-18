@@ -34,6 +34,9 @@ typedef struct {
     float* float_retval;
 } SlaveArgs;
 
+int train_multithread(FCParameters* network_params);
+int test_multithread(FCParameters* network_params, TwoDMatrix* scores, int number_of_threads);
+
 int FCNET_forwardPropagation(TwoDMatrix* X, TwoDMatrix** Ws, TwoDMatrix** bs, TwoDMatrix** Hs, int network_depth, float alpha, int thread_id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier);
 void* FCNET_forwardPropagation_slave(void* args);
 int FCNET_calcLoss(TwoDMatrix** Ws, TwoDMatrix** Hs, TwoDMatrix* correct_labels, int network_depth, float reg_strength, TwoDMatrix** dHs, float* losses, int thread_id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier);
