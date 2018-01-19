@@ -634,8 +634,11 @@ void* FCNET_forwardPropagation_slave(void* args) {
     pthread_mutex_t* mutex = a->mutex;
     pthread_cond_t* cond = a->cond;
     thread_barrier_t* barrier = a->barrier;
+    printf("DEBUG: [forward prop] thread created.\n");
     while(1) {
+        printf("DEBUG: [forward prop] waiting for instuction from master thread\n");
         threadController_slave(handle);
+        printf("DEBUG: [forward prop] running for 1 iteration\n");
         FCNET_forwardPropagation(X,Ws,bs,Hs,network_depth,alpha,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
     }
 }
