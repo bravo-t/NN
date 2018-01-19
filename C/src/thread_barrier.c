@@ -71,7 +71,7 @@ int thread_barrier_wait_reinit(thread_barrier_t* b, int n) {
         int d;
         do { d = thread_barrier_destroy(b); } while(d == THREAD_BARRIER_EDSTRY_BUSY);
         int ie;
-        do {thread_barrier_init(b,n);} while(ie == THREAD_BARRIER_EINIT_BUSY);
+        do {ie = thread_barrier_init(b,n);} while(ie == THREAD_BARRIER_EINIT_BUSY);
     } else {
         bool to_be_destroyed,initialized;
         do {

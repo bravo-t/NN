@@ -262,6 +262,8 @@ int train_multithread(FCParameters* network_params) {
     pthread_mutex_t forward_prop_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
     thread_barrier_t forward_prop_inst_ready = THREAD_BARRIER_INITIALIZER;
     thread_barrier_t forward_prop_inst_ack = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_init(&forward_prop_inst_ready,number_of_threads);
+    thread_barrier_init(&forward_prop_inst_ack,number_of_threads);
     ThreadControl* forward_prop_control_handle = initControlHandle(&forward_prop_control_handle_mutex, &forward_prop_inst_ready, &forward_prop_inst_ack, number_of_threads);
 
     bool calc_loss_mem_alloc = false;
@@ -272,6 +274,8 @@ int train_multithread(FCParameters* network_params) {
     pthread_mutex_t calc_loss_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
     thread_barrier_t calc_loss_inst_ready = THREAD_BARRIER_INITIALIZER;
     thread_barrier_t calc_loss_inst_ack = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_init(&calc_loss_inst_ready,number_of_threads);
+    thread_barrier_init(&calc_loss_inst_ack,number_of_threads);
     ThreadControl* calc_loss_control_handle = initControlHandle(&calc_loss_control_handle_mutex, &calc_loss_inst_ready, &calc_loss_inst_ack, number_of_threads);
     
     bool backward_prop_mem_alloc = false;
@@ -282,6 +286,8 @@ int train_multithread(FCParameters* network_params) {
     pthread_mutex_t backward_prop_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
     thread_barrier_t backward_prop_inst_ready = THREAD_BARRIER_INITIALIZER;
     thread_barrier_t backward_prop_inst_ack = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_init(&backward_prop_inst_ready,number_of_threads);
+    thread_barrier_init(&backward_prop_inst_ack,number_of_threads);
     ThreadControl* backward_prop_control_handle = initControlHandle(&backward_prop_control_handle_mutex, &backward_prop_inst_ready, &backward_prop_inst_ack, number_of_threads);
     
     bool update_weights_mem_alloc = false;
@@ -292,6 +298,8 @@ int train_multithread(FCParameters* network_params) {
     pthread_mutex_t update_weights_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
     thread_barrier_t update_weights_inst_ready = THREAD_BARRIER_INITIALIZER;
     thread_barrier_t update_weights_inst_ack = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_init(&update_weights_inst_ready,number_of_threads);
+    thread_barrier_init(&update_weights_inst_ack,number_of_threads);
     ThreadControl* update_weights_control_handle = initControlHandle(&update_weights_control_handle_mutex, &update_weights_inst_ready, &update_weights_inst_ack, number_of_threads);
     
     printf("INFO: Creating slave threads\n");
@@ -452,6 +460,8 @@ int train_multithread(FCParameters* network_params) {
             printf("Error happened while creating slave threads\n");
             exit(-1);
         }
+
+        printf("DEBUG: Slave threads created %d iteration\n", i);
     }
 
     // Feed data to the network to train it
