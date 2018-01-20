@@ -14,7 +14,7 @@ fully_connected_network: fully_connected_network.c misc_utils.o matrix_operation
 	$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
 
 fully_connected_network_multithread: fully_connected_network_multithread.c misc_utils.o matrix_operations.o layers.o fully_connected_net.o matrix_operations_multithread.o layers_multithread.o fully_connected_net_multithread.o thread_barrier.o thread_control.o inter-process_communication.o
-	$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
+	$(CC) -o $@ $^ $(LIBS) $(CFLAGS) $(THREAD_LIBS)
 
 misc_utils.o: src/misc_utils.c src/misc_utils.h src/network_type.h
 	$(CC) -c -o $@ $< $(LIBS) $(CFLAGS)
