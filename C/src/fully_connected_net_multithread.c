@@ -440,22 +440,27 @@ int train_multithread(FCParameters* network_params) {
             NULL);
 
         int create_thread_error;
-        create_thread_error = pthread_create(&forward_prop[i],&attr,FCNET_forwardPropagation_slave,&forward_prop_arguments[i]);
+        /*
+        forward_prop_arguments[i] is the type of SlaveArgs*, which is expected by FCNET_forwardPropagation_slave.
+        However while creating slave threads, I used &forward_prop_arguments[i], this is a type of SlaveArgs**.
+        So the "&" is not needed.
+        */
+        create_thread_error = pthread_create(&forward_prop[i],&attr,FCNET_forwardPropagation_slave,forward_prop_arguments[i]);
         if (create_thread_error) {
             printf("Error happened while creating slave threads\n");
             exit(-1);
         }
-        create_thread_error = pthread_create(&calc_loss[i],&attr,FCNET_calcLoss_slave,&calc_loss_arguments[i]);
+        create_thread_error = pthread_create(&calc_loss[i],&attr,FCNET_calcLoss_slave,calc_loss_arguments[i]);
         if (create_thread_error) {
             printf("Error happened while creating slave threads\n");
             exit(-1);
         }
-        create_thread_error = pthread_create(&backward_prop[i],&attr,FCNET_backwardPropagation_slave,&backward_prop_arguments[i]);
+        create_thread_error = pthread_create(&backward_prop[i],&attr,FCNET_backwardPropagation_slave,backward_prop_arguments[i]);
         if (create_thread_error) {
             printf("Error happened while creating slave threads\n");
             exit(-1);
         }
-        create_thread_error = pthread_create(&update_weights[i],&attr,FCNET_updateWeights_slave,&forward_prop_arguments[i]);
+        create_thread_error = pthread_create(&update_weights[i],&attr,FCNET_updateWeights_slave,forward_prop_arguments[i]);
         if (create_thread_error) {
             printf("Error happened while creating slave threads\n");
             exit(-1);
