@@ -8,11 +8,6 @@
 #include "network_type.h"
 #include "inter-process_communication.h"
 
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
-sem_t semaphore;
-pthread_barrier_t barrier;
-
 void microsecSleep (long ms) {
     struct timeval delay;
     delay.tv_sec = ms * 1e-6;
