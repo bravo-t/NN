@@ -29,12 +29,12 @@ int IPCWriteToSharedMem(char* shared_memory_name, void* base_ptr, int data_lengt
         return 1;
     }
     ftruncate(shm_fd,data_length);
-    void** shm_base = mmap(0,data_length,PROT_READ|PROT_WRITE,MAP_SHARED,shm_fd,0);
+    void* shm_base = mmap(0,data_length,PROT_READ|PROT_WRITE,MAP_SHARED,shm_fd,0);
     if (shm_base == MAP_FAILED) {
         printf("ERROR: mmap failed\n");
         return 1;
     }
-    memcpy(*shm_base, base_ptr, data_length);
+    memcpy(shm_base, base_ptr, data_length);
     if (munmap(shm_base,data_length)) {
         printf("Unmap failed\n");
         return 1;
@@ -52,13 +52,13 @@ int IPCReadFromSharedMem(char* shared_memory_name, void* data, int data_length) 
         printf("ERROR: Cannot read shared memory\n");
         return(1);
     }
-    TwoDMatrix** shm_base = mmap(0,data_length,PROT_READ,MAP_SHARED,shm_fd,0);
+    void* shm_base = mmap(0,data_length,PROT_READ,MAP_SHARED,shm_fd,0);
     if (shm_base == MAP_FAILED) {
         printf("mmap failed\n");
         return(1);
     }
-    memcpy(data, *shm_base, data_length);
-    if (munmap(shm_base,sizeof(TwoDMatrix))) {
+    memcpy(data, shm_base, data_length);
+    if (munmap(shm_base,data_length)) {
         printf("Unmap failed\n");
         return(1);
     }
