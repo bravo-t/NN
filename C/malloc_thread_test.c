@@ -26,6 +26,7 @@ thread_barrier_t* barrier;
 int number_of_threads = 4;
 
 int main() {
+	barrier = (thread_barrier_t*) malloc(sizeof(thread_barrier_t));
 	*barrier = THREAD_BARRIER_INITIALIZER;
     int* ids = malloc(sizeof(int)*number_of_threads);
     pthread_attr_t attr;
