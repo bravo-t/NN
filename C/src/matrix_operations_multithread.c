@@ -75,12 +75,12 @@ void preset_mem_allocated(int id, bool* mem_allocated,int number_of_threads, pth
 }
 
 void* matrixMalloc_thread(char* share_memory_name, int size, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
-    void* M;
+    void* M = malloc(sizeof(void*));
     if (id == 0) {
         pthread_mutex_lock(mutex);
         thread_barrier_init(barrier,number_of_threads);
-        M = matrixMalloc(size);
-        IPCWriteToSharedMem(share_memory_name,&M,sizeof(void*));
+        void* memory_chunk = matrixMalloc(size);
+        IPCWriteToSharedMem(share_memory_name,&memory_chunk,sizeof(void*));
         *mem_allocated = true;
         pthread_mutex_unlock(mutex);
     } else {
@@ -94,7 +94,7 @@ void* matrixMalloc_thread(char* share_memory_name, int size, int id, bool* mem_a
         pthread_mutex_unlock(mutex);
     }
     pthread_mutex_lock(mutex);
-    IPCReadFromSharedMem(share_memory_name,M,sizeof(void*));
+    IPCReadFromSharedMem(share_memory_name,&M,sizeof(void*));
     pthread_mutex_unlock(mutex);
     if (id == 0) {
         IPCRemoveSharedMemFile(share_memory_name);
@@ -104,13 +104,13 @@ void* matrixMalloc_thread(char* share_memory_name, int size, int id, bool* mem_a
 }
 
 void* malloc_thread(char* share_memory_name, int size, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
-    void* M;
+    void* M = malloc(sizeof(void*));
     if (id == 0) {
         pthread_mutex_lock(mutex);
         thread_barrier_init(barrier,number_of_threads);
-        M = malloc(size);
-        printf("DEBUG: id %d: Writing shm: %p\n",id,M);
-        IPCWriteToSharedMem(share_memory_name,M,sizeof(void*));
+        void* memory_chunk = malloc(size);
+        printf("DEBUG: id %d: Writing shm: %p\n",id,memory_chunk);
+        IPCWriteToSharedMem(share_memory_name,&memory_chunk,sizeof(void*));
         *mem_allocated = true;
         printf("DEBUG: id %d: Shm created\n",id);
         pthread_mutex_unlock(mutex);
@@ -129,7 +129,8 @@ void* malloc_thread(char* share_memory_name, int size, int id, bool* mem_allocat
     }
     pthread_mutex_lock(mutex);
     printf("DEBUG: id %d: Read from shm\n",id);
-    IPCReadFromSharedMem(share_memory_name,M,sizeof(void*));
+    IPCReadFromSharedMem(share_memory_name,&M,sizeof(void*));
+    printf("DEBUG: id %d: Read content %p from shm\n",id,M);
     pthread_mutex_unlock(mutex);
     thread_barrier_wait_reinit(barrier,number_of_threads);
     if (id == 0) {
@@ -141,12 +142,12 @@ void* malloc_thread(char* share_memory_name, int size, int id, bool* mem_allocat
 }
 
 void* calloc_thread(char* share_memory_name, int n, int blk_size, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
-    void* M;
+    void* M = malloc(sizeof(void*));
     if (id == 0) {
         pthread_mutex_lock(mutex);
         thread_barrier_init(barrier,number_of_threads);
-        M = calloc(n,blk_size);
-        IPCWriteToSharedMem(share_memory_name,M,sizeof(M));
+        void* memory_chunk = calloc(n,blk_size);
+        IPCWriteToSharedMem(share_memory_name,&memory_chunk,sizeof(void*));
         *mem_allocated = true;
         pthread_mutex_unlock(mutex);
     } else {
@@ -160,7 +161,7 @@ void* calloc_thread(char* share_memory_name, int n, int blk_size, int id, bool* 
         pthread_mutex_unlock(mutex);
     }
     pthread_mutex_lock(mutex);
-    IPCReadFromSharedMem(share_memory_name,M,sizeof(void*));
+    IPCReadFromSharedMem(share_memory_name,&M,sizeof(void*));
     pthread_mutex_unlock(mutex);
     if (id == 0) {
         IPCRemoveSharedMemFile(share_memory_name);
