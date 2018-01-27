@@ -75,7 +75,7 @@ void preset_mem_allocated(int id, bool* mem_allocated,int number_of_threads, pth
 }
 
 void* matrixMalloc_thread(char* share_memory_name, int size, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
-    void* M = malloc(sizeof(void*));
+    void* M;
     if (id == 0) {
         pthread_mutex_lock(mutex);
         thread_barrier_init(barrier,number_of_threads);
@@ -104,7 +104,7 @@ void* matrixMalloc_thread(char* share_memory_name, int size, int id, bool* mem_a
 }
 
 void* malloc_thread(char* share_memory_name, int size, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
-    void* M = malloc(sizeof(void*));
+    void* M;
     if (id == 0) {
         pthread_mutex_lock(mutex);
         thread_barrier_init(barrier,number_of_threads);
@@ -142,7 +142,7 @@ void* malloc_thread(char* share_memory_name, int size, int id, bool* mem_allocat
 }
 
 void* calloc_thread(char* share_memory_name, int n, int blk_size, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
-    void* M = malloc(sizeof(void*));
+    void* M;
     if (id == 0) {
         pthread_mutex_lock(mutex);
         thread_barrier_init(barrier,number_of_threads);
