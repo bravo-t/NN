@@ -25,7 +25,7 @@ void waitUntilEveryoneIsFinished(sem_t* sem) {
 int IPCWriteToSharedMem(char* shared_memory_name, void* base_ptr, int data_length) {
 	int shm_fd = shm_open(shared_memory_name,O_CREAT|O_RDWR,0666);
     if (shm_fd == -1) {
-        printf("ERROR: Cannot create shared memory\n");
+        printf("ERROR: Cannot create shared memory %s\n", shared_memory_name);
         return 1;
     }
     ftruncate(shm_fd,data_length);
@@ -49,7 +49,7 @@ int IPCWriteToSharedMem(char* shared_memory_name, void* base_ptr, int data_lengt
 int IPCReadFromSharedMem(char* shared_memory_name, void* data, int data_length) {
 	int shm_fd = shm_open(shared_memory_name,O_RDONLY,0666);
     if (shm_fd == -1) {
-        printf("ERROR: Cannot read shared memory\n");
+        printf("ERROR: Cannot read shared memory from %s\n",shared_memory_name);
         return(1);
     }
     void* shm_base = mmap(0,data_length,PROT_READ,MAP_SHARED,shm_fd,0);
