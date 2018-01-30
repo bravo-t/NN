@@ -56,6 +56,6 @@ int main() {
 void* thread(void* id) {
 
 	int* thread_id = (int*) id;
-	char* test = malloc_thread("/malloc_thread_test",sizeof(char)*10,*thread_id,&mem_allocated,number_of_threads,&mutex,&cond,barrier);
+    TwoDMatrix* test = matrixMalloc_thread("/matrixMalloc_test_shm",sizeof(TwoDMatrix),*thread_id,&mem_allocated,number_of_threads,&mutex,&cond,barrier);
 	printf("DEBUG: id %d: test = %p\n", *thread_id, test);
 }
