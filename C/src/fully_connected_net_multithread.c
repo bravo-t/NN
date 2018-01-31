@@ -165,6 +165,10 @@ int train_multithread(FCParameters* network_params) {
         init2DMatrixNormRand(Ws[i],former_width,hidden_layer_sizes[i],0.0,1.0,former_width);
         init2DMatrixZero(bs[i],1,hidden_layer_sizes[i]);
         init2DMatrix(Hs[i],minibatch_size,hidden_layer_sizes[i]);
+        // I have to init deltas here
+        //init2DMatrixZero(dWs[i],former_width,hidden_layer_sizes[i]);
+        //init2DMatrixZero(dbs[i],1,hidden_layer_sizes[i]);
+        //init2DMatrixZero(dHs[i],minibatch_size,hidden_layer_sizes[i]);
         // Statistic data
         number_of_weights += former_width*hidden_layer_sizes[i];
         number_of_biases += hidden_layer_sizes[i];

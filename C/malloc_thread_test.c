@@ -23,10 +23,10 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 thread_barrier_t* barrier;
 
-int number_of_threads = 4;
+int number_of_threads = 1;
 
 int main() {
-	barrier = (thread_barrier_t*) malloc(sizeof(thread_barrier_t));
+    barrier = (thread_barrier_t*) malloc(sizeof(thread_barrier_t));
 	*barrier = THREAD_BARRIER_INITIALIZER;
     int* ids = malloc(sizeof(int)*number_of_threads);
     pthread_attr_t attr;
@@ -56,6 +56,14 @@ int main() {
 void* thread(void* id) {
 
 	int* thread_id = (int*) id;
-    TwoDMatrix* test = matrixMalloc_thread("/matrixMalloc_test_shm",sizeof(TwoDMatrix),*thread_id,&mem_allocated,number_of_threads,&mutex,&cond,barrier);
-	printf("DEBUG: id %d: test = %p\n", *thread_id, test);
+	TwoDMatrix* test = matrixMalloc_thread("/matrixMalloc_thread_test",sizeof(TwoDMatrix),*thread_id,&mem_allocated,number_of_threads,&mutex,&cond,barrier);
+    init2DMatrix_thread(test,200,200,*thread_id,&mem_allocated,number_of_threads,&mutex,&cond,barrier);
+    float sum = 0;
+    for(int i=0;i<200;i++) {
+        for(int j=0;j<200;j++) {
+            sum += test->d[i][j];
+        }
+    }
+	printf("DEBUG: id %d: test = %p, sum = %f\n", *thread_id, test, sum);
+    return NULL;
 }
