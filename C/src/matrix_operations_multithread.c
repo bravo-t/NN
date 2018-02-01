@@ -184,7 +184,7 @@ void* calloc_thread(char* share_memory_name, int n, int blk_size, int id, bool* 
     return M;
 }
 
-
+// Change this to thread 0 only
 int init2DMatrix_thread(TwoDMatrix* M, int height, int width, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
     if (M->initialized) return 0;
@@ -342,6 +342,7 @@ int transpose2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_all
     int w_end = calc_h_end(id,M->width,number_of_threads);
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
     init2DMatrix_thread(OUT, M->width,M->height,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    // M is a matrix of height 2, width 100, but now below for loop is iterating from i:0 .. 99, height and width messed up
     for(int i=w_start;i<=w_end;i++) {
         for(int j=0;j<M->width;j++) OUT->d[j][i] = M->d[i][j];
     }
