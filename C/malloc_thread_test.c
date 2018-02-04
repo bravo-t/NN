@@ -57,13 +57,9 @@ void* thread(void* id) {
 
 	int* thread_id = (int*) id;
 	TwoDMatrix* test = matrixMalloc_thread("/matrixMalloc_thread_test",sizeof(TwoDMatrix),*thread_id,&mem_allocated,number_of_threads,&mutex,&cond,barrier);
-    init2DMatrix_thread(test,200,200,*thread_id,&mem_allocated,number_of_threads,&mutex,&cond,barrier);
-    float sum = 0;
-    for(int i=0;i<200;i++) {
-        for(int j=0;j<200;j++) {
-            sum += test->d[i][j];
-        }
-    }
-	printf("DEBUG: id %d: test = %p, sum = %f\n", *thread_id, test, sum);
+	TwoDMatrix* out = matrixMalloc_thread("/matrixMalloc_thread_test_out",sizeof(TwoDMatrix),*thread_id,&mem_allocated,number_of_threads,&mutex,&cond,barrier);
+    init2DMatrix_thread(test,2,200,*thread_id,&mem_allocated,number_of_threads,&mutex,&cond,barrier);
+    transpose2DMatrix_thread(test,out,*thread_id,&mem_allocated,number_of_threads,&mutex,&cond,barrier);
+	//printf("DEBUG: id %d: test = %p, sum = %f\n", *thread_id, test, sum);
     return NULL;
 }
