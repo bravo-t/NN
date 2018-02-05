@@ -344,7 +344,7 @@ int transpose2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_all
     init2DMatrix_thread(OUT, M->width,M->height,id,mem_allocated,number_of_threads,mutex,cond,barrier);
     // M is a matrix of height 2, width 100, but now below for loop is iterating from i:0 .. 99, height and width messed up
     for(int i=w_start;i<=w_end;i++) {
-        for(int j=0;j<M->width;j++) OUT->d[j][i] = M->d[i][j];
+        for(int j=0;j<M->height;j++) OUT->d[i][j] = M->d[j][i];
     }
     return 0;
 }
