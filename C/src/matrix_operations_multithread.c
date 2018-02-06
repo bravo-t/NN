@@ -22,10 +22,10 @@ int calc_h_start(int id, int height,int number_of_threads) {
 
 int calc_h_end(int id, int height,int number_of_threads) {
     int h_end = ((id+1)*height/number_of_threads)-1;
+    if (id == 0 && height < number_of_threads)
+        return height - 1;
     if (h_end < height) {
         return h_end;
-    } else if (id == 0 && height < number_of_threads) {
-        return height - 1;
     } else {
         // Return a value that makes no sense to prevent functions from over-writing
         return -1;
