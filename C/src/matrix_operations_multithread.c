@@ -22,13 +22,19 @@ int calc_h_start(int id, int height,int number_of_threads) {
 
 int calc_h_end(int id, int height,int number_of_threads) {
     int h_end = ((id+1)*height/number_of_threads)-1;
-    if (id == 0 && height < number_of_threads)
-        return height - 1;
-    if (h_end < height) {
-        return h_end;
+    if (height < number_of_threads) {
+        if (id == 0) {
+            return height - 1;
+        } else {
+            return -1;
+        }
     } else {
-        // Return a value that makes no sense to prevent functions from over-writing
-        return -1;
+        if (h_end < height) {
+            return h_end;
+        } else {
+            // Return a value that makes no sense to prevent functions from over-writing
+            return -1;
+        }
     }
 }
 
@@ -215,8 +221,9 @@ int init2DMatrix_thread(TwoDMatrix* M, int height, int width, int id, bool* mem_
     for(int i=h_start;i<=h_end;i++) {
         M->d[i] = (float*) calloc(width,sizeof(float));
     }
-    if(h_start == 0) M->initialized = true;
+    //if(h_start == 0) M->initialized = true;
     thread_barrier_wait_reinit(barrier,number_of_threads);
+    if(h_start == 0) M->initialized = true;
     return 0;
 }
 
@@ -249,8 +256,9 @@ int init2DMatrixNormRand_thread(TwoDMatrix* M, int height, int width, float mean
             M->d[i][j] = random_normal(mean,std)*sqrt(2.0/n);
         }
     }
-    if(h_start == 0) M->initialized = true;
+    //if(h_start == 0) M->initialized = true;
     thread_barrier_wait_reinit(barrier,number_of_threads);
+    if(h_start == 0) M->initialized = true;
     return 0;
 }
 
@@ -288,8 +296,9 @@ int init2DMatrixOne_thread(TwoDMatrix* M, int height, int width,int id, bool* me
             M->d[i][j] = 1;
         }
     }
-    if(h_start == 0) M->initialized = true;
+    //if(h_start == 0) M->initialized = true;
     thread_barrier_wait_reinit(barrier,number_of_threads);
+    if(h_start == 0) M->initialized = true;
     return 0;
 }
 
