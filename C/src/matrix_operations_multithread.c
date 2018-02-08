@@ -218,11 +218,21 @@ int init2DMatrix_thread(TwoDMatrix* M, int height, int width, int id, bool* mem_
     }
     // TODO
     // for(int i=h_start;i<=h_end && i<M->height;i++)
+    pthread_mutex_lock(mutex);
     for(int i=h_start;i<=h_end;i++) {
-        M->d[i] = (float*) calloc(width,sizeof(float));
+        //printf("DEBUG: Thread %d: Initing memory of row %d\n",id,i);
+        //M->d[i] = (float*) calloc(width,sizeof(float));
+        M->d[i] = (float*) malloc(width*sizeof(float));
+        if (M->d[i] == NULL) {
+            printf("ERROR: Thread %d: NULL pointer returned from malloc for row %d\n",id,i);
+        }
+        //usleep(1);
     }
+    pthread_mutex_unlock(mutex);
     //if(h_start == 0) M->initialized = true;
+    printf("DEBUG: Thread %d reached thread barrier\n",id);
     thread_barrier_wait_reinit(barrier,number_of_threads);
+    printf("DEBUG: Thread %d went through thread barrier\n",id);
     if(h_start == 0) M->initialized = true;
     return 0;
 }
