@@ -202,6 +202,7 @@ int init2DMatrix_thread(TwoDMatrix* M, int height, int width, int id, bool* mem_
         thread_barrier_init(barrier,number_of_threads);
         M->height = height;
         M->width = width;
+        // HERE! h_start is 0 even id is not 0! So M->d is overwrote
         M->d = (float**) calloc(height, sizeof(float*));
         *mem_allocated = true;
         pthread_mutex_unlock(mutex);
