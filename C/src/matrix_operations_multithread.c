@@ -17,7 +17,15 @@ extern pthread_barrier_t barrier;
 extern int number_of_threads;
 
 int calc_h_start(int id, int height,int number_of_threads) {
-    return(id*height/number_of_threads);
+    if (height < number_of_threads) {
+        if (id == 0) {
+            return 0;
+        } else {
+            return height + 1;
+        }
+    } else {
+        return (id*height/number_of_threads);
+    }
 }
 
 int calc_h_end(int id, int height,int number_of_threads) {
