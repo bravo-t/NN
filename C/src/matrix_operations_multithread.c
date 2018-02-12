@@ -702,14 +702,14 @@ int maxY2DMatrix_thread(TwoDMatrix* M,TwoDMatrix* OUT,int id, bool* mem_allocate
 
 float sumAll_thread(TwoDMatrix* M,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
-    float* retval_ptr;
+    float* retval_ptr = malloc(sizeof(float));;
     char* share_memory_name = "/sumAll_thread_shared_memory";
     if (id == 0) {
         pthread_mutex_lock(mutex);
         thread_barrier_init(barrier,number_of_threads);
-        retval_ptr = malloc(sizeof(float));
+        //retval_ptr = malloc(sizeof(float));
         *retval_ptr = sumAll(M);
-        IPCWriteToSharedMem(share_memory_name,retval_ptr,sizeof(float));
+        IPCWriteToSharedMem(share_memory_name,&retval_ptr,sizeof(float));
         *mem_allocated = true;
         pthread_mutex_unlock(mutex);
     } else {
@@ -723,7 +723,7 @@ float sumAll_thread(TwoDMatrix* M,int id, bool* mem_allocated,int number_of_thre
         pthread_mutex_unlock(mutex);
     }
     pthread_mutex_lock(mutex);
-    IPCReadFromSharedMem(share_memory_name,retval_ptr,sizeof(float));
+    IPCReadFromSharedMem(share_memory_name,&retval_ptr,sizeof(float));
     pthread_mutex_unlock(mutex);
     float retval = *retval_ptr;
     thread_barrier_wait_reinit(barrier,number_of_threads);
