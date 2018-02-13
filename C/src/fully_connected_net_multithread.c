@@ -7,6 +7,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <unistd.h>
 #include "thread_barrier.h"
 #include "thread_control.h"
 #include "network_type.h"
@@ -469,8 +470,6 @@ int train_multithread(FCParameters* network_params) {
             printf("Error happened while creating slave threads\n");
             exit(-1);
         }
-
-        printf("DEBUG: Slave threads created %d iteration\n", i);
     }
 
     // Feed data to the network to train it
@@ -492,9 +491,13 @@ int train_multithread(FCParameters* network_params) {
             int data_end = (iteration+1)*minibatch_size-1;
             chop2DMatrix(training_data,data_start,data_end,X);
             // Forward propagation
+            printf("DEBUG: Signaling all forward_prop threads to run\n");
             threadController_master(forward_prop_control_handle, THREAD_RESUME);
+            sleep(1);
             
+            printf("DEBUG: Signaling all calc_loss threads to run\n");
             threadController_master(calc_loss_control_handle, THREAD_RESUME);
+            sleep(1);
             float data_loss = losses[0][0];
             float reg_loss = losses[0][1];
             float accu = training_accuracy(Hs[network_depth-1], correct_labels);
@@ -503,9 +506,13 @@ int train_multithread(FCParameters* network_params) {
                     epoch, data_loss, reg_loss, data_loss+reg_loss, accu);
             }
             // Backward propagation
+            printf("DEBUG: Signaling all backward_prop threads to run\n");
             threadController_master(backward_prop_control_handle, THREAD_RESUME);
+            sleep(1);
             // Update weights
+            printf("DEBUG: Signaling all update_weights threads to run\n");
             threadController_master(update_weights_control_handle, THREAD_RESUME);
+            sleep(1);
         }
         if (shuffle_training_samples != 0 && epoch % shuffle_training_samples == 0) {
             shuffleTrainingSamplesFCNet(training_data, correct_labels, training_data, correct_labels);
@@ -643,11 +650,9 @@ void* FCNET_forwardPropagation_slave(void* args) {
     pthread_mutex_t* mutex = a->mutex;
     pthread_cond_t* cond = a->cond;
     thread_barrier_t* barrier = a->barrier;
-    printf("DEBUG: [forward prop] thread created.\n");
     while(1) {
-        printf("DEBUG: [forward prop] waiting for instuction from master thread\n");
         threadController_slave(handle);
-        printf("DEBUG: [forward prop] running for 1 iteration\n");
+        printf("DEBUG: [forward_prop] Received signal to run\n");
         FCNET_forwardPropagation(X,Ws,bs,Hs,network_depth,alpha,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
     }
 }
@@ -676,6 +681,7 @@ void* FCNET_calcLoss_slave(void* args) {
     float* losses = a->float_retval;
     while(1) {
         threadController_slave(handle);
+        printf("DEBUG: [calc_loss] Received signal to run\n");
         FCNET_calcLoss(Ws,Hs,correct_labels,network_depth,reg_strength,dHs,losses,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
     }
 }
@@ -722,6 +728,7 @@ void* FCNET_backwardPropagation_slave(void* args) {
     thread_barrier_t* barrier = a->barrier;
     while(1) {
         threadController_slave(handle);
+        printf("DEBUG: [backward_prop] Received signal to run\n");
         FCNET_backwardPropagation(Ws,Hs,bs,dWs,dbs,dHs,X,dX,network_depth,alpha,reg_strength,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
     }
 }
@@ -762,6 +769,7 @@ void* FCNET_updateWeights_slave(void* args) {
     thread_barrier_t* barrier = a->barrier;
     while(1) {
         threadController_slave(handle);
+        printf("DEBUG: [update_weights] Received signal to run\n");
         FCNET_updateWeights(Ws,dWs,bs,dbs,Wcaches,bcaches,learning_rate,decay_rate,eps,use_rmsprop,network_depth,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
     }
 }
