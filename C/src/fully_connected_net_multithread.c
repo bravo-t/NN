@@ -493,11 +493,11 @@ int train_multithread(FCParameters* network_params) {
             // Forward propagation
             printf("DEBUG: Signaling all forward_prop threads to run\n");
             threadController_master(forward_prop_control_handle, THREAD_RESUME);
-            sleep(1);
+            //sleep(1);
             
             printf("DEBUG: Signaling all calc_loss threads to run\n");
             threadController_master(calc_loss_control_handle, THREAD_RESUME);
-            sleep(1);
+            //sleep(1);
             float data_loss = losses[0][0];
             float reg_loss = losses[0][1];
             float accu = training_accuracy(Hs[network_depth-1], correct_labels);
@@ -508,11 +508,11 @@ int train_multithread(FCParameters* network_params) {
             // Backward propagation
             printf("DEBUG: Signaling all backward_prop threads to run\n");
             threadController_master(backward_prop_control_handle, THREAD_RESUME);
-            sleep(1);
+            //sleep(1);
             // Update weights
             printf("DEBUG: Signaling all update_weights threads to run\n");
             threadController_master(update_weights_control_handle, THREAD_RESUME);
-            sleep(1);
+            //sleep(1);
         }
         if (shuffle_training_samples != 0 && epoch % shuffle_training_samples == 0) {
             shuffleTrainingSamplesFCNet(training_data, correct_labels, training_data, correct_labels);
@@ -727,6 +727,11 @@ void* FCNET_backwardPropagation_slave(void* args) {
     pthread_cond_t* cond = a->cond;
     thread_barrier_t* barrier = a->barrier;
     while(1) {
+        // Here is the issue
+        // threadController_slave only make sure the instructions from master is safely received
+        // But it didn't guarantee that next step, update weights, will be executed after the FINISH of FCNET_backwardPropagation
+        // Because threadController_slave don't have control of it
+        // To fix, I need to add a controller after FCNET_backwardPropagation, and make threadController_master wait until the newly added slave controller is reached
         threadController_slave(handle);
         printf("DEBUG: [backward_prop] Received signal to run\n");
         FCNET_backwardPropagation(Ws,Hs,bs,dWs,dbs,dHs,X,dX,network_depth,alpha,reg_strength,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
