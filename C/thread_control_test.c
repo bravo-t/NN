@@ -2,23 +2,11 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <pthread.h>
-#include <semaphore.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
-#include "src/inter-process_communication.h"
-
-#define THREAD_RESUME 0
-#define THREAD_EXIT 1
-
-typedef struct {
-    pthread_mutex_t* mutex;
-    pthread_cond_t* cond;
-    sem_t* semaphore;
-    bool cond_set;
-    int state;
-    int iterations;
-} ThreadControl;
+#include "src/thread_barrier.h"
+#include "src/thread_control.h"
 
 typedef struct {
     ThreadControl* handle;
@@ -26,21 +14,18 @@ typedef struct {
 } TestArgs;
 
 void* test(void* a);
-void threadController_slave(ThreadControl* handle, int id);
-ThreadControl* initControlHandle(pthread_mutex_t* mutex, pthread_cond_t* cond, sem_t* sem);
-void threadController_master(ThreadControl* handle, int state_id, int number_of_threads);
-void waitUntilEveryoneIsFinished_test(sem_t *sem);
-
-pthread_mutex_t printf_mutex = PTHREAD_MUTEX_INITIALIZER;
+void microsecSleep (long ms);
 
 pthread_mutex_t test_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t test_cond = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t printf_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 //state_t test_state = RESUME;
 bool test_set = false;
 int main() {
     int number_of_threads = 4;
-    sem_t sem;
-    ThreadControl* control_handle = initControlHandle(&test_mutex, &test_cond, &sem);
+    thread_barrier_t instruction_ready = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t acknowledge = THREAD_BARRIER_INITIALIZER;
+    ThreadControl* control_handle = initControlHandle(&test_mutex, &instruction_ready, &acknowledge, number_of_threads);
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
@@ -60,11 +45,11 @@ int main() {
     pthread_mutex_lock(&printf_mutex);
     printf("Signal all threads to resume\n");
     pthread_mutex_unlock(&printf_mutex);
-    threadController_master(control_handle, THREAD_RESUME, number_of_threads);
+    threadController_master(control_handle, THREAD_RESUME);
     pthread_mutex_lock(&printf_mutex);
     printf("Signal all threads to exit\n");
     pthread_mutex_unlock(&printf_mutex);
-    threadController_master(control_handle, THREAD_EXIT, number_of_threads);
+    threadController_master(control_handle, THREAD_EXIT);
     void* status;
     for(int n=0;n<t;n++) {
         int join_error = pthread_join(thread[n],&status);
@@ -84,89 +69,18 @@ void* test(void* a) {
     int id = (*args).id;
     ThreadControl* control_handle = (*args).handle;
     while(1) {
-        threadController_slave(control_handle,id);
+        threadController_slave(control_handle);
+        pthread_mutex_lock(&printf_mutex);
+        printf("Thread %d resuming\n", id);
+        pthread_mutex_unlock(&printf_mutex);
         sleep(1);
     }
 }
 
 
-void threadController_slave(ThreadControl* handle,int id) {
-    static __thread int i = 0;
-    if (i == 0) {
-        pthread_mutex_lock(&printf_mutex);
-        printf("Thread %d: Waiting for instructions...\n",id);
-        pthread_mutex_unlock(&printf_mutex);
-        int sem_value;
-        sem_getvalue(handle->semaphore, &sem_value);
-        pthread_mutex_lock(&printf_mutex);
-        printf("Thread %d: semaphore value: %d\n",id, sem_value);
-        pthread_mutex_unlock(&printf_mutex);
-        sem_wait(handle->semaphore);
-        pthread_mutex_lock(&printf_mutex);
-        printf("Thread %d: Instructions received...\n",id);
-        pthread_mutex_unlock(&printf_mutex);
-        i = handle->iterations;
-    }
-    i--;
-    pthread_mutex_lock(handle->mutex);
-    while(!(handle->cond_set)) pthread_cond_wait(handle->cond,handle->mutex);
-    pthread_mutex_unlock(handle->mutex);
-    if (handle->state == THREAD_EXIT) {
-        pthread_mutex_lock(&printf_mutex);
-        printf("Thread %d: Exiting...\n",id);
-        pthread_mutex_unlock(&printf_mutex);
-        pthread_exit(NULL);
-    } else if (handle->state == THREAD_RESUME) {
-        pthread_mutex_lock(&printf_mutex);
-        printf("Thread %d: Resuming...\n",id);
-        pthread_mutex_unlock(&printf_mutex);
-        return;
-    }
-}
-
-ThreadControl* initControlHandle(pthread_mutex_t* mutex, pthread_cond_t* cond, sem_t* sem) {
-    ThreadControl* handle = malloc(sizeof(ThreadControl));
-    handle->cond_set = false;
-    handle->mutex = mutex;
-    handle->cond = cond;
-    // Initialize the semaphore to 0 so that all slave thread will
-    // hold their actions and wait for instructions
-    sem_init(sem,0,0);
-    handle->semaphore = sem;
-    handle->state = THREAD_RESUME;
-    handle->iterations = 1;
-    return handle;
-}
-
-void threadController_master(ThreadControl* handle, int state_id, int number_of_threads) {
-    pthread_mutex_lock(handle->mutex);
-    handle->state = state_id;
-    handle->cond_set = true;
-    int c=0;
-    sem_getvalue(handle->semaphore, &c);
-    pthread_mutex_lock(&printf_mutex);
-    printf("Semaphore before post: %d\n",c);
-    pthread_mutex_unlock(&printf_mutex);
-    for(int i=0;i<number_of_threads;i++) {
-        sem_post(handle->semaphore);
-    }
-    sem_getvalue(handle->semaphore, &c);
-    pthread_mutex_lock(&printf_mutex);
-    printf("Semaphore after post: %d\n",c);
-    pthread_mutex_unlock(&printf_mutex);
-    pthread_cond_broadcast(handle->cond);
-    pthread_mutex_unlock(handle->mutex);
-    pthread_mutex_lock(&printf_mutex);
-    printf("Signaled %d threads, wait for them to finish\n",c);
-    pthread_mutex_unlock(&printf_mutex);
-    waitUntilEveryoneIsFinished_test(handle->semaphore);
-    pthread_mutex_lock(&printf_mutex);
-    printf("Thread finished\n");
-    pthread_mutex_unlock(&printf_mutex);
-}
-
-void waitUntilEveryoneIsFinished_test(sem_t *sem) {
-    while (sem_trywait(sem) != -1 && errno != EAGAIN) {
-        sem_post(sem);
-    }
+void microsecSleep (long ms) {
+    struct timeval delay;
+    delay.tv_sec = ms * 1e-6;
+    delay.tv_usec = ms - 1e6*delay.tv_sec;
+    select(0,NULL,NULL,NULL,&delay);
 }
