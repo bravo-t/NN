@@ -4,5 +4,7 @@
   * [Readme for convolutional network](C/README.md#convolutional-neural-network)
 * Two objectives:
   1. Enhance the C programs to make them multi-threaded, especially for the CNN.
-  2. Implement the verilog version of the two networks.
+      * <strike>Multi-threaded version of fully connected network</strike> (Done)
+      * Multi-threaded version of CNN
+  2. <strike>Implement the verilog version of the two networks.</strike> (This will be a big project and I probably don't have time for it, sorry)
   
