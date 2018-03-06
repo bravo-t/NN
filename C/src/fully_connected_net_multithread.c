@@ -267,9 +267,10 @@ int train_multithread(FCParameters* network_params) {
     pthread_mutex_t forward_prop_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
     thread_barrier_t forward_prop_inst_ready = THREAD_BARRIER_INITIALIZER;
     thread_barrier_t forward_prop_inst_ack = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t forward_prop_thread_complete = THREAD_BARRIER_INITIALIZER;
     //thread_barrier_init(&forward_prop_inst_ready,number_of_threads);
     //thread_barrier_init(&forward_prop_inst_ack,number_of_threads);
-    ThreadControl* forward_prop_control_handle = initControlHandle(&forward_prop_control_handle_mutex, &forward_prop_inst_ready, &forward_prop_inst_ack, number_of_threads);
+    ThreadControl* forward_prop_control_handle = initControlHandle(&forward_prop_control_handle_mutex, &forward_prop_inst_ready, &forward_prop_inst_ack, &forward_prop_thread_complete, number_of_threads);
 
     bool calc_loss_mem_alloc = false;
     thread_barrier_t calc_loss_barrier = THREAD_BARRIER_INITIALIZER;
@@ -279,9 +280,10 @@ int train_multithread(FCParameters* network_params) {
     pthread_mutex_t calc_loss_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
     thread_barrier_t calc_loss_inst_ready = THREAD_BARRIER_INITIALIZER;
     thread_barrier_t calc_loss_inst_ack = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t calc_loss_thread_complete = THREAD_BARRIER_INITIALIZER;
     //thread_barrier_init(&calc_loss_inst_ready,number_of_threads);
     //thread_barrier_init(&calc_loss_inst_ack,number_of_threads);
-    ThreadControl* calc_loss_control_handle = initControlHandle(&calc_loss_control_handle_mutex, &calc_loss_inst_ready, &calc_loss_inst_ack, number_of_threads);
+    ThreadControl* calc_loss_control_handle = initControlHandle(&calc_loss_control_handle_mutex, &calc_loss_inst_ready, &calc_loss_inst_ack, &calc_loss_thread_complete, number_of_threads);
     
     bool backward_prop_mem_alloc = false;
     thread_barrier_t backward_prop_barrier = THREAD_BARRIER_INITIALIZER;
@@ -291,9 +293,10 @@ int train_multithread(FCParameters* network_params) {
     pthread_mutex_t backward_prop_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
     thread_barrier_t backward_prop_inst_ready = THREAD_BARRIER_INITIALIZER;
     thread_barrier_t backward_prop_inst_ack = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t backward_prop_thread_complete = THREAD_BARRIER_INITIALIZER;
     //thread_barrier_init(&backward_prop_inst_ready,number_of_threads);
     //thread_barrier_init(&backward_prop_inst_ack,number_of_threads);
-    ThreadControl* backward_prop_control_handle = initControlHandle(&backward_prop_control_handle_mutex, &backward_prop_inst_ready, &backward_prop_inst_ack, number_of_threads);
+    ThreadControl* backward_prop_control_handle = initControlHandle(&backward_prop_control_handle_mutex, &backward_prop_inst_ready, &backward_prop_inst_ack, &backward_prop_thread_complete, number_of_threads);
     
     bool update_weights_mem_alloc = false;
     thread_barrier_t update_weights_barrier = THREAD_BARRIER_INITIALIZER;
@@ -303,9 +306,10 @@ int train_multithread(FCParameters* network_params) {
     pthread_mutex_t update_weights_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
     thread_barrier_t update_weights_inst_ready = THREAD_BARRIER_INITIALIZER;
     thread_barrier_t update_weights_inst_ack = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t update_weights_thread_complete = THREAD_BARRIER_INITIALIZER;
     //thread_barrier_init(&update_weights_inst_ready,number_of_threads);
     //thread_barrier_init(&update_weights_inst_ack,number_of_threads);
-    ThreadControl* update_weights_control_handle = initControlHandle(&update_weights_control_handle_mutex, &update_weights_inst_ready, &update_weights_inst_ack, number_of_threads);
+    ThreadControl* update_weights_control_handle = initControlHandle(&update_weights_control_handle_mutex, &update_weights_inst_ready, &update_weights_inst_ack, &update_weights_thread_complete, number_of_threads);
     
     printf("INFO: Creating slave threads\n");
 
@@ -491,11 +495,9 @@ int train_multithread(FCParameters* network_params) {
             int data_end = (iteration+1)*minibatch_size-1;
             chop2DMatrix(training_data,data_start,data_end,X);
             // Forward propagation
-            printf("DEBUG: Signaling all forward_prop threads to run\n");
             threadController_master(forward_prop_control_handle, THREAD_RESUME);
             //sleep(1);
             
-            printf("DEBUG: Signaling all calc_loss threads to run\n");
             threadController_master(calc_loss_control_handle, THREAD_RESUME);
             //sleep(1);
             float data_loss = losses[0][0];
@@ -506,11 +508,9 @@ int train_multithread(FCParameters* network_params) {
                     epoch, data_loss, reg_loss, data_loss+reg_loss, accu);
             }
             // Backward propagation
-            printf("DEBUG: Signaling all backward_prop threads to run\n");
             threadController_master(backward_prop_control_handle, THREAD_RESUME);
             //sleep(1);
             // Update weights
-            printf("DEBUG: Signaling all update_weights threads to run\n");
             threadController_master(update_weights_control_handle, THREAD_RESUME);
             //sleep(1);
         }
@@ -551,6 +551,12 @@ int train_multithread(FCParameters* network_params) {
     dumpNetworkConfig(network_depth, alpha, Ws, bs, use_batchnorm, mean_caches, var_caches, gammas, betas, batchnorm_eps, network_params->params_save_dir,"network.params");
 
     // Shutdown
+    // Shut down all slave threads
+    threadController_master(forward_prop_control_handle, THREAD_EXIT);
+    threadController_master(calc_loss_control_handle, THREAD_EXIT);
+    threadController_master(backward_prop_control_handle, THREAD_EXIT);
+    threadController_master(update_weights_control_handle, THREAD_EXIT);
+
     destroy2DMatrix(X);
     for(int i=0;i<network_depth;i++) {
         destroy2DMatrix(Ws[i]);
@@ -651,9 +657,9 @@ void* FCNET_forwardPropagation_slave(void* args) {
     pthread_cond_t* cond = a->cond;
     thread_barrier_t* barrier = a->barrier;
     while(1) {
-        threadController_slave(handle);
-        printf("DEBUG: [forward_prop] Received signal to run\n");
+        threadController_slave(handle,CONTROL_WAIT_INST);
         FCNET_forwardPropagation(X,Ws,bs,Hs,network_depth,alpha,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
+        threadController_slave(handle,CONTROL_EXEC_COMPLETE);
     }
 }
 
@@ -680,9 +686,9 @@ void* FCNET_calcLoss_slave(void* args) {
     thread_barrier_t* barrier = a->barrier;
     float* losses = a->float_retval;
     while(1) {
-        threadController_slave(handle);
-        printf("DEBUG: [calc_loss] Received signal to run\n");
+        threadController_slave(handle,CONTROL_WAIT_INST);
         FCNET_calcLoss(Ws,Hs,correct_labels,network_depth,reg_strength,dHs,losses,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
+        threadController_slave(handle,CONTROL_EXEC_COMPLETE);
     }
 }
 
@@ -732,9 +738,9 @@ void* FCNET_backwardPropagation_slave(void* args) {
         // But it didn't guarantee that next step, update weights, will be executed after the FINISH of FCNET_backwardPropagation
         // Because threadController_slave don't have control of it
         // To fix, I need to add a controller after FCNET_backwardPropagation, and make threadController_master wait until the newly added slave controller is reached
-        threadController_slave(handle);
-        printf("DEBUG: [backward_prop] Received signal to run\n");
+        threadController_slave(handle,CONTROL_WAIT_INST);
         FCNET_backwardPropagation(Ws,Hs,bs,dWs,dbs,dHs,X,dX,network_depth,alpha,reg_strength,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
+        threadController_slave(handle,CONTROL_EXEC_COMPLETE);
     }
 }
 
@@ -773,9 +779,9 @@ void* FCNET_updateWeights_slave(void* args) {
     pthread_cond_t* cond = a->cond;
     thread_barrier_t* barrier = a->barrier;
     while(1) {
-        threadController_slave(handle);
-        printf("DEBUG: [update_weights] Received signal to run\n");
+        threadController_slave(handle,CONTROL_WAIT_INST);
         FCNET_updateWeights(Ws,dWs,bs,dbs,Wcaches,bcaches,learning_rate,decay_rate,eps,use_rmsprop,network_depth,thread_id,mem_allocated,number_of_threads,mutex,cond,barrier);
+        threadController_slave(handle,CONTROL_EXEC_COMPLETE);
     }
 }
 
