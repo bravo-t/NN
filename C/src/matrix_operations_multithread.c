@@ -216,10 +216,47 @@ int init2DMatrix_thread(TwoDMatrix* M, int height, int width, int id, bool* mem_
         //printf("DEBUG: Thread %d: Initing memory of row %d\n",id,i);
         //M->d[i] = (float*) calloc(width,sizeof(float));
         M->d[i] = (float*) malloc(width*sizeof(float));
-        if (M->d[i] == NULL) {
-            printf("ERROR: Thread %d: NULL pointer returned from malloc for row %d\n",id,i);
-        }
         //usleep(1);
+    }
+    pthread_mutex_unlock(mutex);
+    //if(h_start == 0) M->initialized = true;
+    thread_barrier_wait_reinit(barrier,number_of_threads);
+    if(h_start == 0) M->initialized = true;
+    return 0;
+}
+
+int init3DMatrix_thread(ThreeDMatrix* M, int depth, int height, int width, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
+    reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    if (M->initialized) return 0;
+    int h_start = calc_h_start(id,height,number_of_threads);
+    int h_end = calc_h_end(id,height,number_of_threads);
+    if (h_start == 0) {
+        pthread_mutex_lock(mutex);
+        thread_barrier_init(barrier,number_of_threads);
+        M->depth = depth;
+        M->height = height;
+        M->width = width;
+        // HERE! h_start is 0 even id is not 0! So M->d is overwrote
+        M->d = (float***) calloc(depth, sizeof(float*));
+        for(int i=0;i<depth;i++) M->d[i] = (float**) calloc(height,sizeof(float*));
+        *mem_allocated = true;
+        pthread_mutex_unlock(mutex);
+    } else {
+        pthread_mutex_lock(mutex);
+        while(!(*mem_allocated)) pthread_cond_wait(cond,mutex);
+        pthread_mutex_unlock(mutex);
+    }
+    if(h_start == 0) {
+        pthread_mutex_lock(mutex);
+        pthread_cond_broadcast(cond);
+        pthread_mutex_unlock(mutex);
+    }
+    // TODO
+    // for(int i=h_start;i<=h_end && i<M->height;i++)
+    pthread_mutex_lock(mutex);
+    for(int i=0;i<depth;i++) {
+        for(int j=h_start;j<=h_end;j++) 
+            M->d[i][j] = (float*) calloc(width,sizeof(float));
     }
     pthread_mutex_unlock(mutex);
     //if(h_start == 0) M->initialized = true;
@@ -263,10 +300,61 @@ int init2DMatrixNormRand_thread(TwoDMatrix* M, int height, int width, float mean
     return 0;
 }
 
+int init3DMatrixNormRand_thread(ThreeDMatrix* M, int depth, int height, int width,float mean, float std, int n, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
+    reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    if (M->initialized) return 0;
+    int h_start = calc_h_start(id,height,number_of_threads);
+    int h_end = calc_h_end(id,height,number_of_threads);
+    if (h_start == 0) {
+        pthread_mutex_lock(mutex);
+        thread_barrier_init(barrier,number_of_threads);
+        M->depth = depth;
+        M->height = height;
+        M->width = width;
+        // HERE! h_start is 0 even id is not 0! So M->d is overwrote
+        M->d = (float***) calloc(depth, sizeof(float*));
+        for(int i=0;i<depth;i++) M->d[i] = (float**) calloc(height,sizeof(float*));
+        *mem_allocated = true;
+        pthread_mutex_unlock(mutex);
+    } else {
+        pthread_mutex_lock(mutex);
+        while(!(*mem_allocated)) pthread_cond_wait(cond,mutex);
+        pthread_mutex_unlock(mutex);
+    }
+    if(h_start == 0) {
+        pthread_mutex_lock(mutex);
+        pthread_cond_broadcast(cond);
+        pthread_mutex_unlock(mutex);
+    }
+    // TODO
+    // for(int i=h_start;i<=h_end && i<M->height;i++)
+    pthread_mutex_lock(mutex);
+    for(int i=0;i<depth;i++) {
+        for(int j=h_start;j<=h_end;j++) {
+            M->d[i][j] = (float*) calloc(width,sizeof(float));
+            for(int k=0;k<width;k++) {
+                M->d[i][j][k] = random_normal(mean,std)*sqrt(2.0/n);
+            }
+        }
+    }
+    pthread_mutex_unlock(mutex);
+    //if(h_start == 0) M->initialized = true;
+    thread_barrier_wait_reinit(barrier,number_of_threads);
+    if(h_start == 0) M->initialized = true;
+    return 0;
+}
+
+
 int init2DMatrixZero_thread(TwoDMatrix* M, int height, int width,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     init2DMatrix_thread(M,height,width,id,mem_allocated,number_of_threads,mutex,cond,barrier);
     return 0;
 }
+
+int init3DMatrixZero_thread(ThreeDMatrix* M, int depth,int height, int width,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
+    init3DMatrix_thread(M,depth,height,width,id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    return 0;
+}
+
 
 int init2DMatrixOne_thread(TwoDMatrix* M, int height, int width,int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
@@ -303,6 +391,51 @@ int init2DMatrixOne_thread(TwoDMatrix* M, int height, int width,int id, bool* me
     return 0;
 }
 
+int init3DMatrixOne_thread(ThreeDMatrix* M, int depth, int height, int width,float mean, float std, int n, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
+    reset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    if (M->initialized) return 0;
+    int h_start = calc_h_start(id,height,number_of_threads);
+    int h_end = calc_h_end(id,height,number_of_threads);
+    if (h_start == 0) {
+        pthread_mutex_lock(mutex);
+        thread_barrier_init(barrier,number_of_threads);
+        M->depth = depth;
+        M->height = height;
+        M->width = width;
+        // HERE! h_start is 0 even id is not 0! So M->d is overwrote
+        M->d = (float***) calloc(depth, sizeof(float*));
+        for(int i=0;i<depth;i++) M->d[i] = (float**) calloc(height,sizeof(float*));
+        *mem_allocated = true;
+        pthread_mutex_unlock(mutex);
+    } else {
+        pthread_mutex_lock(mutex);
+        while(!(*mem_allocated)) pthread_cond_wait(cond,mutex);
+        pthread_mutex_unlock(mutex);
+    }
+    if(h_start == 0) {
+        pthread_mutex_lock(mutex);
+        pthread_cond_broadcast(cond);
+        pthread_mutex_unlock(mutex);
+    }
+    // TODO
+    // for(int i=h_start;i<=h_end && i<M->height;i++)
+    pthread_mutex_lock(mutex);
+    for(int i=0;i<depth;i++) {
+        for(int j=h_start;j<=h_end;j++) {
+            M->d[i][j] = (float*) calloc(width,sizeof(float));
+            for(int k=0;k<width;k++) {
+                M->d[i][j][k] = 1;
+            }
+        }
+    }
+    pthread_mutex_unlock(mutex);
+    //if(h_start == 0) M->initialized = true;
+    thread_barrier_wait_reinit(barrier,number_of_threads);
+    if(h_start == 0) M->initialized = true;
+    return 0;
+}
+
+
 int destroy2DMatrix_thread(TwoDMatrix* M, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     int h_start = calc_h_start(id,M->height,number_of_threads);
     int h_end = calc_h_end(id,M->height,number_of_threads);
@@ -333,6 +466,42 @@ int destroy2DMatrix_thread(TwoDMatrix* M, int id, bool* mem_allocated,int number
     thread_barrier_wait_reinit(barrier,number_of_threads);
     return 0;
 }
+
+int destroy3DMatrix_thread(ThreeDMatrix* M, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
+    int h_start = calc_h_start(id,M->height,number_of_threads);
+    int h_end = calc_h_end(id,M->height,number_of_threads);
+    for(int i=0;i<depth;i++) {
+        for(int j=h_start;j<=h_end;j++) {
+            free(M->d[i][j]);
+            M->d[i][j] = NULL;
+        }
+        free(M->d[i]);
+        M->d[i] = NULL;
+    }
+    preset_mem_allocated(id,mem_allocated,number_of_threads,mutex,cond,barrier);
+    if (h_start == 0) {
+        pthread_mutex_lock(mutex);
+        thread_barrier_init(barrier,number_of_threads);
+        free(M->d);
+        M->d = NULL;
+        free(M);
+        M = NULL;
+        *mem_allocated = false;
+        pthread_mutex_unlock(mutex);
+    } else {
+        pthread_mutex_lock(mutex);
+        while((*mem_allocated)) pthread_cond_wait(cond,mutex);
+        pthread_mutex_unlock(mutex);
+    }
+    if(h_start == 0) {
+        pthread_mutex_lock(mutex);
+        pthread_cond_broadcast(cond);
+        pthread_mutex_unlock(mutex);
+    }
+    thread_barrier_wait_reinit(barrier,number_of_threads);
+    return 0;
+}
+
 
 int copyTwoDMatrix_thread(TwoDMatrix* M, TwoDMatrix* OUT, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     int h_start = calc_h_start(id,M->height,number_of_threads);
