@@ -37,4 +37,6 @@ typedef struct {
     bool use_rmsprop;
     float learning_rate;
     bool verbose;
+    int id;
+    int number_of_threads;
 } ConvnetSlaveArgs;

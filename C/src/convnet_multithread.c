@@ -860,11 +860,13 @@ int CONV_backwardPropagation(int M, int N, int minibatch_size, ThreeDMatrix**** 
     return 0;
 }
 
-int CONVNET_updateWeights(int M, int N, int minibatch_size, ThreeDMatrix**** C, ThreeDMatrix*** P, ThreeDMatrix**** F, ThreeDMatrix**** b, ThreeDMatrix**** dC, ThreeDMatrix*** dP, ThreeDMatrix**** dF, ThreeDMatrix**** db, ThreeDMatrix**** Fcache, ThreeDMatrix**** bcache, int* filter_number, bool use_rmsprop) {
+int CONVNET_updateWeights(int M, int N, int minibatch_size, ThreeDMatrix**** C, ThreeDMatrix*** P, ThreeDMatrix**** F, ThreeDMatrix**** b, ThreeDMatrix**** dC, ThreeDMatrix*** dP, ThreeDMatrix**** dF, ThreeDMatrix**** db, ThreeDMatrix**** Fcache, ThreeDMatrix**** bcache, int* filter_number, bool use_rmsprop, int id, int number_of_threads) {
     if (use_rmsprop) {
         for(int i=0;i<M;i++) {
             for(int j=0;j<N;j++) {
-                for(int k=0;k<filter_number[i*N+j];k++) {
+                int start_index = calc_h_start(id,filter_number[i*N+j],number_of_threads);
+                int end_index = calc_h_end(id,filter_number[i*N+j],number_of_threads);
+                for(int k=start_index;k<=end_index;k++) {
                     RMSPropConvnet(F[i][j][k], dF[i][j][k], Fcache[i][j][k], learning_rate, rmsprop_decay_rate, rmsprop_eps, F[i][j][k]);
                     RMSPropConvnet(b[i][j][k], db[i][j][k], bcache[i][j][k], learning_rate, rmsprop_decay_rate, rmsprop_eps, b[i][j][k]);
                 }
@@ -873,7 +875,9 @@ int CONVNET_updateWeights(int M, int N, int minibatch_size, ThreeDMatrix**** C, 
     } else {
         for(int i=0;i<M;i++) {
             for(int j=0;j<N;j++) {
-                for(int k=0;k<filter_number[i*N+j];k++) {
+                int start_index = calc_h_start(id,filter_number[i*N+j],number_of_threads);
+                int end_index = calc_h_end(id,filter_number[i*N+j],number_of_threads);
+                for(int k=start_index;k<=end_index;k++) {
                     vanillaUpdateConvnet(F[i][j][k], dF[i][j][k], learning_rate, F[i][j][k]);
                     vanillaUpdateConvnet(b[i][j][k], db[i][j][k], learning_rate, b[i][j][k]);
                 }
@@ -1010,7 +1014,44 @@ void* CONV_updateWeights_slave(void* args) {
         threadController_slave(handle,CONTROL_WAIT_INST);
         CONVNET_updateWeights(M, N, minibatch_size, 
         C, P, F, b, dC, dP, dF, db, Fcache, bcache, 
-        filter_number, use_rmsprop);
+        filter_number, use_rmsprop, id, number_of_threads);
         threadController_slave(handle,CONTROL_EXEC_COMPLETE);
     }
+}
+
+void assignConvSlaveArguments (ConvnetSlaveArgs* args,
+    int M, int N, int minibatch_size, ThreeDMatrix** CONV_OUT,
+    ThreeDMatrix**** C, ThreeDMatrix*** P, ThreeDMatrix**** F, ThreeDMatrix**** b, ThreeDMatrix**** dC, ThreeDMatrix*** dP, ThreeDMatrix**** dF, ThreeDMatrix**** db, 
+    int* filter_number, int* filter_height, int* filter_width, int* filter_stride_y, int* filter_stride_x, 
+    int* padding_width, int* padding_height, 
+    bool* enable_maxpooling, int* pooling_height, int* pooling_width, int* pooling_stride_x, int* pooling_stride_y, 
+    float alpha, bool verbose, int id,int number_of_threads) {
+    args->M = M;
+    args->N = N;
+    args->minibatch_size = minibatch_size;
+    args->CONV_OUT = CONV_OUT;
+    args->C = C;
+    args->P = P;
+    args->F = F;
+    args->b = b;
+    args->dC = dC;
+    args->dP = dP;
+    args->dF = dF;
+    args->db = db;
+    args->filter_number = filter_number;
+    args->filter_height = filter_height;
+    args->filter_width = filter_width;
+    args->filter_stride_y = filter_stride_y;
+    args->filter_stride_x = filter_stride_x;
+    args->padding_width = padding_width;
+    args->padding_height = padding_height;
+    args->enable_maxpooling = enable_maxpooling;
+    args->pooling_height = pooling_height;
+    args->pooling_width = pooling_width;
+    args->pooling_stride_x = pooling_stride_x;
+    args->pooling_stride_y = pooling_stride_y;
+    args->alpha = alpha;
+    args->verbose = verbose;
+    args->id = id;
+    args->number_of_threads = number_of_threads;
 }
