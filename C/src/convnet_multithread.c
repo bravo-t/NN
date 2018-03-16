@@ -269,6 +269,79 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
     /* INPUT -> [[CONV -> RELU]*N -> POOL?]*M -> [FC -> RELU]*K -> FC */
     //ThreeDMatrix* dX = matrixMalloc(sizeof(ThreeDMatrix));
     //init3DMatrix(dX, training_data->depth, training_data->height, training_data->width);
+    printf("CONVNET INFO: Creating slave threads...\n");
+    pthread_mutex_t forward_prop_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
+    thread_barrier_t forward_prop_inst_ready = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t forward_prop_inst_ack = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t forward_prop_thread_complete = THREAD_BARRIER_INITIALIZER;
+    ThreadControl* forward_prop_control_handle = initControlHandle(&forward_prop_control_handle_mutex, &forward_prop_inst_ready, &forward_prop_inst_ack, &forward_prop_thread_complete, number_of_threads);
+
+    pthread_mutex_t backward_prop_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
+    thread_barrier_t backward_prop_inst_ready = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t backward_prop_inst_ack = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t backward_prop_thread_complete = THREAD_BARRIER_INITIALIZER;
+    ThreadControl* backward_prop_control_handle = initControlHandle(&backward_prop_control_handle_mutex, &backward_prop_inst_ready, &backward_prop_inst_ack, &backward_prop_thread_complete, number_of_threads);
+    
+    pthread_mutex_t update_weights_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
+    thread_barrier_t update_weights_inst_ready = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t update_weights_inst_ack = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t update_weights_thread_complete = THREAD_BARRIER_INITIALIZER;
+    ThreadControl* update_weights_control_handle = initControlHandle(&update_weights_control_handle_mutex, &update_weights_inst_ready, &update_weights_inst_ack, &update_weights_thread_complete, number_of_threads);
+
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+    pthread_t* forward_prop = malloc(sizeof(pthread_t)*number_of_threads);
+    pthread_t* backward_prop = malloc(sizeof(pthread_t)*number_of_threads);
+    pthread_t* update_weights = malloc(sizeof(pthread_t)*number_of_threads);
+
+    ConvnetSlaveArgs** forward_prop_arguments = malloc(sizeof(ConvnetSlaveArgs*)*number_of_threads);
+    ConvnetSlaveArgs** backward_prop_arguments = malloc(sizeof(ConvnetSlaveArgs*)*number_of_threads);
+    ConvnetSlaveArgs** update_weights_arguments = malloc(sizeof(ConvnetSlaveArgs*)*number_of_threads);
+
+    for(int i=0;i<number_of_threads;i++) {
+        forward_prop_arguments[i] = (ConvnetSlaveArgs*) malloc(sizeof(ConvnetSlaveArgs));
+        backward_prop_arguments[i] = (ConvnetSlaveArgs*) malloc(sizeof(ConvnetSlaveArgs));
+        update_weights_arguments[i] = (ConvnetSlaveArgs*) malloc(sizeof(ConvnetSlaveArgs));
+
+        assignConvSlaveArguments(forward_prop_arguments[i], 
+            forward_prop_control_handle,
+            );
+        assignConvSlaveArguments(backward_prop_arguments[i], 
+            backward_prop_control_handle,
+            );
+        assignConvSlaveArguments(update_weights_arguments[i], 
+            update_weights_control_handle,
+            );
+
+        int create_thread_error;
+        /*
+        forward_prop_arguments[i] is the type of SlaveArgs*, which is expected by FCNET_forwardPropagation_slave.
+        However while creating slave threads, I used &forward_prop_arguments[i], this is a type of SlaveArgs**.
+        So the "&" is not needed.
+        */
+        create_thread_error = pthread_create(&forward_prop[i],&attr,CONV_forwardPropagation_slave,forward_prop_arguments[i]);
+        if (create_thread_error) {
+            printf("Error happened while creating slave threads\n");
+            exit(-1);
+        }
+
+        create_thread_error = pthread_create(&backward_prop[i],&attr,CONV_backwardPropagation_slave,backward_prop_arguments[i]);
+        if (create_thread_error) {
+            printf("Error happened while creating slave threads\n");
+            exit(-1);
+        }
+        create_thread_error = pthread_create(&update_weights[i],&attr,CONV_updateWeights_slave,update_weights_arguments[i]);
+        if (create_thread_error) {
+            printf("Error happened while creating slave threads\n");
+            exit(-1);
+        }
+    }
+
+
+
+
     printf("CONVNET INFO: Training network...\n");
     for(int e=1;e<=epochs;e++) {
         learning_rate = decayLearningRate(enable_learning_rate_step_decay,
