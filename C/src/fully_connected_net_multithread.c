@@ -845,3 +845,375 @@ void assignSlaveArguments(SlaveArgs* args,
 int test_multithread(FCParameters* network_params,TwoDMatrix* scores, int number_of_threads) {
     return 0;
 }
+
+
+int FCTrainCore_multithread(FCParameters* network_params, 
+    TwoDMatrix** Ws, TwoDMatrix** bs, 
+    TwoDMatrix** vWs, TwoDMatrix** vbs, TwoDMatrix** vW_prevs, TwoDMatrix** vb_prevs,
+    TwoDMatrix** Wcaches, TwoDMatrix** bcaches,
+    TwoDMatrix** mean_caches, TwoDMatrix** var_caches, TwoDMatrix** gammas, TwoDMatrix** betas,
+    TwoDMatrix* dX, int e, float* learning_rate, float* losses, int number_of_threads) {
+    TwoDMatrix* training_data = network_params->X;
+    TwoDMatrix* correct_labels = network_params->correct_labels;
+    int minibatch_size = network_params->minibatch_size;
+    //int labels = network_params->labels;
+    float reg_strength = network_params->reg_strength;
+    float alpha = network_params->alpha;
+    float base_learning_rate = network_params->learning_rate;
+    int network_depth = network_params->network_depth;
+    int* hidden_layer_sizes = network_params->hidden_layer_sizes;
+    int epochs = network_params->epochs;
+    
+    bool enable_learning_rate_step_decay = network_params->enable_learning_rate_step_decay;
+    bool enable_learning_rate_exponential_decay = network_params->enable_learning_rate_exponential_decay;
+    bool enable_learning_rate_invert_t_decay = network_params->enable_learning_rate_invert_t_decay;
+    int learning_rate_decay_unit = network_params->learning_rate_decay_unit;
+    float learning_rate_decay_a0 = network_params->learning_rate_decay_a0;
+    float learning_rate_decay_k = network_params->learning_rate_decay_k;
+
+    //bool verbose = network_params->verbose;
+    // Below are control variables for optimizers
+    bool use_momentum_update =  network_params->use_momentum_update;
+    bool use_nag_update =  network_params->use_nag_update;
+    bool use_rmsprop =  network_params->use_rmsprop;
+    float mu =  network_params->mu; // or 0.5,0.95, 0.99
+    float decay_rate =  network_params->decay_rate; // or with more 9s in it
+    float eps =  network_params->eps;
+
+    bool use_batchnorm =  network_params->use_batchnorm;
+    float batchnorm_momentum =  network_params->batchnorm_momentum;
+    float batchnorm_eps =  network_params->batchnorm_eps;
+    // Initialize all learnable parameters
+    // Hidden layers
+    TwoDMatrix** Hs = malloc(sizeof(TwoDMatrix*)*network_depth);
+    // Gradient descend values of Weights
+    TwoDMatrix** dWs = malloc(sizeof(TwoDMatrix*)*network_depth);
+    // Gradient descend values of Biases
+    TwoDMatrix** dbs = malloc(sizeof(TwoDMatrix*)*network_depth);
+    // Gradient descend values of Hidden layers
+    TwoDMatrix** dHs = malloc(sizeof(TwoDMatrix*)*network_depth);
+    // Below variables are used in optimization algorithms
+    // Batch normalization layers;
+    TwoDMatrix** dgammas = NULL;
+    TwoDMatrix** dbetas = NULL;
+    TwoDMatrix** means = NULL;
+    TwoDMatrix** vars = NULL;
+    TwoDMatrix** Hs_normalized = NULL;
+
+    if (use_batchnorm) {
+        dgammas = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        dbetas = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        means = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        vars = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+        Hs_normalized = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*network_depth);
+    }
+
+    //int former_width = training_data->width;
+    for(int i=0;i<network_depth;i++) {
+        // Initialize layer data holders
+        Hs[i] = matrixMalloc(sizeof(TwoDMatrix));
+        dWs[i] = matrixMalloc(sizeof(TwoDMatrix));
+        dbs[i] = matrixMalloc(sizeof(TwoDMatrix));
+        dHs[i] = matrixMalloc(sizeof(TwoDMatrix));
+        init2DMatrix(Hs[i],minibatch_size,hidden_layer_sizes[i]);
+
+        // Initialize variables for optimization
+        if (use_batchnorm) {
+            dgammas[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrix(dgammas[i],1,hidden_layer_sizes[i]);
+            dbetas[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrix(dbetas[i],1,hidden_layer_sizes[i]);
+            means[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrix(means[i],1,hidden_layer_sizes[i]);
+            vars[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrix(vars[i],1,hidden_layer_sizes[i]);
+            Hs_normalized[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrixZero(Hs_normalized[i],minibatch_size,hidden_layer_sizes[i]);
+        }
+        //former_width = hidden_layer_sizes[i];
+    }
+    
+    // Create slave workers
+    bool forward_prop_mem_alloc = false;
+    thread_barrier_t forward_prop_barrier = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_init(&forward_prop_barrier,number_of_threads);
+    pthread_mutex_t forward_prop_mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_cond_t forward_prop_cond = PTHREAD_COND_INITIALIZER;
+    pthread_mutex_t forward_prop_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
+    thread_barrier_t forward_prop_inst_ready = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t forward_prop_inst_ack = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t forward_prop_thread_complete = THREAD_BARRIER_INITIALIZER;
+    //thread_barrier_init(&forward_prop_inst_ready,number_of_threads);
+    //thread_barrier_init(&forward_prop_inst_ack,number_of_threads);
+    ThreadControl* forward_prop_control_handle = initControlHandle(&forward_prop_control_handle_mutex, &forward_prop_inst_ready, &forward_prop_inst_ack, &forward_prop_thread_complete, number_of_threads);
+
+    bool calc_loss_mem_alloc = false;
+    thread_barrier_t calc_loss_barrier = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_init(&calc_loss_barrier,number_of_threads);
+    pthread_mutex_t calc_loss_mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_cond_t calc_loss_cond = PTHREAD_COND_INITIALIZER;
+    pthread_mutex_t calc_loss_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
+    thread_barrier_t calc_loss_inst_ready = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t calc_loss_inst_ack = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t calc_loss_thread_complete = THREAD_BARRIER_INITIALIZER;
+    //thread_barrier_init(&calc_loss_inst_ready,number_of_threads);
+    //thread_barrier_init(&calc_loss_inst_ack,number_of_threads);
+    ThreadControl* calc_loss_control_handle = initControlHandle(&calc_loss_control_handle_mutex, &calc_loss_inst_ready, &calc_loss_inst_ack, &calc_loss_thread_complete, number_of_threads);
+    
+    bool backward_prop_mem_alloc = false;
+    thread_barrier_t backward_prop_barrier = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_init(&backward_prop_barrier,number_of_threads);
+    pthread_mutex_t backward_prop_mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_cond_t backward_prop_cond = PTHREAD_COND_INITIALIZER;
+    pthread_mutex_t backward_prop_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
+    thread_barrier_t backward_prop_inst_ready = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t backward_prop_inst_ack = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t backward_prop_thread_complete = THREAD_BARRIER_INITIALIZER;
+    //thread_barrier_init(&backward_prop_inst_ready,number_of_threads);
+    //thread_barrier_init(&backward_prop_inst_ack,number_of_threads);
+    ThreadControl* backward_prop_control_handle = initControlHandle(&backward_prop_control_handle_mutex, &backward_prop_inst_ready, &backward_prop_inst_ack, &backward_prop_thread_complete, number_of_threads);
+    
+    bool update_weights_mem_alloc = false;
+    thread_barrier_t update_weights_barrier = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_init(&update_weights_barrier,number_of_threads);
+    pthread_mutex_t update_weights_mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_cond_t update_weights_cond = PTHREAD_COND_INITIALIZER;
+    pthread_mutex_t update_weights_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
+    thread_barrier_t update_weights_inst_ready = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t update_weights_inst_ack = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t update_weights_thread_complete = THREAD_BARRIER_INITIALIZER;
+    //thread_barrier_init(&update_weights_inst_ready,number_of_threads);
+    //thread_barrier_init(&update_weights_inst_ack,number_of_threads);
+    ThreadControl* update_weights_control_handle = initControlHandle(&update_weights_control_handle_mutex, &update_weights_inst_ready, &update_weights_inst_ack, &update_weights_thread_complete, number_of_threads);
+    
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+    pthread_t* forward_prop = malloc(sizeof(pthread_t)*number_of_threads);
+    pthread_t* calc_loss = malloc(sizeof(pthread_t)*number_of_threads);
+    pthread_t* backward_prop = malloc(sizeof(pthread_t)*number_of_threads);
+    pthread_t* update_weights = malloc(sizeof(pthread_t)*number_of_threads);
+
+    SlaveArgs** forward_prop_arguments = malloc(sizeof(SlaveArgs*)*number_of_threads);
+    SlaveArgs** calc_loss_arguments = malloc(sizeof(SlaveArgs*)*number_of_threads);
+    SlaveArgs** backward_prop_arguments = malloc(sizeof(SlaveArgs*)*number_of_threads);
+    SlaveArgs** update_weights_arguments = malloc(sizeof(SlaveArgs*)*number_of_threads);
+
+    for(int i=0;i<number_of_threads;i++) {
+        losses[i] = malloc(sizeof(float)*2);
+
+        forward_prop_arguments[i] = (SlaveArgs*) malloc(sizeof(SlaveArgs));
+        calc_loss_arguments[i] = (SlaveArgs*) malloc(sizeof(SlaveArgs));
+        backward_prop_arguments[i] = (SlaveArgs*) malloc(sizeof(SlaveArgs));
+        update_weights_arguments[i] = (SlaveArgs*) malloc(sizeof(SlaveArgs));
+
+        assignSlaveArguments(forward_prop_arguments[i], 
+            forward_prop_control_handle,
+            i,
+            network_depth,
+            X,
+            Ws,
+            bs,
+            Hs,
+            dWs,
+            dbs,
+            dHs,
+            Wcaches,
+            bcaches,
+            correct_labels,
+            NULL,
+            alpha,
+            learning_rate,
+            reg_strength,
+            decay_rate,
+            eps,
+            use_rmsprop,
+            &forward_prop_mem_alloc,
+            number_of_threads,
+            &forward_prop_mutex,
+            &forward_prop_cond,
+            &forward_prop_barrier,
+            NULL,
+            NULL);
+        assignSlaveArguments(calc_loss_arguments[i], 
+            calc_loss_control_handle,
+            i,
+            network_depth,
+            X,
+            Ws,
+            bs,
+            Hs,
+            dWs,
+            dbs,
+            dHs,
+            Wcaches,
+            bcaches,
+            correct_labels,
+            NULL,
+            alpha,
+            learning_rate,
+            reg_strength,
+            decay_rate,
+            eps,
+            use_rmsprop,
+            &calc_loss_mem_alloc,
+            number_of_threads,
+            &calc_loss_mutex,
+            &calc_loss_cond,
+            &calc_loss_barrier,
+            NULL,
+            losses[i]);
+        assignSlaveArguments(backward_prop_arguments[i], 
+            backward_prop_control_handle,
+            i,
+            network_depth,
+            X,
+            Ws,
+            bs,
+            Hs,
+            dWs,
+            dbs,
+            dHs,
+            Wcaches,
+            bcaches,
+            correct_labels,
+            dX,
+            alpha,
+            learning_rate,
+            reg_strength,
+            decay_rate,
+            eps,
+            use_rmsprop,
+            &backward_prop_mem_alloc,
+            number_of_threads,
+            &backward_prop_mutex,
+            &backward_prop_cond,
+            &backward_prop_barrier,
+            NULL,
+            NULL);
+        assignSlaveArguments(update_weights_arguments[i], 
+            update_weights_control_handle,
+            i,
+            network_depth,
+            X,
+            Ws,
+            bs,
+            Hs,
+            dWs,
+            dbs,
+            dHs,
+            Wcaches,
+            bcaches,
+            correct_labels,
+            NULL,
+            alpha,
+            learning_rate,
+            reg_strength,
+            decay_rate,
+            eps,
+            use_rmsprop,
+            &update_weights_mem_alloc,
+            number_of_threads,
+            &update_weights_mutex,
+            &update_weights_cond,
+            &update_weights_barrier,
+            NULL,
+            NULL);
+
+        int create_thread_error;
+        /*
+        forward_prop_arguments[i] is the type of SlaveArgs*, which is expected by FCNET_forwardPropagation_slave.
+        However while creating slave threads, I used &forward_prop_arguments[i], this is a type of SlaveArgs**.
+        So the "&" is not needed.
+        */
+        create_thread_error = pthread_create(&forward_prop[i],&attr,FCNET_forwardPropagation_slave,forward_prop_arguments[i]);
+        if (create_thread_error) {
+            printf("Error happened while creating slave threads\n");
+            exit(-1);
+        }
+        create_thread_error = pthread_create(&calc_loss[i],&attr,FCNET_calcLoss_slave,calc_loss_arguments[i]);
+        if (create_thread_error) {
+            printf("Error happened while creating slave threads\n");
+            exit(-1);
+        }
+        create_thread_error = pthread_create(&backward_prop[i],&attr,FCNET_backwardPropagation_slave,backward_prop_arguments[i]);
+        if (create_thread_error) {
+            printf("Error happened while creating slave threads\n");
+            exit(-1);
+        }
+        create_thread_error = pthread_create(&update_weights[i],&attr,FCNET_updateWeights_slave,update_weights_arguments[i]);
+        if (create_thread_error) {
+            printf("Error happened while creating slave threads\n");
+            exit(-1);
+        }
+    }
+
+
+
+    // Feed data to the network to train it
+    //printf("%s: Training network\n",TAG);
+    int iterations = training_data->height / minibatch_size;
+    TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
+    for(int epoch=1;epoch<=epochs;epoch++) {
+        *learning_rate = decayLearningRate(enable_learning_rate_step_decay,
+            enable_learning_rate_exponential_decay,
+            enable_learning_rate_invert_t_decay,
+            learning_rate_decay_unit,
+            learning_rate_decay_k,
+            learning_rate_decay_a0,
+            epoch,
+            base_learning_rate,
+            *learning_rate);
+        // find number of minibatch_size example to go into the network as 1 iteration
+        for(int iteration=0;iteration<iterations;iteration++) {
+            int data_start = iteration*minibatch_size;
+            int data_end = (iteration+1)*minibatch_size-1;
+            chop2DMatrix(training_data,data_start,data_end,X);
+            // Forward propagation
+            threadController_master(forward_prop_control_handle, THREAD_RESUME);
+            //sleep(1);
+            
+            threadController_master(calc_loss_control_handle, THREAD_RESUME);
+            //sleep(1);
+            float data_loss = losses[0][0];
+            float reg_loss = losses[0][1];
+            float accu = training_accuracy(Hs[network_depth-1], correct_labels);
+            if ((epoch % 1000 == 0 && iteration == 0) || verbose) {
+                printf("INFO: Epoch %d, data loss: %f, regulization loss: %f, total loss: %f, training accuracy: %f\n",
+                    epoch, data_loss, reg_loss, data_loss+reg_loss, accu);
+            }
+            // Backward propagation
+            threadController_master(backward_prop_control_handle, THREAD_RESUME);
+            //sleep(1);
+            // Update weights
+            threadController_master(update_weights_control_handle, THREAD_RESUME);
+            //sleep(1);
+        }
+    }
+
+    threadController_master(forward_prop_control_handle, THREAD_EXIT);
+    threadController_master(calc_loss_control_handle, THREAD_EXIT);
+    threadController_master(backward_prop_control_handle, THREAD_EXIT);
+    threadController_master(update_weights_control_handle, THREAD_EXIT);
+
+    destroy2DMatrix(X);
+    for(int i=0;i<network_depth;i++) {
+        destroy2DMatrix(dWs[i]);
+        destroy2DMatrix(dbs[i]);
+        destroy2DMatrix(Hs[i]);
+        destroy2DMatrix(dHs[i]);
+        if (use_batchnorm) {
+            destroy2DMatrix(dgammas[i]);
+            destroy2DMatrix(dbetas[i]);
+            destroy2DMatrix(means[i]);
+            destroy2DMatrix(vars[i]);
+            destroy2DMatrix(Hs_normalized[i]);
+        }
+    }
+    free(dWs);
+    free(dbs);
+    free(Hs);
+    free(dHs);
+    return 0;
+}

@@ -378,44 +378,7 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
         for(int iter=0;iter <iterations; iter++) {
             CONV_OUT = training_data + iter*sizeof(ThreeDMatrix*);
             // Forward propagation
-            for(int i=0;i<M;i++) {
-                for(int j=0;j<N;j++) {
-                    if (verbose) {
-                        printf("CONVNET INFO: Epoch: %d, CONV M = %d, N = %d\n", e, i, j);
-                    }
-                    for(int n=0;n<minibatch_size;n++) {
-                        convLayerForward(CONV_OUT[n], 
-                            F[i][j], 
-                            filter_number[i*N+j], 
-                            b[i][j], 
-                            filter_height[i*N+j], 
-                            filter_width[i*N+j], 
-                            filter_stride_y[i*N+j], 
-                            filter_stride_x[i*N+j], 
-                            padding_height[i*N+j], 
-                            padding_width[i*N+j], 
-                            alpha, 
-                            C[i][j][n]);
-                    }
-                    CONV_OUT = C[i][j];
-                }
-                if (enable_maxpooling[i]) {
-                    if (verbose) {
-                        printf("CONVNET INFO: Epoch: %d, POOLING M = %d\n", e, i);
-                    }
-                    for(int n=0;n<minibatch_size;n++) {
-                        maxPoolingForward(CONV_OUT[n], 
-                            pooling_stride_y[i], 
-                            pooling_stride_x[i], 
-                            pooling_width[i], 
-                            pooling_height[i], 
-                            P[i][n]);
-                    }
-                } else {
-                    P[i] = CONV_OUT;
-                }
-                CONV_OUT = P[i];
-            }
+            threadController_master(forward_prop_control_handle, THREAD_RESUME);
     
             // Feed data to fully connected network
             TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
@@ -425,12 +388,12 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
             }
             network_params->fcnet_param->X = X;
     
-            FCTrainCore(network_params->fcnet_param, 
+            FCTrainCore_multithread(network_params->fcnet_param, 
                 Ws, bs, 
                 NULL, NULL, NULL, NULL,
                 Wscache, bscache,
                 NULL, NULL, NULL, NULL,
-                dP2D, e, &current_fcnet_learning_rate, losses);
+                dP2D, e, &current_fcnet_learning_rate, losses, number_of_threads);
             destroy2DMatrix(X);
             if (verbose) {
                 printf("CONVNET INFO: Epoch: %d iteration %d, data loss: %f, regulization loss: %f, total loss: %f, training accuracy: %f\n", e, iter, losses[0], losses[1], losses[0]+losses[1],losses[2]);
@@ -441,129 +404,10 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
             //restoreThreeDMatrixFromCol(dP2D, dP3D);
             restoreThreeDMatrixFromCol(dP2D, dP[M-1]);
             // Backward propagation
-            /* Schematic
-            ** For the (i*j)th layer of a M*N layer network
-            **
-            **             P[i-1][j]  F[i][j],b[i][j]  C[i][j]                 P[i][j]
-            **             |                 |         |                         |
-            **             V                 V         V                         V
-            ** dF[i][j]    -----------------------------                -------------------
-            ** db[i][j] <- |         CONV[i][j]        | <- dC[i][j] <- |  POOLING[i][j]  | <- dP[i][j]
-            ** dP[i][j]    -----------------------------                -------------------
-            **
-            ** Actual dimentions of each variable:
-            ** dC[M][N][minibatch_size]
-            ** dP[M][minibatch_size]
-            ** dF[M][N][filter_number]
-            ** db[M][N][filter_number]
-            **
-            */
-            //ThreeDMatrix** dV = dP3D;
-            //dP[M-1] = dP3D;
-            for(int i=M-1;i>=0;i--) {
-                if (enable_maxpooling[i]) {
-                    if (verbose) {
-                        printf("CONVNET INFO: Epoch: %d, POOLING Backprop M = %d\n", e, i);
-                    }
-                    for(int n=0;n<minibatch_size;n++) {
-                        maxPoolingBackward(dP[i][n], 
-                            C[i][N-1][n], 
-                            pooling_stride_y[i], 
-                            pooling_stride_x[i], 
-                            pooling_width[i], 
-                            pooling_height[i],
-                            dC[i][N-1][n]);
-                    }
-                } else {
-                    // FIX ME
-                    // In cases where maxpooling is not enabled, dP is all zeros.
-                    for(int n=0;n<minibatch_size;n++) {
-                        dC[i][N-1][n] = dP[i][n];
-                    }
-                }
-    
-                for(int j=N-1;j>=0;j--) {
-                    if (verbose) {
-                        printf("CONVNET INFO: Epoch: %d, CONV Backprop M = %d, N = %d\n",e , i, j);
-                    }
-                    if (i == 0 && j == 0) {
-                        /* This is the begining of the whole network
-                        ** So the input data should be training_data
-                        */ 
-                        for(int n=0;n<minibatch_size;n++) {
-                            convLayerBackward(training_data[n], 
-                                C[i][j][n],
-                                F[i][j], 
-                                dC[i][j][n], 
-                                padding_height[i*N+j], 
-                                padding_width[i*N+j], 
-                                filter_stride_y[i*N+j], 
-                                filter_stride_x[i*N+j],
-                                alpha,
-                                dX[n], 
-                                dF[i][j], 
-                                db[i][j]);
-                        }
-                    } else if (i != 0 && j == 0) {
-                        /* This is the begining of a CONV layer
-                        ** So the input data should be the output of the max pooling layer ahead of it, which is P[i-1][n]
-                        */
-    
-                        for(int n=0;n<minibatch_size;n++) {
-                            convLayerBackward(P[i-1][n], 
-                                C[i][j][n],
-                                F[i][j], 
-                                dC[i][j][n], 
-                                padding_height[i*N+j], 
-                                padding_width[i*N+j],
-                                filter_stride_y[i*N+j], 
-                                filter_stride_x[i*N+j],
-                                alpha,
-                                dP[i-1][n], 
-                                dF[i][j], 
-                                db[i][j]);
-                        }
-                        //dV = dP[i-1];
-                    } else {
-                        for(int n=0;n<minibatch_size;n++) {
-                            convLayerBackward(C[i][j-1][n], 
-                                C[i][j][n],
-                                F[i][j], 
-                                dC[i][j][n], 
-                                padding_height[i*N+j], 
-                                padding_width[i*N+j],
-                                filter_stride_y[i*N+j], 
-                                filter_stride_x[i*N+j],
-                                alpha,
-                                dC[i][j-1][n], 
-                                dF[i][j], 
-                                db[i][j]);
-                        }
-                    }
-    
-                }
-            }
+            threadController_master(backward_prop_control_handle, THREAD_RESUME);
     
             // Update parameters
-            if (use_rmsprop) {
-                for(int i=0;i<M;i++) {
-                    for(int j=0;j<N;j++) {
-                        for(int k=0;k<filter_number[i*N+j];k++) {
-                            RMSPropConvnet(F[i][j][k], dF[i][j][k], Fcache[i][j][k], learning_rate, rmsprop_decay_rate, rmsprop_eps, F[i][j][k]);
-                            RMSPropConvnet(b[i][j][k], db[i][j][k], bcache[i][j][k], learning_rate, rmsprop_decay_rate, rmsprop_eps, b[i][j][k]);
-                        }
-                    }
-                }
-            } else {
-                for(int i=0;i<M;i++) {
-                    for(int j=0;j<N;j++) {
-                        for(int k=0;k<filter_number[i*N+j];k++) {
-                            vanillaUpdateConvnet(F[i][j][k], dF[i][j][k], learning_rate, F[i][j][k]);
-                            vanillaUpdateConvnet(b[i][j][k], db[i][j][k], learning_rate, b[i][j][k]);
-                        }
-                    }
-                }
-            }
+            threadController_master(update_weights_control_handle, THREAD_RESUME);
         }
 
         printf("CONVNET INFO:  Epoch: %d, data loss: %f, regulization loss: %f, total loss: %f, training accuracy: %f\n", e, total_data_loss/iterations, total_reg_loss/iterations, total_data_loss/iterations+total_reg_loss/iterations,training_accu/iterations);
@@ -619,6 +463,10 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
     }
 
     // Release memories, shutdown the network
+    threadController_master(forward_prop_control_handle, THREAD_EXIT);
+    threadController_master(backward_prop_control_handle, THREAD_EXIT);
+    threadController_master(update_weights_control_handle, THREAD_EXIT);
+
     for(int i=0;i<M;i++) {
         for(int j=0;j<N;j++) {
             for(int k=0;k<filter_number[i*N+j];k++) {
