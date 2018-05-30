@@ -92,7 +92,7 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
     printf("CONVNET INFO: Initializing learnable weights and intermediate layers\n");
     unsigned long long int total_parameters = 0;
     unsigned long long int total_memory = 0;
-    float* losses = malloc(sizeof(float)*3);
+    float** losses = malloc(sizeof(float)*number_of_threads);
     /*
     C will hold intermediate values of CONV -> RELU layer, C[M][N][minibatch_size]
     P will hold intermediate values of POOL, P[M][minibatch_size]
@@ -662,21 +662,29 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
             for(int i=0;i<minibatch_size;i++) {
                 reshapeThreeDMatrix2Col(P[M-1][i],i,X);
             }
-            network_params->fcnet_param->X = X;
-    
-            FCTrainCore_multithread(network_params->fcnet_param, 
-                Ws, bs, 
-                NULL, NULL, NULL, NULL,
-                Wscache, bscache,
-                NULL, NULL, NULL, NULL,
-                dP2D, e, &current_fcnet_learning_rate, losses, number_of_threads);
-            destroy2DMatrix(X);
+
+            // Forward propagation
+            threadController_master(forward_prop_control_handle, THREAD_RESUME);
+            
+            threadController_master(calc_loss_control_handle, THREAD_RESUME);
+
+            float data_loss = losses[0][0];
+            float reg_loss = losses[0][1];
+            float accu = training_accuracy(Hs[network_depth-1], correct_labels);
+            
+            // Backward propagation
+            threadController_master(backward_prop_control_handle, THREAD_RESUME);
+            //sleep(1);
+            // Update weights
+            threadController_master(update_weights_control_handle, THREAD_RESUME);
+            //sleep(1);
+
             if (verbose) {
-                printf("CONVNET INFO: Epoch: %d iteration %d, data loss: %f, regulization loss: %f, total loss: %f, training accuracy: %f\n", e, iter, losses[0], losses[1], losses[0]+losses[1],losses[2]);
+                printf("CONVNET INFO: Epoch: %d iteration %d, data loss: %f, regulization loss: %f, total loss: %f, training accuracy: %f\n", e, iter, losses[0][0], losses[0][1], losses[0][0]+losses[0][1],accu);
             }
-            total_data_loss += losses[0];
-            total_reg_loss += losses[1];
-            training_accu += losses[2];
+            total_data_loss += losses[0][0];
+            total_reg_loss += losses[0][1];
+            training_accu += accu;
             //restoreThreeDMatrixFromCol(dP2D, dP3D);
             restoreThreeDMatrixFromCol(dP2D, dP[M-1]);
             // Backward propagation
