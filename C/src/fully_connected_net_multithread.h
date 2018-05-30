@@ -20,7 +20,7 @@ typedef struct {
     TwoDMatrix* correct_labels;
     TwoDMatrix* tmp;
     float alpha;
-    float learning_rate;
+    float* learning_rate_addr;
     float reg_strength;
     float decay_rate;
     float eps;

@@ -351,7 +351,7 @@ int train_multithread(FCParameters* network_params) {
             correct_labels,
             NULL,
             alpha,
-            learning_rate,
+            &learning_rate,
             reg_strength,
             decay_rate,
             eps,
@@ -379,7 +379,7 @@ int train_multithread(FCParameters* network_params) {
             correct_labels,
             NULL,
             alpha,
-            learning_rate,
+            &learning_rate,
             reg_strength,
             decay_rate,
             eps,
@@ -407,7 +407,7 @@ int train_multithread(FCParameters* network_params) {
             correct_labels,
             dX,
             alpha,
-            learning_rate,
+            &learning_rate,
             reg_strength,
             decay_rate,
             eps,
@@ -435,7 +435,7 @@ int train_multithread(FCParameters* network_params) {
             correct_labels,
             NULL,
             alpha,
-            learning_rate,
+            &learning_rate,
             reg_strength,
             decay_rate,
             eps,
@@ -767,7 +767,7 @@ void* FCNET_updateWeights_slave(void* args) {
     TwoDMatrix** Wcaches = a->Wcaches;
     TwoDMatrix** bcaches = a->bcaches;
     bool use_rmsprop = a->use_rmsprop;
-    float learning_rate = a->learning_rate;
+    float learning_rate = *(a->learning_rate_addr);
     float decay_rate = a->decay_rate;
     float eps = a->eps;
     int network_depth = a->network_depth;
@@ -801,7 +801,7 @@ void assignSlaveArguments(SlaveArgs* args,
     TwoDMatrix* correct_labels,
     TwoDMatrix* tmp,
     float alpha,
-    float learning_rate,
+    float* learning_rate,
     float reg_strength,
     float decay_rate,
     float eps,
@@ -828,7 +828,7 @@ void assignSlaveArguments(SlaveArgs* args,
     args->correct_labels = correct_labels;
     args->tmp = tmp;
     args->alpha = alpha;
-    args->learning_rate = learning_rate;
+    args->learning_rate = *learning_rate;
     args->reg_strength = reg_strength;
     args->decay_rate = decay_rate;
     args->eps = eps;

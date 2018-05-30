@@ -272,6 +272,7 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
     //ThreeDMatrix* dX = matrixMalloc(sizeof(ThreeDMatrix));
     //init3DMatrix(dX, training_data->depth, training_data->height, training_data->width);
     printf("CONVNET INFO: Creating slave threads...\n");
+    // slave threads for convnet
     pthread_mutex_t forward_prop_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
     thread_barrier_t forward_prop_inst_ready = THREAD_BARRIER_INITIALIZER;
     thread_barrier_t forward_prop_inst_ack = THREAD_BARRIER_INITIALIZER;
@@ -356,6 +357,282 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
         }
     }
 
+    // Now slave threads for fully connected network
+    float fcnet_reg_strength = network_params->fcnet_param->reg_strength;
+    int fcnet_network_depth = network_params->fcnet_param->network_depth;
+    int* fcnet_hidden_layer_sizes = network_params->fcnet_param->hidden_layer_sizes;
+    
+    float fcnet_mu = network_params->fcnet_param->mu; // or 0.5,0.95, 0.99
+    float fcnet_decay_rate = network_params->fcnet_param->decay_rate; // or with more 9s in it
+    float fcnet_eps = network_params->fcnet_param->eps;
+    TwoDMatrix* fcnet_training_data = network_params->fcnet_param->X;
+    // Initialize all learnable parameters
+    // Hidden layers
+    TwoDMatrix** Hs = malloc(sizeof(TwoDMatrix*)*fcnet_network_depth);
+    // Gradient descend values of Weights
+    TwoDMatrix** dWs = malloc(sizeof(TwoDMatrix*)*fcnet_network_depth);
+    // Gradient descend values of Biases
+    TwoDMatrix** dbs = malloc(sizeof(TwoDMatrix*)*fcnet_network_depth);
+    // Gradient descend values of Hidden layers
+    TwoDMatrix** dHs = malloc(sizeof(TwoDMatrix*)*fcnet_network_depth);
+    // Below variables are used in optimization algorithms
+    // Batch normalization layers;
+    TwoDMatrix** dgammas = NULL;
+    TwoDMatrix** dbetas = NULL;
+    TwoDMatrix** means = NULL;
+    TwoDMatrix** vars = NULL;
+    TwoDMatrix** Hs_normalized = NULL;
+
+    if (use_batchnorm) {
+        dgammas = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*fcnet_network_depth);
+        dbetas = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*fcnet_network_depth);
+        means = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*fcnet_network_depth);
+        vars = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*fcnet_network_depth);
+        Hs_normalized = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*fcnet_network_depth);
+    }
+
+    for(int i=0;i<network_depth;i++) {
+        // Initialize layer data holders
+        Hs[i] = matrixMalloc(sizeof(TwoDMatrix));
+        dWs[i] = matrixMalloc(sizeof(TwoDMatrix));
+        dbs[i] = matrixMalloc(sizeof(TwoDMatrix));
+        dHs[i] = matrixMalloc(sizeof(TwoDMatrix));
+        init2DMatrix(Hs[i],minibatch_size,fcnet_hidden_layer_sizes[i]);
+
+        // Initialize variables for optimization
+        if (use_batchnorm) {
+            dgammas[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrix(dgammas[i],1,fcnet_hidden_layer_sizes[i]);
+            dbetas[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrix(dbetas[i],1,fcnet_hidden_layer_sizes[i]);
+            means[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrix(means[i],1,fcnet_hidden_layer_sizes[i]);
+            vars[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrix(vars[i],1,fcnet_hidden_layer_sizes[i]);
+            Hs_normalized[i] = matrixMalloc(sizeof(TwoDMatrix));
+            init2DMatrixZero(Hs_normalized[i],minibatch_size,fcnet_hidden_layer_sizes[i]);
+        }
+        //former_width = hidden_layer_sizes[i];
+    }
+    
+    // Create slave workers
+    bool fcnet_forward_prop_mem_alloc = false;
+    thread_barrier_t fcnet_forward_prop_barrier = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_init(&fcnet_forward_prop_barrier,number_of_threads);
+    pthread_mutex_t fcnet_forward_prop_mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_cond_t fcnet_forward_prop_cond = PTHREAD_COND_INITIALIZER;
+    pthread_mutex_t fcnet_forward_prop_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
+    thread_barrier_t fcnet_forward_prop_inst_ready = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t fcnet_forward_prop_inst_ack = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t fcnet_forward_prop_thread_complete = THREAD_BARRIER_INITIALIZER;
+    //thread_barrier_init(&forward_prop_inst_ready,number_of_threads);
+    //thread_barrier_init(&forward_prop_inst_ack,number_of_threads);
+    ThreadControl* fcnet_forward_prop_control_handle = initControlHandle(&fcnet_forward_prop_control_handle_mutex, 
+        &fcnet_forward_prop_inst_ready, &fcnet_forward_prop_inst_ack, &fcnet_forward_prop_thread_complete, number_of_threads);
+
+    bool fcnet_calc_loss_mem_alloc = false;
+    thread_barrier_t fcnet_calc_loss_barrier = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_init(&fcnet_calc_loss_barrier,number_of_threads);
+    pthread_mutex_t fcnet_calc_loss_mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_cond_t fcnet_calc_loss_cond = PTHREAD_COND_INITIALIZER;
+    pthread_mutex_t fcnet_calc_loss_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
+    thread_barrier_t fcnet_calc_loss_inst_ready = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t fcnet_calc_loss_inst_ack = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t fcnet_calc_loss_thread_complete = THREAD_BARRIER_INITIALIZER;
+    //thread_barrier_init(&calc_loss_inst_ready,number_of_threads);
+    //thread_barrier_init(&calc_loss_inst_ack,number_of_threads);
+    ThreadControl* fcnet_calc_loss_control_handle = initControlHandle(&fcnet_calc_loss_control_handle_mutex, 
+        &fcnet_calc_loss_inst_ready, &fcnet_calc_loss_inst_ack, &fcnet_calc_loss_thread_complete, number_of_threads);
+    
+    bool fcnet_backward_prop_mem_alloc = false;
+    thread_barrier_t fcnet_backward_prop_barrier = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_init(&fcnet_backward_prop_barrier,number_of_threads);
+    pthread_mutex_t fcnet_backward_prop_mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_cond_t fcnet_backward_prop_cond = PTHREAD_COND_INITIALIZER;
+    pthread_mutex_t fcnet_backward_prop_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
+    thread_barrier_t fcnet_backward_prop_inst_ready = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t fcnet_backward_prop_inst_ack = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t fcnet_backward_prop_thread_complete = THREAD_BARRIER_INITIALIZER;
+    //thread_barrier_init(&backward_prop_inst_ready,number_of_threads);
+    //thread_barrier_init(&backward_prop_inst_ack,number_of_threads);
+    ThreadControl* fcnet_backward_prop_control_handle = initControlHandle(&fcnet_backward_prop_control_handle_mutex, 
+        &fcnet_backward_prop_inst_ready, &fcnet_backward_prop_inst_ack, &fcnet_backward_prop_thread_complete, number_of_threads);
+    
+    bool fcnet_update_weights_mem_alloc = false;
+    thread_barrier_t fcnet_update_weights_barrier = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_init(&fcnet_update_weights_barrier,number_of_threads);
+    pthread_mutex_t fcnet_update_weights_mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_cond_t fcnet_update_weights_cond = PTHREAD_COND_INITIALIZER;
+    pthread_mutex_t fcnet_update_weights_control_handle_mutex = PTHREAD_MUTEX_INITIALIZER;
+    thread_barrier_t fcnet_update_weights_inst_ready = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t fcnet_update_weights_inst_ack = THREAD_BARRIER_INITIALIZER;
+    thread_barrier_t fcnet_update_weights_thread_complete = THREAD_BARRIER_INITIALIZER;
+    //thread_barrier_init(&update_weights_inst_ready,number_of_threads);
+    //thread_barrier_init(&update_weights_inst_ack,number_of_threads);
+    ThreadControl* fcnet_update_weights_control_handle = initControlHandle(&fcnet_update_weights_control_handle_mutex, 
+        &fcnet_update_weights_inst_ready, &fcnet_update_weights_inst_ack, &fcnet_update_weights_thread_complete, number_of_threads);
+    
+    pthread_t* fcnet_forward_prop = malloc(sizeof(pthread_t)*number_of_threads);
+    pthread_t* fcnet_calc_loss = malloc(sizeof(pthread_t)*number_of_threads);
+    pthread_t* fcnet_backward_prop = malloc(sizeof(pthread_t)*number_of_threads);
+    pthread_t* fcnet_update_weights = malloc(sizeof(pthread_t)*number_of_threads);
+
+    SlaveArgs** fcnet_forward_prop_arguments = malloc(sizeof(SlaveArgs*)*number_of_threads);
+    SlaveArgs** fcnet_calc_loss_arguments = malloc(sizeof(SlaveArgs*)*number_of_threads);
+    SlaveArgs** fcnet_backward_prop_arguments = malloc(sizeof(SlaveArgs*)*number_of_threads);
+    SlaveArgs** fcnet_update_weights_arguments = malloc(sizeof(SlaveArgs*)*number_of_threads);
+
+    TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
+
+    for(int i=0;i<number_of_threads;i++) {
+        losses[i] = malloc(sizeof(float)*2);
+        
+        fcnet_forward_prop_arguments[i] = (SlaveArgs*) malloc(sizeof(SlaveArgs));
+        fcnet_calc_loss_arguments[i] = (SlaveArgs*) malloc(sizeof(SlaveArgs));
+        fcnet_backward_prop_arguments[i] = (SlaveArgs*) malloc(sizeof(SlaveArgs));
+        fcnet_update_weights_arguments[i] = (SlaveArgs*) malloc(sizeof(SlaveArgs));
+
+        assignSlaveArguments(fcnet_forward_prop_arguments[i], 
+            fcnet_forward_prop_control_handle,
+            i,
+            fcnet_network_depth,
+            X,
+            Ws,
+            bs,
+            Hs,
+            dWs,
+            dbs,
+            dHs,
+            Wcaches,
+            bcaches,
+            network_params->fcnet_param->correct_labels,
+            NULL,
+            alpha,
+            &learning_rate,
+            fcnet_reg_strength,
+            fcnet_decay_rate,
+            fcnet_eps,
+            use_rmsprop,
+            &fcnet_forward_prop_mem_alloc,
+            number_of_threads,
+            &fcnet_forward_prop_mutex,
+            &fcnet_forward_prop_cond,
+            &fcnet_forward_prop_barrier,
+            NULL,
+            NULL);
+        assignSlaveArguments(fcnet_calc_loss_arguments[i], 
+            fcnet_calc_loss_control_handle,
+            i,
+            fcnet_network_depth,
+            X,
+            Ws,
+            bs,
+            Hs,
+            dWs,
+            dbs,
+            dHs,
+            Wcaches,
+            bcaches,
+            network_params->fcnet_param->correct_labels,
+            NULL,
+            alpha,
+            &learning_rate,
+            fcnet_reg_strength,
+            fcnet_decay_rate,
+            fcnet_eps,
+            use_rmsprop,
+            &fcnet_calc_loss_mem_alloc,
+            number_of_threads,
+            &fcnet_calc_loss_mutex,
+            &fcnet_calc_loss_cond,
+            &fcnet_calc_loss_barrier,
+            NULL,
+            losses[i]);
+        assignSlaveArguments(fcnet_backward_prop_arguments[i], 
+            fcnet_backward_prop_control_handle,
+            i,
+            fcnet_network_depth,
+            X,
+            Ws,
+            bs,
+            Hs,
+            dWs,
+            dbs,
+            dHs,
+            Wcaches,
+            bcaches,
+            network_params->fcnet_param->correct_labels,
+            dX,
+            alpha,
+            &learning_rate,
+            fcnet_reg_strength,
+            fcnet_decay_rate,
+            fcnet_eps,
+            use_rmsprop,
+            &fcnet_backward_prop_mem_alloc,
+            number_of_threads,
+            &fcnet_backward_prop_mutex,
+            &fcnet_backward_prop_cond,
+            &fcnet_backward_prop_barrier,
+            NULL,
+            NULL);
+        assignSlaveArguments(fcnet_update_weights_arguments[i], 
+            fcnet_update_weights_control_handle,
+            i,
+            fcnet_network_depth,
+            X,
+            Ws,
+            bs,
+            Hs,
+            dWs,
+            dbs,
+            dHs,
+            Wcaches,
+            bcaches,
+            network_params->fcnet_param->correct_labels,
+            NULL,
+            alpha,
+            &learning_rate,
+            fcnet_reg_strength,
+            fcnet_decay_rate,
+            fcnet_eps,
+            use_rmsprop,
+            &fcnet_update_weights_mem_alloc,
+            number_of_threads,
+            &fcnet_update_weights_mutex,
+            &fcnet_update_weights_cond,
+            &fcnet_update_weights_barrier,
+            NULL,
+            NULL);
+
+        int create_thread_error;
+        /*
+        fcnet_forward_prop_arguments[i] is the type of SlaveArgs*, which is expected by FCNET_forwardPropagation_slave.
+        However while creating slave threads, I used &fcnet_forward_prop_arguments[i], this is a type of SlaveArgs**.
+        So the "&" is not needed.
+        */
+        create_thread_error = pthread_create(&fcnet_forward_prop[i],&attr,FCNET_forwardPropagation_slave,fcnet_forward_prop_arguments[i]);
+        if (create_thread_error) {
+            printf("Error happened while creating slave threads\n");
+            exit(-1);
+        }
+        create_thread_error = pthread_create(&fcnet_calc_loss[i],&attr,FCNET_calcLoss_slave,fcnet_calc_loss_arguments[i]);
+        if (create_thread_error) {
+            printf("Error happened while creating slave threads\n");
+            exit(-1);
+        }
+        create_thread_error = pthread_create(&fcnet_backward_prop[i],&attr,FCNET_backwardPropagation_slave,fcnet_backward_prop_arguments[i]);
+        if (create_thread_error) {
+            printf("Error happened while creating slave threads\n");
+            exit(-1);
+        }
+        create_thread_error = pthread_create(&fcnet_update_weights[i],&attr,FCNET_updateWeights_slave,fcnet_update_weights_arguments[i]);
+        if (create_thread_error) {
+            printf("Error happened while creating slave threads\n");
+            exit(-1);
+        }
+    }
+
 
 
 
@@ -381,7 +658,6 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
             threadController_master(forward_prop_control_handle, THREAD_RESUME);
     
             // Feed data to fully connected network
-            TwoDMatrix* X = matrixMalloc(sizeof(TwoDMatrix));
             init2DMatrix(X,minibatch_size,layer_data_depth*layer_data_height*layer_data_width);
             for(int i=0;i<minibatch_size;i++) {
                 reshapeThreeDMatrix2Col(P[M-1][i],i,X);
@@ -533,6 +809,7 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
     free(dC);
     free(db);
     free(losses);
+    destroy2DMatrix(X);
     if (use_rmsprop) {
         free(Fcache);
         free(bcache);
