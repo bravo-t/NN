@@ -470,7 +470,7 @@ int destroy2DMatrix_thread(TwoDMatrix* M, int id, bool* mem_allocated,int number
 int destroy3DMatrix_thread(ThreeDMatrix* M, int id, bool* mem_allocated,int number_of_threads, pthread_mutex_t* mutex, pthread_cond_t* cond, thread_barrier_t* barrier) {
     int h_start = calc_h_start(id,M->height,number_of_threads);
     int h_end = calc_h_end(id,M->height,number_of_threads);
-    for(int i=0;i<depth;i++) {
+    for(int i=0;i<M->depth;i++) {
         for(int j=h_start;j<=h_end;j++) {
             free(M->d[i][j]);
             M->d[i][j] = NULL;
