@@ -318,6 +318,7 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
             filter_number, filter_height, filter_width, filter_stride_y, filter_stride_x, 
             padding_width, padding_height, 
             enable_maxpooling, pooling_height, pooling_width, pooling_stride_x, pooling_stride_y, 
+            learning_rate, use_rmsprop, rmsprop_decay_rate, rmsprop_eps,
             alpha, verbose, i, number_of_threads, forward_prop_control_handle);
         assignConvSlaveArguments(backward_prop_arguments[i], 
             M, N, minibatch_size, training_data, dX, &CONV_OUT,
@@ -325,6 +326,7 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
             filter_number, filter_height, filter_width, filter_stride_y, filter_stride_x, 
             padding_width, padding_height, 
             enable_maxpooling, pooling_height, pooling_width, pooling_stride_x, pooling_stride_y, 
+            learning_rate, use_rmsprop, rmsprop_decay_rate, rmsprop_eps,
             alpha, verbose, i, number_of_threads, backward_prop_control_handle);
         assignConvSlaveArguments(update_weights_arguments[i], 
             M, N, minibatch_size, NULL, NULL, &CONV_OUT,
@@ -332,6 +334,7 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
             filter_number, filter_height, filter_width, filter_stride_y, filter_stride_x, 
             padding_width, padding_height, 
             enable_maxpooling, pooling_height, pooling_width, pooling_stride_x, pooling_stride_y, 
+            learning_rate, use_rmsprop, rmsprop_decay_rate, rmsprop_eps,
             alpha, verbose, i, number_of_threads, update_weights_control_handle);
 
         int create_thread_error;

@@ -12,7 +12,7 @@ typedef struct {
     int minibatch_size;
     ThreeDMatrix** training_data;
     ThreeDMatrix** dX,
-    ThreeDMatrix** CONV_OUT;
+    ThreeDMatrix*** CONV_OUT;
     ThreeDMatrix**** C;
     ThreeDMatrix*** P;
     ThreeDMatrix**** F;
