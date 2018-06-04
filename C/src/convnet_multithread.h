@@ -10,6 +10,8 @@ typedef struct {
     int M;
     int N;
     int minibatch_size;
+    ThreeDMatrix** training_data;
+    ThreeDMatrix** dX,
     ThreeDMatrix** CONV_OUT;
     ThreeDMatrix**** C;
     ThreeDMatrix*** P;
@@ -35,6 +37,8 @@ typedef struct {
     int* pooling_stride_y;
     float alpha;
     bool use_rmsprop;
+    float rmsprop_decay_rate;
+    float rmsprop_eps;
     float learning_rate;
     bool verbose;
     int id;

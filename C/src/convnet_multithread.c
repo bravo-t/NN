@@ -313,21 +313,21 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
         update_weights_arguments[i] = (ConvnetSlaveArgs*) malloc(sizeof(ConvnetSlaveArgs));
 
         assignConvSlaveArguments(forward_prop_arguments[i], 
-            M, N, minibatch_size, &CONV_OUT,
+            M, N, minibatch_size, NULL, NULL, &CONV_OUT,
             C, P, F, b, dC, dP, dF, db, 
             filter_number, filter_height, filter_width, filter_stride_y, filter_stride_x, 
             padding_width, padding_height, 
             enable_maxpooling, pooling_height, pooling_width, pooling_stride_x, pooling_stride_y, 
             alpha, verbose, i, number_of_threads, forward_prop_control_handle);
         assignConvSlaveArguments(backward_prop_arguments[i], 
-            M, N, minibatch_size, &CONV_OUT,
+            M, N, minibatch_size, training_data, dX, &CONV_OUT,
             C, P, F, b, dC, dP, dF, db, 
             filter_number, filter_height, filter_width, filter_stride_y, filter_stride_x, 
             padding_width, padding_height, 
             enable_maxpooling, pooling_height, pooling_width, pooling_stride_x, pooling_stride_y, 
             alpha, verbose, i, number_of_threads, backward_prop_control_handle);
         assignConvSlaveArguments(update_weights_arguments[i], 
-            M, N, minibatch_size, &CONV_OUT,
+            M, N, minibatch_size, NULL, NULL, &CONV_OUT,
             C, P, F, b, dC, dP, dF, db, 
             filter_number, filter_height, filter_width, filter_stride_y, filter_stride_x, 
             padding_width, padding_height, 
@@ -956,9 +956,9 @@ int CONV_forwardPropagation(int M, int N, int minibatch_size,ThreeDMatrix*** CON
     int end_index = calc_h_end(id,minibatch_size,number_of_threads);
     for(int i=0;i<M;i++) {
         for(int j=0;j<N;j++) {
-            if (verbose) {
-                printf("CONVNET INFO: Epoch: %d, CONV M = %d, N = %d\n", e, i, j);
-            }
+            //if (verbose) {
+            //    printf("CONVNET INFO: Epoch: %d, CONV M = %d, N = %d\n", e, i, j);
+            //}
             for(int n=start_index;n<=end_index;n++) {
                 convLayerForward(*(CONV_OUT[n]), 
                     F[i][j], 
@@ -976,9 +976,9 @@ int CONV_forwardPropagation(int M, int N, int minibatch_size,ThreeDMatrix*** CON
             *(CONV_OUT) = C[i][j];
         }
         if (enable_maxpooling[i]) {
-            if (verbose) {
-                printf("CONVNET INFO: Epoch: %d, POOLING M = %d\n", e, i);
-            }
+            //if (verbose) {
+            //    printf("CONVNET INFO: Epoch: %d, POOLING M = %d\n", e, i);
+            //}
             for(int n=start_index;n<=end_index;n++) {
                 maxPoolingForward(*(CONV_OUT[n]), 
                     pooling_stride_y[i], 
@@ -995,14 +995,14 @@ int CONV_forwardPropagation(int M, int N, int minibatch_size,ThreeDMatrix*** CON
     return 0;
 }
 
-int CONV_backwardPropagation(int M, int N, int minibatch_size, ThreeDMatrix**** C, ThreeDMatrix*** P, ThreeDMatrix**** F, ThreeDMatrix**** b, ThreeDMatrix**** dC, ThreeDMatrix*** dP, ThreeDMatrix**** dF, ThreeDMatrix**** db, int* filter_number, int* filter_height, int* filter_width, int* filter_stride_y, int* filter_stride_x, int* padding_width, int* padding_height, bool* enable_maxpooling, int* pooling_height, int* pooling_width, int* pooling_stride_x, int* pooling_stride_y, float alpha, bool verbose, int id,int number_of_threads) {
+int CONV_backwardPropagation(int M, int N, int minibatch_size, ThreeDMatrix** training_data, ThreeDMatrix** dX, ThreeDMatrix**** C, ThreeDMatrix*** P, ThreeDMatrix**** F, ThreeDMatrix**** b, ThreeDMatrix**** dC, ThreeDMatrix*** dP, ThreeDMatrix**** dF, ThreeDMatrix**** db, int* filter_number, int* filter_height, int* filter_width, int* filter_stride_y, int* filter_stride_x, int* padding_width, int* padding_height, bool* enable_maxpooling, int* pooling_height, int* pooling_width, int* pooling_stride_x, int* pooling_stride_y, float alpha, bool verbose, int id,int number_of_threads) {
     int start_index = calc_h_start(id,minibatch_size,number_of_threads);
     int end_index = calc_h_end(id,minibatch_size,number_of_threads);
     for(int i=M-1;i>=0;i--) {
         if (enable_maxpooling[i]) {
-            if (verbose) {
-                printf("CONVNET INFO: Epoch: %d, POOLING Backprop M = %d\n", e, i);
-            }
+            //if (verbose) {
+            //    printf("CONVNET INFO: Epoch: %d, POOLING Backprop M = %d\n", e, i);
+            //}
             for(int n=start_index;n<=end_index;n++) {
                 maxPoolingBackward(dP[i][n], 
                     C[i][N-1][n], 
@@ -1013,7 +1013,7 @@ int CONV_backwardPropagation(int M, int N, int minibatch_size, ThreeDMatrix**** 
                     dC[i][N-1][n]);
             }
         } else {
-            // FIX ME
+            // FIXME
             // In cases where maxpooling is not enabled, dP is all zeros.
             for(int n=start_index;n<=end_index;n++) {
                 dC[i][N-1][n] = dP[i][n];
@@ -1021,9 +1021,9 @@ int CONV_backwardPropagation(int M, int N, int minibatch_size, ThreeDMatrix**** 
         }
     
         for(int j=N-1;j>=0;j--) {
-            if (verbose) {
-                printf("CONVNET INFO: Epoch: %d, CONV Backprop M = %d, N = %d\n",e , i, j);
-            }
+            //if (verbose) {
+            //    printf("CONVNET INFO: Epoch: %d, CONV Backprop M = %d, N = %d\n",e , i, j);
+            //}
             if (i == 0 && j == 0) {
                 /* This is the begining of the whole network
                 ** So the input data should be training_data
@@ -1083,7 +1083,7 @@ int CONV_backwardPropagation(int M, int N, int minibatch_size, ThreeDMatrix**** 
     return 0;
 }
 
-int CONVNET_updateWeights(int M, int N, int minibatch_size, ThreeDMatrix**** C, ThreeDMatrix*** P, ThreeDMatrix**** F, ThreeDMatrix**** b, ThreeDMatrix**** dC, ThreeDMatrix*** dP, ThreeDMatrix**** dF, ThreeDMatrix**** db, ThreeDMatrix**** Fcache, ThreeDMatrix**** bcache, int* filter_number, bool use_rmsprop, int id, int number_of_threads) {
+int CONVNET_updateWeights(int M, int N, int minibatch_size, ThreeDMatrix**** C, ThreeDMatrix*** P, ThreeDMatrix**** F, ThreeDMatrix**** b, ThreeDMatrix**** dC, ThreeDMatrix*** dP, ThreeDMatrix**** dF, ThreeDMatrix**** db, ThreeDMatrix**** Fcache, ThreeDMatrix**** bcache, int* filter_number, float learning_rate, bool use_rmsprop, float rmsprop_decay_rate, float rmsprop_eps, int id, int number_of_threads) {
     if (use_rmsprop) {
         for(int i=0;i<M;i++) {
             for(int j=0;j<N;j++) {
@@ -1116,6 +1116,7 @@ void* CONV_forwardPropagation_slave(void* args) {
     int N = a->N;
     int minibatch_size = a->minibatch_size;
     ThreeDMatrix*** CONV_OUT = a->CONV_OUT;
+    ThreeDMatrix** dX = a->dX;
     ThreeDMatrix**** C = a->C;
     ThreeDMatrix*** P = a->P;
     ThreeDMatrix**** F = a->F;
@@ -1160,6 +1161,8 @@ void* CONV_backwardPropagation_slave(void* args) {
     int M = a->M;
     int N = a->N;
     int minibatch_size = a->minibatch_size;
+    ThreeDMatrix** training_data = a->training_data;
+    ThreeDMatrix** dX = a->dX;
     ThreeDMatrix*** CONV_OUT = a->CONV_OUT;
     ThreeDMatrix**** C = a->C;
     ThreeDMatrix*** P = a->P;
@@ -1230,6 +1233,8 @@ void* CONV_updateWeights_slave(void* args) {
     int* pooling_stride_y = a->pooling_stride_y;
     float alpha = a->alpha;
     bool use_rmsprop = a->use_rmsprop;
+    float rmsprop_decay_rate = a->rmsprop_decay_rate;
+    float rmsprop_eps = a->rmsprop_eps;
     float learning_rate = a->learning_rate;
     bool verbose = a->verbose;
     ThreadControl* handle = a->handle;
@@ -1237,21 +1242,24 @@ void* CONV_updateWeights_slave(void* args) {
         threadController_slave(handle,CONTROL_WAIT_INST);
         CONVNET_updateWeights(M, N, minibatch_size, 
         C, P, F, b, dC, dP, dF, db, Fcache, bcache, 
-        filter_number, use_rmsprop, id, number_of_threads);
+        filter_number, learning_rate, use_rmsprop, 
+        rmsprop_decay_rate, rmsprop_eps, id, number_of_threads);
         threadController_slave(handle,CONTROL_EXEC_COMPLETE);
     }
 }
 
 void assignConvSlaveArguments (ConvnetSlaveArgs* args,
-    int M, int N, int minibatch_size, ThreeDMatrix*** CONV_OUT,
+    int M, int N, int minibatch_size, ThreeDMatrix** training_data, ThreeDMatrix*** CONV_OUT,
     ThreeDMatrix**** C, ThreeDMatrix*** P, ThreeDMatrix**** F, ThreeDMatrix**** b, ThreeDMatrix**** dC, ThreeDMatrix*** dP, ThreeDMatrix**** dF, ThreeDMatrix**** db, 
     int* filter_number, int* filter_height, int* filter_width, int* filter_stride_y, int* filter_stride_x, 
     int* padding_width, int* padding_height, 
     bool* enable_maxpooling, int* pooling_height, int* pooling_width, int* pooling_stride_x, int* pooling_stride_y, 
+    float learning_rate, bool use_rmsprop, float rmsprop_decay_rate, float rmsprop_eps,
     float alpha, bool verbose, int id,int number_of_threads, ThreadControl* handle) {
     args->M = M;
     args->N = N;
     args->minibatch_size = minibatch_size;
+    args->training_data = training_data;
     args->CONV_OUT = CONV_OUT;
     args->C = C;
     args->P = P;
@@ -1273,6 +1281,10 @@ void assignConvSlaveArguments (ConvnetSlaveArgs* args,
     args->pooling_width = pooling_width;
     args->pooling_stride_x = pooling_stride_x;
     args->pooling_stride_y = pooling_stride_y;
+    args->learning_rate = learning_rate;
+    args->use_rmsprop = use_rmsprop;
+    args->rmsprop_decay_rate = rmsprop_decay_rate;
+    args->rmsprop_eps = rmsprop_eps;
     args->alpha = alpha;
     args->verbose = verbose;
     args->id = id;
