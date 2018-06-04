@@ -40,3 +40,5 @@ typedef struct {
     int id;
     int number_of_threads;
 } ConvnetSlaveArgs;
+
+#endif

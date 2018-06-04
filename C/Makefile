@@ -49,6 +49,9 @@ convnet_layers.o: src/convnet_layers.c src/convnet_layers.h convnet_operations.o
 convnet.o: src/convnet.c src/convnet.h convnet_layers.o
 	$(CC) -c -o $@ $< $(LIBS) $(CFLAGS)
 
+convnet_multithread.o: src/convnet_multithread.c src/convnet_multithread.h matrix_operations.o layers.o layers_multithread.o matrix_operations_multithread.o thread_control.o convnet_operations.o convnet_layers.o convnet.o 
+	$(CC) -c -o $@ $< $(CFLAGS) $(LIBS) $(THREAD_LIBS)
+
 convnet_test: convnet_test.c convnet.o convnet_layers.o convnet_operations.o matrix_operations.o layers.o fully_connected_net.o misc_utils.o
 	$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
 
