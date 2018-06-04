@@ -15,6 +15,7 @@
 #include "layers.h"
 #include "misc_utils.h"
 #include "fully_connected_net.h"
+#include "fully_connected_net_multithread.h"
 #include "convnet_operations.h"
 #include "convnet_layers.h"
 #include "convnet.h"
@@ -66,6 +67,9 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
     float learning_rate_decay_k = network_params->learning_rate_decay_k;
     char* param_dir = network_params->params_save_dir;
     int save_checkpoint = network_params->save_checkpoint;
+
+    int number_of_threads = network_params->number_of_threads;
+
     // Turn these features off to reduce the complexity for now
     network_params->fcnet_param->use_momentum_update = false;
     network_params->fcnet_param->use_batchnorm = false;
@@ -314,24 +318,21 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
             filter_number, filter_height, filter_width, filter_stride_y, filter_stride_x, 
             padding_width, padding_height, 
             enable_maxpooling, pooling_height, pooling_width, pooling_stride_x, pooling_stride_y, 
-            alpha, verbose, id, number_of_threads, forward_prop_control_handle,
-            );
+            alpha, verbose, i, number_of_threads, forward_prop_control_handle);
         assignConvSlaveArguments(backward_prop_arguments[i], 
             M, N, minibatch_size, &CONV_OUT,
             C, P, F, b, dC, dP, dF, db, 
             filter_number, filter_height, filter_width, filter_stride_y, filter_stride_x, 
             padding_width, padding_height, 
             enable_maxpooling, pooling_height, pooling_width, pooling_stride_x, pooling_stride_y, 
-            alpha, verbose, id, number_of_threads, backward_prop_control_handle,
-            );
+            alpha, verbose, i, number_of_threads, backward_prop_control_handle);
         assignConvSlaveArguments(update_weights_arguments[i], 
             M, N, minibatch_size, &CONV_OUT,
             C, P, F, b, dC, dP, dF, db, 
             filter_number, filter_height, filter_width, filter_stride_y, filter_stride_x, 
             padding_width, padding_height, 
             enable_maxpooling, pooling_height, pooling_width, pooling_stride_x, pooling_stride_y, 
-            alpha, verbose, id, number_of_threads, update_weights_control_handle,
-            );
+            alpha, verbose, i, number_of_threads, update_weights_control_handle);
 
         int create_thread_error;
         /*
@@ -360,7 +361,6 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
     // Now slave threads for fully connected network
     float fcnet_reg_strength = network_params->fcnet_param->reg_strength;
     int fcnet_network_depth = network_params->fcnet_param->network_depth;
-    int* fcnet_hidden_layer_sizes = network_params->fcnet_param->hidden_layer_sizes;
     
     float fcnet_mu = network_params->fcnet_param->mu; // or 0.5,0.95, 0.99
     float fcnet_decay_rate = network_params->fcnet_param->decay_rate; // or with more 9s in it
@@ -383,7 +383,7 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
     TwoDMatrix** vars = NULL;
     TwoDMatrix** Hs_normalized = NULL;
 
-    if (use_batchnorm) {
+    if (network_params->fcnet_param->use_batchnorm) {
         dgammas = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*fcnet_network_depth);
         dbetas = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*fcnet_network_depth);
         means = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*fcnet_network_depth);
@@ -391,7 +391,7 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
         Hs_normalized = (TwoDMatrix**) malloc(sizeof(TwoDMatrix*)*fcnet_network_depth);
     }
 
-    for(int i=0;i<network_depth;i++) {
+    for(int i=0;i<fcnet_network_depth;i++) {
         // Initialize layer data holders
         Hs[i] = matrixMalloc(sizeof(TwoDMatrix));
         dWs[i] = matrixMalloc(sizeof(TwoDMatrix));
@@ -400,7 +400,7 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
         init2DMatrix(Hs[i],minibatch_size,fcnet_hidden_layer_sizes[i]);
 
         // Initialize variables for optimization
-        if (use_batchnorm) {
+        if (network_params->fcnet_param->use_batchnorm) {
             dgammas[i] = matrixMalloc(sizeof(TwoDMatrix));
             init2DMatrix(dgammas[i],1,fcnet_hidden_layer_sizes[i]);
             dbetas[i] = matrixMalloc(sizeof(TwoDMatrix));
@@ -503,8 +503,8 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
             dWs,
             dbs,
             dHs,
-            Wcaches,
-            bcaches,
+            Wscache,
+            bscache,
             network_params->fcnet_param->correct_labels,
             NULL,
             alpha,
@@ -531,8 +531,8 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
             dWs,
             dbs,
             dHs,
-            Wcaches,
-            bcaches,
+            Wscache,
+            bscache,
             network_params->fcnet_param->correct_labels,
             NULL,
             alpha,
@@ -559,10 +559,10 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
             dWs,
             dbs,
             dHs,
-            Wcaches,
-            bcaches,
+            Wscache,
+            bscache,
             network_params->fcnet_param->correct_labels,
-            dX,
+            dP2D,
             alpha,
             &learning_rate,
             fcnet_reg_strength,
@@ -587,8 +587,8 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
             dWs,
             dbs,
             dHs,
-            Wcaches,
-            bcaches,
+            Wscache,
+            bscache,
             network_params->fcnet_param->correct_labels,
             NULL,
             alpha,
@@ -664,13 +664,13 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
             }
 
             // Forward propagation
-            threadController_master(forward_prop_control_handle, THREAD_RESUME);
+            threadController_master(fcnet_forward_prop_control_handle, THREAD_RESUME);
             
-            threadController_master(calc_loss_control_handle, THREAD_RESUME);
+            threadController_master(fcnet_calc_loss_control_handle, THREAD_RESUME);
 
             float data_loss = losses[0][0];
             float reg_loss = losses[0][1];
-            float accu = training_accuracy(Hs[network_depth-1], correct_labels);
+            float accu = training_accuracy(Hs[fcnet_network_depth-1], network_params->fcnet_param->correct_labels);
             
             // Backward propagation
             threadController_master(backward_prop_control_handle, THREAD_RESUME);
