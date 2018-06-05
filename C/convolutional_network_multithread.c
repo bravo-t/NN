@@ -31,9 +31,9 @@ int main(int argc, char** argv) {
     int number_of_threads = strtol(argv[2],NULL,10);
     if (strcmp(network_params->mode,"train")) {
     	TwoDMatrix* scores = NULL;
-        testConvnet(network_params,scores);
+        testConvnet_multithread(network_params,scores);
     } else {
         network_params->number_of_threads = number_of_threads;
-        trainConvnet(network_params);
+        trainConvnet_multithread(network_params);
     }
 }
