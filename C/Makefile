@@ -8,7 +8,7 @@ LIBS=-lm
 THREAD_LIBS=-lpthread -lrt
 CFLAGS=$(PRE_CFLAGS) -std=gnu99 -Wall
 
-default: fully_connected_network convolutional_network 
+default: fully_connected_network convolutional_network fully_connected_network_multithread convolutional_network_multithread
 
 fully_connected_network: fully_connected_network.c misc_utils.o matrix_operations.o layers.o fully_connected_net.o
 	$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
@@ -57,6 +57,9 @@ convnet_test: convnet_test.c convnet.o convnet_layers.o convnet_operations.o mat
 
 convolutional_network: convolutional_network.c convnet.o convnet_layers.o convnet_operations.o matrix_operations.o layers.o fully_connected_net.o misc_utils.o
 	$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
+
+convolutional_network_multithread: convolutional_network_multithread.c convnet.o convnet_multithread.o convnet_layers.o convnet_operations.o matrix_operations.o layers.o layers_multithread.o fully_connected_net.o misc_utils.o matrix_operations_multithread.o fully_connected_net_multithread.o thread_barrier.o thread_control.o inter-process_communication.o
+	$(CC) -o $@ $^ $(LIBS) $(CFLAGS) $(THREAD_LIBS)
 
 mnist_test: mnist.c convnet.o convnet_layers.o convnet_operations.o matrix_operations.o layers.o fully_connected_net.o misc_utils.o
 	$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
