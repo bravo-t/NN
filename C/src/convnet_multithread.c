@@ -21,6 +21,11 @@
 #include "convnet.h"
 #include "convnet_multithread.h"
 
+#if defined(DEBUG) && DEBUG > 1
+    pthread_mutex_t debug_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
+
 int trainConvnet_multithread(ConvnetParameters* network_params) {
     ThreeDMatrix** training_data = network_params->X;
     int number_of_samples = network_params->number_of_samples;
@@ -81,7 +86,8 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
     network_params->fcnet_param->learning_rate_decay_unit = learning_rate_decay_unit;
     network_params->fcnet_param->learning_rate_decay_a0 = learning_rate_decay_a0;
     network_params->fcnet_param->learning_rate_decay_k = learning_rate_decay_k;
-
+    
+    printf("CONVNET INFO: Convolutional neural network started with %d CPU cores\n",number_of_threads);
     if (normalize_data_per_channel) {
         printf("CONVNET INFO: Normalizing input data\n");
         for(int i=0;i<number_of_samples;i++) {
@@ -314,7 +320,7 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
 
         assignConvSlaveArguments(forward_prop_arguments[i], 
             M, N, minibatch_size, NULL, NULL, &CONV_OUT,
-            C, P, F, b, dC, dP, dF, db, 
+            C, P, F, b, dC, dP, dF, db, Fcache, bcache,
             filter_number, filter_height, filter_width, filter_stride_y, filter_stride_x, 
             padding_width, padding_height, 
             enable_maxpooling, pooling_height, pooling_width, pooling_stride_x, pooling_stride_y, 
@@ -322,7 +328,7 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
             alpha, verbose, i, number_of_threads, forward_prop_control_handle);
         assignConvSlaveArguments(backward_prop_arguments[i], 
             M, N, minibatch_size, training_data, dX, &CONV_OUT,
-            C, P, F, b, dC, dP, dF, db, 
+            C, P, F, b, dC, dP, dF, db, Fcache, bcache,
             filter_number, filter_height, filter_width, filter_stride_y, filter_stride_x, 
             padding_width, padding_height, 
             enable_maxpooling, pooling_height, pooling_width, pooling_stride_x, pooling_stride_y, 
@@ -330,7 +336,7 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
             alpha, verbose, i, number_of_threads, backward_prop_control_handle);
         assignConvSlaveArguments(update_weights_arguments[i], 
             M, N, minibatch_size, NULL, NULL, &CONV_OUT,
-            C, P, F, b, dC, dP, dF, db, 
+            C, P, F, b, dC, dP, dF, db, Fcache, bcache,
             filter_number, filter_height, filter_width, filter_stride_y, filter_stride_x, 
             padding_width, padding_height, 
             enable_maxpooling, pooling_height, pooling_width, pooling_stride_x, pooling_stride_y, 
@@ -963,7 +969,7 @@ int CONV_forwardPropagation(int M, int N, int minibatch_size,ThreeDMatrix*** CON
             //    printf("CONVNET INFO: Epoch: %d, CONV M = %d, N = %d\n", e, i, j);
             //}
             for(int n=start_index;n<=end_index;n++) {
-                convLayerForward(*(CONV_OUT[n]), 
+                convLayerForward((*CONV_OUT)[n], 
                     F[i][j], 
                     filter_number[i*N+j], 
                     b[i][j], 
@@ -983,7 +989,7 @@ int CONV_forwardPropagation(int M, int N, int minibatch_size,ThreeDMatrix*** CON
             //    printf("CONVNET INFO: Epoch: %d, POOLING M = %d\n", e, i);
             //}
             for(int n=start_index;n<=end_index;n++) {
-                maxPoolingForward(*(CONV_OUT[n]), 
+                maxPoolingForward((*CONV_OUT)[n], 
                     pooling_stride_y[i], 
                     pooling_stride_x[i], 
                     pooling_width[i], 
@@ -1150,6 +1156,11 @@ void* CONV_forwardPropagation_slave(void* args) {
     ThreadControl* handle = a->handle;
     while(1) {
         threadController_slave(handle,CONTROL_WAIT_INST);
+        #if defined(DEBUG) && DEBUG > 1
+        pthread_mutex_lock(&debug_mutex);
+        printf("DEBUG: Forward prop threads running\n");
+        pthread_mutex_unlock(&debug_mutex);
+        #endif
         CONV_forwardPropagation(M, N, minibatch_size,
         CONV_OUT, C, P, F, b, 
         filter_number, filter_height, filter_width, filter_stride_y, filter_stride_x,
@@ -1199,6 +1210,11 @@ void* CONV_backwardPropagation_slave(void* args) {
     ThreadControl* handle = a->handle;
     while(1) {
         threadController_slave(handle,CONTROL_WAIT_INST);
+        #if defined(DEBUG) && DEBUG > 1
+        pthread_mutex_lock(&debug_mutex);
+        printf("DEBUG: Backward prop threads running\n");
+        pthread_mutex_unlock(&debug_mutex);
+        #endif
         CONV_backwardPropagation(M, N, minibatch_size, training_data, dX,
         C, P, F, b, dC, dP, dF, db, 
         filter_number, filter_height, filter_width, filter_stride_y, filter_stride_x, 
@@ -1248,6 +1264,11 @@ void* CONV_updateWeights_slave(void* args) {
     ThreadControl* handle = a->handle;
     while(1) {
         threadController_slave(handle,CONTROL_WAIT_INST);
+        #if defined(DEBUG) && DEBUG > 1
+        pthread_mutex_lock(&debug_mutex);
+        printf("DEBUG: Update weights threads running\n");
+        pthread_mutex_unlock(&debug_mutex);
+        #endif
         CONVNET_updateWeights(M, N, minibatch_size, 
         C, P, F, b, dC, dP, dF, db, Fcache, bcache, 
         filter_number, learning_rate, use_rmsprop, 
@@ -1259,6 +1280,7 @@ void* CONV_updateWeights_slave(void* args) {
 void assignConvSlaveArguments (ConvnetSlaveArgs* args,
     int M, int N, int minibatch_size, ThreeDMatrix** training_data, ThreeDMatrix** dX, ThreeDMatrix*** CONV_OUT,
     ThreeDMatrix**** C, ThreeDMatrix*** P, ThreeDMatrix**** F, ThreeDMatrix**** b, ThreeDMatrix**** dC, ThreeDMatrix*** dP, ThreeDMatrix**** dF, ThreeDMatrix**** db, 
+    ThreeDMatrix**** Fcache, ThreeDMatrix**** bcache,
     int* filter_number, int* filter_height, int* filter_width, int* filter_stride_y, int* filter_stride_x, 
     int* padding_width, int* padding_height, 
     bool* enable_maxpooling, int* pooling_height, int* pooling_width, int* pooling_stride_x, int* pooling_stride_y, 
@@ -1278,6 +1300,8 @@ void assignConvSlaveArguments (ConvnetSlaveArgs* args,
     args->dP = dP;
     args->dF = dF;
     args->db = db;
+    args->Fcache = Fcache;
+    args->bcache = bcache;
     args->filter_number = filter_number;
     args->filter_height = filter_height;
     args->filter_width = filter_width;

@@ -67,6 +67,7 @@ void* CONV_updateWeights_slave(void* args);
 void assignConvSlaveArguments (ConvnetSlaveArgs* args,
     int M, int N, int minibatch_size, ThreeDMatrix** training_data, ThreeDMatrix** dX, ThreeDMatrix*** CONV_OUT,
     ThreeDMatrix**** C, ThreeDMatrix*** P, ThreeDMatrix**** F, ThreeDMatrix**** b, ThreeDMatrix**** dC, ThreeDMatrix*** dP, ThreeDMatrix**** dF, ThreeDMatrix**** db, 
+    ThreeDMatrix**** Fcache, ThreeDMatrix**** bcache,
     int* filter_number, int* filter_height, int* filter_width, int* filter_stride_y, int* filter_stride_x, 
     int* padding_width, int* padding_height, 
     bool* enable_maxpooling, int* pooling_height, int* pooling_width, int* pooling_stride_x, int* pooling_stride_y, 
