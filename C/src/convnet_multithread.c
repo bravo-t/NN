@@ -663,6 +663,7 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
         float training_accu = 0.0f;
         for(int iter=0;iter <iterations; iter++) {
             CONV_OUT = training_data + iter*sizeof(ThreeDMatrix*);
+            printf("DEBUG: Current height: %d, width: %d\n",(*CONV_OUT)[0].height,(*CONV_OUT)[0].width);
             // Forward propagation
             threadController_master(forward_prop_control_handle, THREAD_RESUME);
     
@@ -965,6 +966,11 @@ int CONV_forwardPropagation(int M, int N, int minibatch_size,ThreeDMatrix*** CON
     int end_index = calc_h_end(id,minibatch_size,number_of_threads);
     for(int i=0;i<M;i++) {
         for(int j=0;j<N;j++) {
+            #if defined(DEBUG) && DEBUG > 1
+                pthread_mutex_lock(&debug_mutex);
+                printf("DEBUG: CONV M = %d, N = %d, input matrix height: %d, width: %d, depth: %d\n", i, j,(*CONV_OUT)[0]->height, (*CONV_OUT)[0]->width, (*CONV_OUT)[0]->depth);
+                pthread_mutex_unlock(&debug_mutex);
+            #endif
             //if (verbose) {
             //    printf("CONVNET INFO: Epoch: %d, CONV M = %d, N = %d\n", e, i, j);
             //}
@@ -982,8 +988,17 @@ int CONV_forwardPropagation(int M, int N, int minibatch_size,ThreeDMatrix*** CON
                     alpha, 
                     C[i][j][n]);
             }
-            *(CONV_OUT) = C[i][j];
+            CONV_OUT = &(C[i][j]);
+            #if defined(DEBUG) && DEBUG > 1
+                pthread_mutex_lock(&debug_mutex);
+                printf("DEBUG: Output matrix height: %d, width: %d, depth: %d\n",(*CONV_OUT)[0]->height, (*CONV_OUT)[0]->width, (*CONV_OUT)[0]->depth);
+                pthread_mutex_unlock(&debug_mutex);
+            #endif
         }
+        // A thread barrier should be added here,
+        // Or a local copy of CONV_OUT
+        // Some thread may still trying to enter convLayerForward, while others have finished pooling and changed CONV_OUT
+        // And then size error happens
         if (enable_maxpooling[i]) {
             //if (verbose) {
             //    printf("CONVNET INFO: Epoch: %d, POOLING M = %d\n", e, i);
