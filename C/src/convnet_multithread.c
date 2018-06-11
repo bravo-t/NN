@@ -663,7 +663,6 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
         float training_accu = 0.0f;
         for(int iter=0;iter <iterations; iter++) {
             CONV_OUT = training_data + iter*sizeof(ThreeDMatrix*);
-            printf("DEBUG: Current height: %d, width: %d\n",(*CONV_OUT)[0].height,(*CONV_OUT)[0].width);
             // Forward propagation
             threadController_master(forward_prop_control_handle, THREAD_RESUME);
     
@@ -683,10 +682,10 @@ int trainConvnet_multithread(ConvnetParameters* network_params) {
             float accu = training_accuracy(Hs[fcnet_network_depth-1], network_params->fcnet_param->correct_labels);
             
             // Backward propagation
-            threadController_master(backward_prop_control_handle, THREAD_RESUME);
+            threadController_master(fcnet_backward_prop_control_handle, THREAD_RESUME);
             //sleep(1);
             // Update weights
-            threadController_master(update_weights_control_handle, THREAD_RESUME);
+            threadController_master(fcnet_update_weights_control_handle, THREAD_RESUME);
             //sleep(1);
 
             if (verbose) {
@@ -961,21 +960,22 @@ int testConvnetCore_multithread(ThreeDMatrix** test_data, int M,int N, int numbe
     return 0;
 }
 
-int CONV_forwardPropagation(int M, int N, int minibatch_size,ThreeDMatrix*** CONV_OUT, ThreeDMatrix**** C, ThreeDMatrix*** P, ThreeDMatrix**** F, ThreeDMatrix**** b, int* filter_number, int* filter_height, int* filter_width, int* filter_stride_y, int* filter_stride_x, int* padding_width, int* padding_height, bool* enable_maxpooling, int* pooling_height, int* pooling_width, int* pooling_stride_x, int* pooling_stride_y, float alpha, bool verbose, int id, int number_of_threads) {
+int CONV_forwardPropagation(int M, int N, int minibatch_size,ThreeDMatrix*** CONV_OUT_ADDR, ThreeDMatrix**** C, ThreeDMatrix*** P, ThreeDMatrix**** F, ThreeDMatrix**** b, int* filter_number, int* filter_height, int* filter_width, int* filter_stride_y, int* filter_stride_x, int* padding_width, int* padding_height, bool* enable_maxpooling, int* pooling_height, int* pooling_width, int* pooling_stride_x, int* pooling_stride_y, float alpha, bool verbose, int id, int number_of_threads) {
     int start_index = calc_h_start(id,minibatch_size,number_of_threads);
     int end_index = calc_h_end(id,minibatch_size,number_of_threads);
+    ThreeDMatrix** CONV_OUT_local = *CONV_OUT_ADDR;
     for(int i=0;i<M;i++) {
         for(int j=0;j<N;j++) {
             #if defined(DEBUG) && DEBUG > 1
                 pthread_mutex_lock(&debug_mutex);
-                printf("DEBUG: CONV M = %d, N = %d, input matrix height: %d, width: %d, depth: %d\n", i, j,(*CONV_OUT)[0]->height, (*CONV_OUT)[0]->width, (*CONV_OUT)[0]->depth);
+                printf("DEBUG: CONV M = %d, N = %d, input matrix height: %d, width: %d, depth: %d\n", i, j,CONV_OUT_local[0]->height, CONV_OUT_local[0]->width, CONV_OUT_local[0]->depth);
                 pthread_mutex_unlock(&debug_mutex);
             #endif
             //if (verbose) {
             //    printf("CONVNET INFO: Epoch: %d, CONV M = %d, N = %d\n", e, i, j);
             //}
             for(int n=start_index;n<=end_index;n++) {
-                convLayerForward((*CONV_OUT)[n], 
+                convLayerForward(CONV_OUT_local[n], 
                     F[i][j], 
                     filter_number[i*N+j], 
                     b[i][j], 
@@ -988,10 +988,10 @@ int CONV_forwardPropagation(int M, int N, int minibatch_size,ThreeDMatrix*** CON
                     alpha, 
                     C[i][j][n]);
             }
-            CONV_OUT = &(C[i][j]);
+            CONV_OUT_local = C[i][j];
             #if defined(DEBUG) && DEBUG > 1
                 pthread_mutex_lock(&debug_mutex);
-                printf("DEBUG: Output matrix height: %d, width: %d, depth: %d\n",(*CONV_OUT)[0]->height, (*CONV_OUT)[0]->width, (*CONV_OUT)[0]->depth);
+                printf("DEBUG: Output matrix height: %d, width: %d, depth: %d\n",CONV_OUT_local[0]->height, CONV_OUT_local[0]->width, CONV_OUT_local[0]->depth);
                 pthread_mutex_unlock(&debug_mutex);
             #endif
         }
@@ -1004,7 +1004,7 @@ int CONV_forwardPropagation(int M, int N, int minibatch_size,ThreeDMatrix*** CON
             //    printf("CONVNET INFO: Epoch: %d, POOLING M = %d\n", e, i);
             //}
             for(int n=start_index;n<=end_index;n++) {
-                maxPoolingForward((*CONV_OUT)[n], 
+                maxPoolingForward(CONV_OUT_local[n], 
                     pooling_stride_y[i], 
                     pooling_stride_x[i], 
                     pooling_width[i], 
@@ -1012,9 +1012,9 @@ int CONV_forwardPropagation(int M, int N, int minibatch_size,ThreeDMatrix*** CON
                     P[i][n]);
             }
         } else {
-            P[i] = *(CONV_OUT);
+            P[i] = CONV_OUT_local;
         }
-        *(CONV_OUT) = P[i];
+        CONV_OUT_local = P[i];
     }
     return 0;
 }
